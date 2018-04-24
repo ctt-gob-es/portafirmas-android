@@ -1,0 +1,13 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/configuration"
+            android:alphabeticShortcut="C"
+            android:title="@string/server_select"></item>
+
+    <item android:id="@+id/clavefirma"
+            android:title="@string/enable_clavefirma"
+            android:visible="false"
+            android:checkable="true"></item>
+
+    <item android:id="@+id/help" android:alphabeticShortcut="H" android:title="@string/help"></item>
+
+</menu>

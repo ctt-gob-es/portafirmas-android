@@ -1,0 +1,10 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+	<item android:id="@+id/update" android:icon="@drawable/icon_refresh" android:title="@string/update" android:showAsAction="ifRoom"></item>
+    <item android:id="@+id/filter" android:icon="@drawable/icon_filter" android:title="@string/filter"></item>
+    <item android:id="@+id/no_filter" android:icon="@drawable/icon_no_filter" android:title="@string/nofilter" android:visible="false"></item>
+    <item android:id="@+id/see_unresolveds" android:title="@string/see_unresolves" />
+    <item android:id="@+id/see_rejects" android:title="@string/see_rejects" />
+    <item android:id="@+id/notifications" android:title="@string/enable_notifications" android:visible="false"></item>
+    <item android:id="@+id/help" android:alphabeticShortcut="H" android:title="@string/help"></item>
+    <item android:id="@+id/logout" android:alphabeticShortcut="L" android:title="@string/logout"></item>
+</menu>

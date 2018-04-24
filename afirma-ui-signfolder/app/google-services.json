@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "520139663123",
+    "firebase_url": "https://portafirmas-1329.firebaseio.com",
+    "project_id": "portafirmas-1329",
+    "storage_bucket": "portafirmas-1329.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:520139663123:android:687b6d6e4ac9e7dd",
+        "android_client_info": {
+          "package_name": "es.gob.afirma.android.signfolder"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "520139663123-dndb50ih5j62lbr82ilc3iv8j7h4btbf.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC_hDKajl580gF0MBBN3GtG40VEYZ7-iLI"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
