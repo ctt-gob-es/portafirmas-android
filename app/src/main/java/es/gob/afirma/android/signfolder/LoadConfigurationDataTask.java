@@ -4,7 +4,6 @@ import android.content.Context;
 import android.os.AsyncTask;
 import android.util.Log;
 import es.gob.afirma.android.signfolder.proxy.CommManager;
-import es.gob.afirma.android.signfolder.proxy.CommManagerOldVersion;
 import es.gob.afirma.android.signfolder.proxy.RequestAppConfiguration;
 
 /** Carga los datos remotos necesarios para la configuraci&oacute;n de la aplicaci&oacute;n. */
@@ -59,8 +58,7 @@ final class LoadConfigurationDataTask extends AsyncTask<Void, Void, RequestAppCo
 
 	@Override
 	protected void onPostExecute(final RequestAppConfiguration appConfig) {
-		// TODO diferenciar entre proxy antiguo con login correcto e incorrecto
-		if (true || appConfig != null) {
+		if (appConfig != null) {
 			this.listener.configurationLoadSuccess(appConfig, this.certB64, this.certAlias);
 		}
 		else {
@@ -71,8 +69,6 @@ final class LoadConfigurationDataTask extends AsyncTask<Void, Void, RequestAppCo
 	/** Interfaz con los metodos para gestionar los resultados de la carga de la
 	 * configuraci&oacute;n de la aplicaci&oacute;n. */
 	interface LoadConfigurationListener {
-
-		void dismissDialog();
 
 		void configurationLoadSuccess(RequestAppConfiguration appConfig, String certB64, String certAlias);
 

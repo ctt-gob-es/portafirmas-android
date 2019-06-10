@@ -60,12 +60,12 @@
                 style="@style/ButtonText" />
 
             <Button
-                android:id="@+id/button_acceder_local"
+                android:id="@+id/button_acceder"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:minWidth="30dp"
                 android:onClick="onClick"
-                android:text="@string/button_login_local"
+                android:text="@string/button_login"
                 android:maxLines="2"
                 android:layout_weight="0.5"
                 style="@style/ButtonText" />

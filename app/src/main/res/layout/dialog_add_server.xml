@@ -7,7 +7,7 @@
     <TextView
         android:id="@+id/aliasLabel"
         android:filterTouchesWhenObscured="true"
-        android:layout_width="fill_parent"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingLeft="20dp"
         android:paddingTop="20dp"
@@ -17,7 +17,7 @@
     <EditText
         android:id="@+id/alias"
         android:filterTouchesWhenObscured="true"
-        android:layout_width="fill_parent"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:inputType="text"
         android:paddingLeft="20dp"/>
@@ -25,7 +25,7 @@
     <TextView
         android:id="@+id/urlLabel"
         android:filterTouchesWhenObscured="true"
-        android:layout_width="fill_parent"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingLeft="20dp"
         android:paddingTop="20dp"
@@ -35,7 +35,7 @@
     <EditText
         android:id="@+id/url"
         android:filterTouchesWhenObscured="true"
-        android:layout_width="fill_parent"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:inputType="textUri"
         android:paddingBottom="20dp"

@@ -10,8 +10,7 @@ import es.gob.afirma.android.signfolder.SFConstants;
 
 /** Analizador de XML para la generaci&oacute;n de un listado de objetos
  * de tipo {@link es.gob.afirma.android.signfolder.proxy.TriphaseRequest} a partir
- * de un XML de respuesta de postfirma.
- * @author Carlos Gamuci */
+ * de un XML de respuesta de postfirma. */
 public class PostsignsResponseParser {
 
 	private static final String POSTSIGN_RESPONSE_NODE = "posts"; //$NON-NLS-1$

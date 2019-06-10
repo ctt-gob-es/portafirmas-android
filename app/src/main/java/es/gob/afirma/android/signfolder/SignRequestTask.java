@@ -19,9 +19,7 @@ import es.gob.afirma.android.util.AOException;
  * La operaci&oacute;n puede ser firma simple, cofirma o contrafirma (de nodos hoja
  * o todo el &aacute;rbol) seg&uacute;n se indique.
  * La firma es una operaci&oacute;n que necesariamente debe ejecutarse en segundo
- * plano ya que las firmas trif&aacute;sicas hacen conexiones de red.
- * @author Carlos Gamuci
- */
+ * plano ya que las firmas trif&aacute;sicas hacen conexiones de red. */
 final class SignRequestTask extends AsyncTask<Void, Void, RequestResult>{
 
 	private final SignRequest signRequest;

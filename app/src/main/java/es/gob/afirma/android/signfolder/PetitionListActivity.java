@@ -66,13 +66,11 @@ import es.gob.afirma.android.signfolder.proxy.SignRequest.RequestType;
  * La visibilidad de la lista y la etiqueta de "No hay elementos" se delega en
  * el Layout por medio del uso de los elementos "list" y "empty" reconocidos por
  * el ListActivity.
- *
- * @author Carlos Gamuci
  */
 public final class PetitionListActivity extends FragmentActivity implements
 		OperationRequestListener, LoadSignRequestListener, OnItemClickListener,
-		DialogFragmentListener, ClaveFirmaPreSignTask.ClaveFirmaPreSignListener,
-		ClaveFirmaPostSignTask.ClaveFirmaPostSignListener {
+		DialogFragmentListener, FirePreSignTask.ClaveFirmaPreSignListener,
+		FirePostSignTask.ClaveFirmaPostSignListener {
 
 	/**
 	 * Clave usada internamente para guardar el estado de la propiedad
@@ -157,18 +155,10 @@ public final class PetitionListActivity extends FragmentActivity implements
 
 	private String certAlias = null;
 
-	String getCertAlias() {
-		return this.certAlias;
-	}
-
 	private String certB64 = null;
 
-	String getCertB64() {
-		return this.certB64;
-	}
-
-	private String[] appIds = null;
-	private String[] appNames = null;
+	private List<String> appIds = null;
+	private List<String> appNames = null;
 
 	private FilterConfig filterConfig = null;
 
@@ -282,26 +272,25 @@ public final class PetitionListActivity extends FragmentActivity implements
 	}
 
 	private void loadSavedInstances(final Bundle savedInstanceState) {
-		this.needReload = savedInstanceState
-				.containsKey(KEY_SAVEINSTANCE_NEED_RELOAD) ? savedInstanceState
-				.getBoolean(KEY_SAVEINSTANCE_NEED_RELOAD) : false;
+		this.needReload =
+				savedInstanceState.containsKey(KEY_SAVEINSTANCE_NEED_RELOAD) &&
+				savedInstanceState.getBoolean(KEY_SAVEINSTANCE_NEED_RELOAD);
 
-		this.loadingRequests = savedInstanceState
-				.containsKey(KEY_SAVEINSTANCE_LOADING) ? savedInstanceState
-				.getBoolean(KEY_SAVEINSTANCE_LOADING) : true;
+		this.loadingRequests =
+				!savedInstanceState.containsKey(KEY_SAVEINSTANCE_LOADING) ||
+				savedInstanceState.getBoolean(KEY_SAVEINSTANCE_LOADING);
 
-		setFilterConfig(ConfigureFilterDialogBuilder
-				.loadFilter(savedInstanceState));
+		setFilterConfig(ConfigureFilterDialogBuilder.loadFilter(savedInstanceState));
 	}
 
 	private void loadIntentExtra(final Intent intent) {
 
 		this.certAlias = intent.getStringExtra(EXTRA_RESOURCE_CERT_ALIAS);
 		this.certB64 = intent.getStringExtra(EXTRA_RESOURCE_CERT_B64);
-		this.appIds = intent.getStringArrayExtra(EXTRA_RESOURCE_APP_IDS);
-		this.appNames = intent.getStringArrayExtra(EXTRA_RESOURCE_APP_NAMES);
+		this.appIds = intent.getStringArrayListExtra(EXTRA_RESOURCE_APP_IDS);
+		this.appNames = intent.getStringArrayListExtra(EXTRA_RESOURCE_APP_NAMES);
 		// Si solo esta documentado el certificado se viene de pinchar en una notificacion
-		if(this.certAlias == null && this.appIds == null && this.appNames == null) {
+		if (this.certAlias == null && this.appIds == null && this.appNames == null) {
 			CommManager.getInstance().setNewProxy();
 			CommManager.getInstance().setProxyURL(AppPreferences.getInstance().getSelectedProxyUrl());
 		}
@@ -335,10 +324,7 @@ public final class PetitionListActivity extends FragmentActivity implements
 		final CustomAlertDialog dialog = CustomAlertDialog.newInstance(
 				DIALOG_CONFIRM_REJECT,
 				getString(R.string.dialog_title_confirm_reject),
-				reqs.length > 1 ? getString(
-						R.string.dialog_msg_reject_request,
-						Integer.valueOf(reqs.length))
-						: getString(R.string.dialog_msg_reject_request),
+				getString(R.string.dialog_msg_reject_request),
 				getString(android.R.string.ok),
 				getString(android.R.string.cancel),
 				this);
@@ -450,7 +436,7 @@ public final class PetitionListActivity extends FragmentActivity implements
 			if (requests.length - countApproved == 1) {
 				tvSign.setText(R.string.dialog_msg_sign_petition_1); //$NON-NLS-1$
 			} else {
-				tvSign.setText(getString(R.string.dialog_msg_sign_petition_2, Integer.valueOf(requests.length - countApproved))); //$NON-NLS-1$
+				tvSign.setText(getString(R.string.dialog_msg_sign_petition_2, (requests.length - countApproved))); //$NON-NLS-1$
 			}
 		}
 		// Peticiones de visto bueno
@@ -461,7 +447,7 @@ public final class PetitionListActivity extends FragmentActivity implements
 						.setText(R.string.dialog_msg_approve_petition_1); //$NON-NLS-1$
 			} else {
 				tvApprove
-						.setText(getString(R.string.dialog_msg_approve_petition_2, Integer.valueOf(countApproved))); //$NON-NLS-1$
+						.setText(getString(R.string.dialog_msg_approve_petition_2, countApproved)); //$NON-NLS-1$
 			}
 		}
 
@@ -499,7 +485,7 @@ public final class PetitionListActivity extends FragmentActivity implements
 		if (adapter == null) {
 			return null;
 		}
-		final List<SignRequest> requests = new ArrayList<SignRequest>();
+		final List<SignRequest> requests = new ArrayList<>();
 
 		for (int i = 0; i < adapter.getCount(); i++) {
 			final PetitionListAdapterItem item = adapter.getItem(i);
@@ -631,7 +617,7 @@ public final class PetitionListActivity extends FragmentActivity implements
 			// Configuramos los filtros
 			final List<String> filters = ConfigureFilterDialogBuilder
 					.generateFilters(this.filterConfig);
-			this.loadingTask = new LoadSignRequestsTask(this.certB64,
+			this.loadingTask = new LoadSignRequestsTask(
 					this.currentState, page, PAGE_SIZE, filters,
 					CommManager.getInstance(), this);
 			setVisibilityLoadingMessage(true, null, this.loadingTask);
@@ -664,7 +650,7 @@ public final class PetitionListActivity extends FragmentActivity implements
 	}
 
 	/**
-	 * Selecciona o deselecciona todo el listado de peticiones en pantalla.
+	 * Selecciona o deselecciona todos los elementos del listado de peticiones en pantalla.
 	 *
 	 * @param selected
 	 *            {@code true} para seleccionar todas las peticiones,
@@ -1025,7 +1011,7 @@ public final class PetitionListActivity extends FragmentActivity implements
 			return v;
 		}
 
-		public SignRequest getSignRequest() {
+		private SignRequest getSignRequest() {
 			return this.request;
 		}
 	}
@@ -1037,7 +1023,7 @@ public final class PetitionListActivity extends FragmentActivity implements
 
 		private final LayoutInflater mInflater;
 
-		public PetitionListArrayAdapter(final Context context, final List<PetitionListAdapterItem> objects) {
+		private PetitionListArrayAdapter(final Context context, final List<PetitionListAdapterItem> objects) {
 			super(context, 0, objects);
 			this.mInflater = LayoutInflater.from(context);
 		}
@@ -1064,7 +1050,7 @@ public final class PetitionListActivity extends FragmentActivity implements
 		final int page;
 		final Context context;
 
-		public PanelPaginationElement(final int numPages, final int currentPage, final Context context) {
+		private PanelPaginationElement(final int numPages, final int currentPage, final Context context) {
 			this.nPages = numPages;
 			this.page = currentPage;
 			this.context = context;
@@ -1130,7 +1116,7 @@ public final class PetitionListActivity extends FragmentActivity implements
 					});
 
 			((TextView) paginationView.findViewById(R.id.paginationText)).setText(
-					getString(R.string.pagination_separator, Integer.valueOf(this.page), Integer.valueOf(this.nPages)));
+					getString(R.string.pagination_separator, this.page, this.nPages));
 
 			return paginationView;
 		}
@@ -1205,7 +1191,7 @@ public final class PetitionListActivity extends FragmentActivity implements
 
 				Log.w(SFConstants.LOG_TAG, "Iniciamos la AsyncTask de la PostFirma");
 				// Se inicia el WebView
-				ClaveFirmaPostSignTask cct = new ClaveFirmaPostSignTask(this.firePreSignResult, this, this);
+				FirePostSignTask cct = new FirePostSignTask(this.firePreSignResult, this, this);
 				//showProgressDialog(getString(R.string.dialog_msg_clave),null);
 				cct.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 			}
@@ -1338,7 +1324,8 @@ public final class PetitionListActivity extends FragmentActivity implements
 			final Bundle savedInstanceState) {
 
 		this.filterDialogBuilder = new ConfigureFilterDialogBuilder(
-				savedInstanceState, this.appIds, this.appNames, this);
+				savedInstanceState, this.appIds.toArray(new String[0]),
+				this.appNames.toArray(new String[0]), this);
 		this.filterDialogBuilder.setPositiveButton(R.string.ok,
 				new DialogInterface.OnClickListener() {
 					@Override
@@ -1412,7 +1399,7 @@ public final class PetitionListActivity extends FragmentActivity implements
 			if (this.numRequestToApprovePending > 0) {
 				Log.i(SFConstants.LOG_TAG, "Peticiones para aprobar: " + this.numRequestToApprovePending); //$NON-NLS-1$
 				approveRequests(
-						requestToApprove.toArray(new SignRequest[requestToApprove.size()]));
+						requestToApprove.toArray(new SignRequest[0]));
 			}
 
 			// Mandamos a firmar las peticiones de firma
@@ -1420,13 +1407,13 @@ public final class PetitionListActivity extends FragmentActivity implements
 			if (this.numRequestToSignPending > 0) {
 				Log.i(SFConstants.LOG_TAG, "Peticiones para firmar: " + this.numRequestToSignPending); //$NON-NLS-1$
 				// Dependiendo de si firmamos con certificado local o con Cl@ve Firma
-				if(AppPreferences.getInstance().getEnabledClavefirma()) {
-					doSignWithClaveFirma(requestToSign.toArray(new SignRequest[requestToSign.size()]));
+				if(AppPreferences.getInstance().isCloudCertEnabled()) {
+					doSignWithClaveFirma(requestToSign.toArray(new SignRequest[0]));
 				}
 				else {
 					signRequets(
 							this.certAlias,
-							requestToSign.toArray(new SignRequest[requestToSign.size()]));
+							requestToSign.toArray(new SignRequest[0]));
 				}
 			}
 		}
@@ -1463,7 +1450,7 @@ public final class PetitionListActivity extends FragmentActivity implements
 
 	private void doSignWithClaveFirma(final SignRequest[] requests) {
 		// Se inicia el WebView
-		ClaveFirmaPreSignTask cct = new ClaveFirmaPreSignTask(requests, this, this);
+		FirePreSignTask cct = new FirePreSignTask(requests, this, this);
 		//showProgressDialog(getString(R.string.dialog_msg_clave),null);
 		cct.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
@@ -1556,8 +1543,7 @@ public final class PetitionListActivity extends FragmentActivity implements
 		synchronized (this) {
 			this.numRequestToSignPending = 0;
 
-			if (this.numRequestToSignPending <= 0
-					&& this.numRequestToApprovePending <= 0) {
+			if (this.numRequestToApprovePending <= 0) {
 
 				setVisibilityLoadingMessage(false, null, null);
 
@@ -1575,8 +1561,7 @@ public final class PetitionListActivity extends FragmentActivity implements
 		synchronized (this) {
 			this.numRequestToSignPending = 0;
 
-			if (this.numRequestToSignPending <= 0
-					&& this.numRequestToApprovePending <= 0) {
+			if (this.numRequestToApprovePending <= 0) {
 				setVisibilityLoadingMessage(false, null, null);
 
 				// Una vez finalizada una operacion, recargamos el listado por
@@ -1593,8 +1578,7 @@ public final class PetitionListActivity extends FragmentActivity implements
 		synchronized (this) {
 			this.numRequestToSignPending = 0;
 
-			if (this.numRequestToSignPending <= 0
-					&& this.numRequestToApprovePending <= 0) {
+			if (this.numRequestToApprovePending <= 0) {
 
 				setVisibilityLoadingMessage(false, null, null);
 
@@ -1606,7 +1590,6 @@ public final class PetitionListActivity extends FragmentActivity implements
 	}
 
 	// Funciones para implementar el registro de notificaciones GCM
-	private boolean isReceiverRegistered;
 	private static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
 
 	/**
@@ -1650,7 +1633,7 @@ public final class PetitionListActivity extends FragmentActivity implements
 
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			if(intent.getExtras().getBoolean("success")) {
+			if(intent.getExtras() != null && intent.getExtras().getBoolean("success")) {
 				menuRef.findItem(R.id.notifications).setVisible(false);
 				Toast.makeText(context, R.string.toast_msg_gcm_connection_ok, Toast.LENGTH_SHORT).show();
 			}
@@ -1675,7 +1658,7 @@ public final class PetitionListActivity extends FragmentActivity implements
 		final String text;
 		final Context context;
 
-		public PanelTitle(final String text, final Context context) {
+		private PanelTitle(final String text, final Context context) {
 			this.text = text;
 			this.context = context;
 		}
@@ -1707,7 +1690,7 @@ public final class PetitionListActivity extends FragmentActivity implements
 
 		DateFormat dateFormat;
 
-		public SignRequestComparator(DateFormat dateFormat) {
+		private SignRequestComparator(DateFormat dateFormat) {
 			this.dateFormat = dateFormat;
 		}
 

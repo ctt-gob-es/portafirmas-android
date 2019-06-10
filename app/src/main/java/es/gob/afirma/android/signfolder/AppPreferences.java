@@ -26,16 +26,16 @@ public final class AppPreferences {
 	private static final String KEY_HELP_URL = "help.url"; //$NON-NLS-1$
 
 	/** &Uacute;ltimo certificado utilizado */
-	public static final String LAST_CERT = "lastCert"; //$NON-NLS-1$
+	private static final String LAST_CERT = "lastCert"; //$NON-NLS-1$
 
-	/** Indicador de si se quiere firmar con Cl@ve Firma */
-	public static final String ENABLED_CLAVEFIRMA = "enabledClaveFirma"; //$NON-NLS-1$
+	/** Indicador de si se quiere autenticar y firmar con certificado en la nube. */
+	private static final String CLOUD_CERT_ENABLED = "enabledCloudCert"; //$NON-NLS-1$
 
 	/** Clave de preferencia de la URL del Proxy. */
-	public static final String PREFERENCES_KEY_SELECTED_PROXY_URL = "URL_PROXY"; //$NON-NLS-1$
+	private static final String PREFERENCES_KEY_SELECTED_PROXY_URL = "URL_PROXY"; //$NON-NLS-1$
 
 	/** Clave de preferencia de alias del proxy seleccionado . */
-	public static final String PREFERENCES_KEY_SELECTED_PROXY_ALIAS = "alias"; //$NON-NLS-1$
+	private static final String PREFERENCES_KEY_SELECTED_PROXY_ALIAS = "alias"; //$NON-NLS-1$
 
 	/** Prefijo de clave de preferencia para registrar cuando un usuario tiene activas las
 	 * notificaciones para un proxy. */
@@ -48,9 +48,6 @@ public final class AppPreferences {
 
 	/** Token actual para el env&iacute;o de notificaciones. */
 	 private static final String PREFERENCES_KEY_CURRENT_TOKEN = "currentToken";
-
-	/** Prefijo de las claves de guardado de tokens de notificaciones. */
-	private static final String PREFERENCES_KEY_PREFIX_TOKEN = "tkn";
 
 	private static final String CONFIG_SEPARATOR = ";"; //$NON-NLS-1$
 
@@ -78,8 +75,8 @@ public final class AppPreferences {
 
 	/** Inicializa las preferencias a partir de su fichero de propiedades.
 	 * @param activity Actividad padre. */
-	public void init(final Context activity) {
-		if(config ==  null) {
+	void init(final Context activity) {
+		if (config ==  null) {
 			config = new Properties();
 			try {
 				config.load(activity.getAssets().open(CONFIG_PROPERTIES));
@@ -88,32 +85,33 @@ public final class AppPreferences {
 				throw new RuntimeException("No se encuentra el fichero de configuracion " + CONFIG_PROPERTIES, e); //$NON-NLS-1$
 			}
 		}
-		if(sharedPref == null) {
+		if (sharedPref == null) {
 			sharedPref = PreferenceManager.getDefaultSharedPreferences(activity);
 		}
 	}
 
 	/**
 	 * Define si se ha habilitado la firma con Cl@ve Firma.
-	 * @param  enabledClavefirma Certificado del usuario.
+	 * @param  cloudCertEnabled {@code true} para habilitar el uso de
+	 * certificados en la mube, {@code false} para usar certificados locales.
 	 */
-	public void setEnabledClavefirma(boolean enabledClavefirma) {
-		setPreferenceBool(ENABLED_CLAVEFIRMA, enabledClavefirma);
+	void setCloudCertEnabled(boolean cloudCertEnabled) {
+		setPreferenceBool(CLOUD_CERT_ENABLED, cloudCertEnabled);
 	}
 
 	/**
 	 * Recupera si se ha habilitado la firma con Cl@ve Firma.
 	 * @return Certificado del usuario.
 	 */
-	public boolean getEnabledClavefirma() {
-		return getPreferenceBool(ENABLED_CLAVEFIRMA, false);
+	boolean isCloudCertEnabled() {
+		return getPreferenceBool(CLOUD_CERT_ENABLED, false);
 	}
 
 	/**
 	 * Define el ultimo certificado con el que se accedio.
 	 * @param  certEncoded Certificado del usuario.
 	 */
-	public void setLastCertificate(String certEncoded) {
+	void setLastCertificate(String certEncoded) {
 		setPreference(LAST_CERT, certEncoded);
 	}
 
@@ -151,11 +149,11 @@ public final class AppPreferences {
 
 	/** Recupera la URL del documento de ayuda de la aplicaci&oacute;n.
 	 * @return URL del documento. */
-	public String getHelpUrl() {
+	String getHelpUrl() {
 		return config.getProperty(KEY_HELP_URL);
 	}
 
-	public String getPreference(final String key) {
+	String getPreference(final String key) {
 		return sharedPref.getString(key.trim(), ""); //$NON-NLS-1$
 	}
 
@@ -166,7 +164,7 @@ public final class AppPreferences {
 	public void setPreference(final String key, final String value) {
 		final SharedPreferences.Editor editor = sharedPref.edit();
 		editor.putString(key.trim(), value);
-		editor.commit();
+		editor.apply();
 	}
 
 	public int getPreferenceInt(final String key, final int defaultValue) {
@@ -176,7 +174,7 @@ public final class AppPreferences {
 	public void setPreferenceInt(final String key, final int value) {
 		final SharedPreferences.Editor editor = sharedPref.edit();
 		editor.putInt(key.trim(), value);
-		editor.commit();
+		editor.apply();
 	}
 
 	public boolean getPreferenceBool(final String key, final boolean defaultValue) {
@@ -186,13 +184,13 @@ public final class AppPreferences {
 	public void setPreferenceBool(final String key, final boolean value) {
 		final SharedPreferences.Editor editor = sharedPref.edit();
 		editor.putBoolean(key.trim(), value);
-		editor.commit();
+		editor.apply();
 	}
 
-	public void removePreference(final String key) {
+	private void removePreference(final String key) {
 		final SharedPreferences.Editor editor = sharedPref.edit();
 		editor.remove(key.trim());
-		editor.commit();
+		editor.apply();
 	}
 
 	/** Establece un proxy como el seleccionado.
@@ -211,11 +209,11 @@ public final class AppPreferences {
 
 	/** Recupera el alias del proxy actualmente seleccionado.
 	 * @return Alias del proxy o cadena vaci&iacute;a si no hay ninguno. */
-	public String getSelectedProxyAlias() {
+	String getSelectedProxyAlias() {
 		return getPreference(PREFERENCES_KEY_SELECTED_PROXY_ALIAS, "");
 	}
 	
-	public void saveServer(final String alias, final String url) {
+	void saveServer(final String alias, final String url) {
 		setPreference(PREFERENCES_KEY_PREFIX_SERVER + alias, url);
 	}
 
@@ -228,25 +226,25 @@ public final class AppPreferences {
 		return getPreference(PREFERENCES_KEY_PREFIX_SERVER + alias, "");
 	}
 
-	public void setCurrentToken(final String token) {
+	void setCurrentToken(final String token) {
 		setPreference(PREFERENCES_KEY_CURRENT_TOKEN, token);
 	}
 
-	public String getCurrentToken() {
+	String getCurrentToken() {
 		return getPreference(PREFERENCES_KEY_CURRENT_TOKEN);
 	}
 
-	public void removeServer(final String alias) {
+	void removeServer(final String alias) {
 		removePreference(PREFERENCES_KEY_PREFIX_SERVER + alias);
 	}
 	
-	public void removeProxyConfig() {
+	void removeProxyConfig() {
 		removePreference(PREFERENCES_KEY_SELECTED_PROXY_ALIAS);
 		removePreference(PREFERENCES_KEY_SELECTED_PROXY_URL);
 	}
 	
 	public List<String> getServersList() {
-		ArrayList<String> servers = new ArrayList<String>();
+		ArrayList<String> servers = new ArrayList<>();
 		Map<String, ?> allPrefs = sharedPref.getAll();
 	    Set<String> set = allPrefs.keySet();
 	    for(String s : set){
@@ -261,34 +259,10 @@ public final class AppPreferences {
 	 * Establece los servidores proxy por defecto de la aplicaci&oacute;n. El del Portafirmas
 	 * General de la AGE y el de RedSara.
 	 */
-	public void setDefaultServers() {
+	void setDefaultServers() {
 		saveServer(DEFAULT_PROXY_GOB_ALIAS, DEFAULT_PROXY_GOB_URL);
 		saveServer(DEFAULT_PROXY_REDSARA_ALIAS, DEFAULT_PROXY_REDSARA_URL);
 
 		setSelectedProxy(DEFAULT_PROXY_GOB_ALIAS, DEFAULT_PROXY_GOB_URL);
-	}
-
-	/**
-	 * Obtiene el token de notificaci&oacute;n dado de alta para un servidor proxy y un
-	 * usuario concreto.
-	 * @param proxyUrl URL del servidor proxy que debe enviar las notificaciones.
-	 * @param user Usuario al que deben enviarse las notificaciones.
-	 * @return Token de notificaci&oacute;n actualmente registrado.
-	 */
-	public String getNotificationToken(String proxyUrl, String user) {
-		return getPreference(PREFERENCES_KEY_PREFIX_TOKEN +
-				proxyUrl.replace("=", "_") + "." + user);
-	}
-
-	/**
-	 * Establece el token de notificaci&oacute;n dado de alta para un servidor proxy y un
-	 * usuario concreto.
-	 * @param proxyUrl URL del servidor proxy que debe enviar las notificaciones.
-	 * @param user Usuario al que deben enviarse las notificaciones.
-	 * @param token Token para el env&iacute;o de notificaciones.
-	 */
-	public void setNotificationToken(String proxyUrl, String user, String token) {
-		setPreference(PREFERENCES_KEY_PREFIX_TOKEN +
-				proxyUrl.replace("=", "_") + "." + user, token);
 	}
 }

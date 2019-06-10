@@ -11,9 +11,9 @@ import es.gob.afirma.android.signfolder.SFConstants;
 
 /** Analizador de XML para la generaci&oacute;n del token firmado para validar la identidad.
  * @author Sergio Mart&iacute;nez. */
-public class LoginValidationResponseParser {
+class LoginValidationResponseParser {
 
-	private static final String TOKEN_VALIDATION_RESPONSE_NODE = "vllgnrq"; //$NON-NLS-1$
+	private static final String LOGIN_VALIDATION_RESPONSE_NODE = "vllgnrq"; //$NON-NLS-1$
 
 	private LoginValidationResponseParser() {
 		// No instanciable
@@ -26,15 +26,15 @@ public class LoginValidationResponseParser {
 	 * @return Objeto con los datos del XML.
 	 * @throws IllegalArgumentException Cuando el XML no tiene el formato esperado.
 	 */
-	static RequestResult parse(final Document doc) {
+	static ValidationLoginResult parse(final Document doc) {
 
 		if (doc == null) {
 			throw new IllegalArgumentException("El documento proporcionado no puede ser nulo");  //$NON-NLS-1$
 		}
 
-		if (!TOKEN_VALIDATION_RESPONSE_NODE.equalsIgnoreCase(doc.getDocumentElement().getNodeName())) {
+		if (!LOGIN_VALIDATION_RESPONSE_NODE.equalsIgnoreCase(doc.getDocumentElement().getNodeName())) {
 			throw new IllegalArgumentException("El elemento raiz del XML debe ser '" + //$NON-NLS-1$
-					TOKEN_VALIDATION_RESPONSE_NODE + "' y aparece: " + //$NON-NLS-1$
+					LOGIN_VALIDATION_RESPONSE_NODE + "' y aparece: " + //$NON-NLS-1$
 					doc.getDocumentElement().getNodeName());
 		}
 
@@ -47,16 +47,17 @@ public class LoginValidationResponseParser {
 		else {
 			requestNode = requestNodes.item(nextIndex);
 		}
-		return RequestResultParser.parse(requestNode);
+		return LoginValidationResultParser.parse(requestNode);
 	}
 
-	private static final class RequestResultParser {
+	private static final class LoginValidationResultParser {
 
 		private static final String REQUEST_NODE = "vllgnrq"; //$NON-NLS-1$
 		private static final String OK_ATTRIBUTE = "ok"; //$NON-NLS-1$
 		private static final String ERROR_ATTRIBUTE = "err"; //$NON-NLS-1$
+		private static final String DNI_ATTRIBUTE = "dni"; //$NON-NLS-1$
 
-		static RequestResult parse(final Node requestNode) {
+		static ValidationLoginResult parse(final Node requestNode) {
 
 			if (!REQUEST_NODE.equalsIgnoreCase(requestNode.getNodeName())) {
 				throw new IllegalArgumentException("Se encontro un elemento '" + //$NON-NLS-1$
@@ -66,11 +67,11 @@ public class LoginValidationResponseParser {
 			// Datos de la peticion
 			String errorMessage = "";
 			boolean statusOk = true;
+			String dni = "";
 
 			// Cargamos los atributos
-			Node attributeNode = null;
 			final NamedNodeMap attributes = requestNode.getAttributes();
-			attributeNode = attributes.getNamedItem(OK_ATTRIBUTE);
+			Node attributeNode = attributes.getNamedItem(OK_ATTRIBUTE);
 			if (attributeNode == null) {
 				throw new IllegalArgumentException("No se ha encontrado el atributo obligatorio '" + //$NON-NLS-1$
 						OK_ATTRIBUTE + "' en un peticion de prefirma"); //$NON-NLS-1$
@@ -87,9 +88,23 @@ public class LoginValidationResponseParser {
 				errorMessage = attributeNode.getNodeValue();
 			}
 
-			Log.i(SFConstants.LOG_TAG, "Ok=" + statusOk + "; Error=" + errorMessage); //$NON-NLS-1$ //$NON-NLS-2$
+			// Cargamos el mensaje de error
+			attributeNode = attributes.getNamedItem(DNI_ATTRIBUTE);
+			if (attributeNode != null) {
+				dni = attributeNode.getNodeValue();
+			}
 
-			return new RequestResult(errorMessage, statusOk);
+			Log.i(SFConstants.LOG_TAG, "Ok=" + statusOk + "; Dni=" + dni + "; Error=" + errorMessage); //$NON-NLS-1$ //$NON-NLS-2$
+
+			final ValidationLoginResult result = new ValidationLoginResult(statusOk);
+			if (dni != null) {
+				result.setDni(dni);
+			}
+			if (errorMessage != null) {
+				result.setErrorMsg(errorMessage);
+			}
+
+			return result;
 		}
 	}
 }

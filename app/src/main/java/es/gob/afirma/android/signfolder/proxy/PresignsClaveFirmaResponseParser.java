@@ -11,8 +11,7 @@ import es.gob.afirma.android.util.Base64;
 
 /** Analizador de XML para la generaci&oacute;n de un listado de objetos
  * de tipo {@link TriphaseRequest} a partir
- * de un XML de respuesta de prefirma.
- * @author Carlos Gamuci */
+ * de un XML de respuesta de prefirma. */
 public final class PresignsClaveFirmaResponseParser {
 
 	private static final String PRESIGN_RESPONSE_NODE = "cfpre"; //$NON-NLS-1$

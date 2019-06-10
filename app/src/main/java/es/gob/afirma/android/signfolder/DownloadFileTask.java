@@ -44,8 +44,10 @@ final class DownloadFileTask extends AsyncTask<Void, Void, DocumentData> impleme
 		 * @param documentFile Documento que hay que visualizar.
 		 * @param filename Nombre del documento.
 		 * @param mimetype MimeType del documento.
-		 * @param docType Tipo de documento (datos, firma o informe). */
-		void downloadDocumentSuccess(File documentFile, String filename, String mimetype, int docType);
+		 * @param docType Tipo de documento (datos, firma o informe).
+		 * @param  externalDir Indica si se almacena el fichero en un directorio externo o en
+		 *                     un directorio interno de la aplicaci&oacute;n. */
+		void downloadDocumentSuccess(File documentFile, String filename, String mimetype, int docType, boolean externalDir);
 
 		/** Cuando ocurri&oacute; un error al descargar el documento. */
 		void downloadDocumentError();
@@ -133,13 +135,13 @@ final class DownloadFileTask extends AsyncTask<Void, Void, DocumentData> impleme
 		}
 
 		new SaveFileTask(
-				documentData.getDataIs(), filename, this.extDir, this, this.activity
+				documentData.getDataIs(), filename, this, this.activity
 				).execute();
 	}
 
 	@Override
 	public void saveFileSuccess(File outputFile) {
-		this.listener.downloadDocumentSuccess(outputFile, outputFile.getName(), this.mimetype, this.type);
+		this.listener.downloadDocumentSuccess(outputFile, outputFile.getName(), this.mimetype, this.type, this.extDir);
 	}
 
 	@Override

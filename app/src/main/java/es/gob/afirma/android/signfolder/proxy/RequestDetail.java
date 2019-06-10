@@ -9,6 +9,8 @@ public final class RequestDetail extends SignRequest {
 
 	private String ref = null;
 
+	private String message = null;
+
 	private String signlinestype = null;
 
 	private Vector<SignLine> signLines;
@@ -38,9 +40,21 @@ public final class RequestDetail extends SignRequest {
 	}
 
 	/** Establece la referencia de la petici&oacute;n.
-	 * @param ref Referencia de la aplicaci&oacute;n. */
+	 * @param ref Referencia de la petici&oacute;n. */
 	public void setRef(final String ref) {
 		this.ref = ref;
+	}
+
+	/** Recupera el mensaje asociado a la petici&oacute;n.
+	 * @return Mensaje de la petici&oacute;n. */
+	public String getMessage() {
+		return this.message;
+	}
+
+	/** Establece el mensaje asociado a la petici&oacute;n.
+	 * @param message Mensaje de la petici&oacute;n. */
+	public void setMessage(final String message) {
+		this.message = message;
 	}
 
 	/** Recupera el listado de l&iacute;neas de firma de la petici&oacute;n. Las l&iacute;neas de firma

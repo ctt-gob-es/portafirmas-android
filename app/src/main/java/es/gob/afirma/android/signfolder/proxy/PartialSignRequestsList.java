@@ -3,9 +3,7 @@ package es.gob.afirma.android.signfolder.proxy;
 import java.util.List;
 
 /**
- * Listado parcial del peticiones de firma.
- * @author Carlos Gamuci
- */
+ * Listado parcial del peticiones de firma. */
 public class PartialSignRequestsList {
 
 	private final List<SignRequest> currentSignRequests;

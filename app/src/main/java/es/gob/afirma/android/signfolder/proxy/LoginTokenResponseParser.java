@@ -7,15 +7,21 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+
+import es.gob.afirma.android.signfolder.ErrorManager;
 import es.gob.afirma.android.signfolder.SFConstants;
 
 /** Analizador de XML para la generaci&oacute;n de una petici&oacute;n de login o logout.
  * @author Sergio Mart&iacute;nez. */
-public class LoginTokenResponseParser {
+class LoginTokenResponseParser {
 
 	private static final String LOGIN_TOKEN_RESPONSE_NODE = "lgnrq"; //$NON-NLS-1$
 
-	private LoginTokenResponseParser() {
+    private static final String ERROR_NODE = "err"; //$NON-NLS-1$
+
+    private static final String ERROR_CODE_ATTR = "cd"; //$NON-NLS-1$
+
+    private LoginTokenResponseParser() {
 		// No instanciable
 	}
 
@@ -26,13 +32,21 @@ public class LoginTokenResponseParser {
 	 * @return Objeto con los datos del XML.
 	 * @throws IllegalArgumentException Cuando el XML no tiene el formato esperado.
 	 */
-	static RequestResult parse(final Document doc) {
+	static RequestResult parse(final Document doc) throws OldProxyException {
 
 		if (doc == null) {
 			throw new IllegalArgumentException("El documento proporcionado no puede ser nulo");  //$NON-NLS-1$
 		}
 
 		if (!LOGIN_TOKEN_RESPONSE_NODE.equalsIgnoreCase(doc.getDocumentElement().getNodeName())) {
+
+			if (ERROR_NODE.equalsIgnoreCase(doc.getDocumentElement().getNodeName())) {
+				String errorCode = doc.getDocumentElement().getAttribute(ERROR_CODE_ATTR);
+				if (ErrorManager.ERROR_UNSUPPORTED_OPERATION_NAME.equals(errorCode)) {
+					throw new OldProxyException("La operacion de login no esta soportada");
+				}
+			}
+
 			throw new IllegalArgumentException("El elemento raiz del XML debe ser '" + //$NON-NLS-1$
 					LOGIN_TOKEN_RESPONSE_NODE + "' y aparece: " + //$NON-NLS-1$
 					doc.getDocumentElement().getNodeName());
@@ -60,7 +74,7 @@ public class LoginTokenResponseParser {
 
 			if (!LOGIN_NODE.equalsIgnoreCase(requestNode.getNodeName())) {
 				throw new IllegalArgumentException("Se encontro un elemento '" + //$NON-NLS-1$
-						requestNode.getNodeName() + "' en el listado de peticiones"); //$NON-NLS-1$
+						requestNode.getNodeName() + "' en la solicitud de token de inicio de sesion"); //$NON-NLS-1$
 			}
 
 			// Datos de la peticion
@@ -68,21 +82,11 @@ public class LoginTokenResponseParser {
 			boolean statusOk = true;
 
 			// Cargamos los atributos
-			Node attributeNode = null;
 			final NamedNodeMap attributes = requestNode.getAttributes();
-			attributeNode = attributes.getNamedItem(ID_ATTRIBUTE);
+			Node attributeNode = attributes.getNamedItem(ID_ATTRIBUTE);
 			if (attributeNode == null) {
-				if (attributeNode == null) {
-					throw new IllegalArgumentException("No se ha encontrado el atributo obligatorio '" + //$NON-NLS-1$
-							ID_ATTRIBUTE + "' en un peticion de prefirma"); //$NON-NLS-1$
-				}
-				else {
-					attributeNode = attributes.getNamedItem(ERROR_ATTRIBUTE);
-					// Si existe el atributo de error significa que se ha producido un error
-					if (attributeNode == null) {
-						statusOk = false;
-					}
-				}
+				throw new IllegalArgumentException("No se ha encontrado el atributo obligatorio '" + //$NON-NLS-1$
+						ID_ATTRIBUTE + "' en un peticion de login"); //$NON-NLS-1$
 			}
 
 			attributeNode = attributes.getNamedItem(ERROR_ATTRIBUTE);

@@ -5,12 +5,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
-
-import java.security.KeyStore.PrivateKeyEntry;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 
@@ -20,10 +19,11 @@ import org.xml.sax.SAXException;
 
 import android.util.Log;
 
-import es.gob.afirma.android.crypto.AOPkcs1Signer;
 import es.gob.afirma.android.network.AndroidUrlHttpManager;
+import es.gob.afirma.android.network.ConnectionResponse;
 import es.gob.afirma.android.signfolder.AppPreferences;
 import es.gob.afirma.android.signfolder.SFConstants;
+import es.gob.afirma.android.util.AOUtil;
 import es.gob.afirma.android.util.Base64;
 import es.gob.afirma.core.misc.http.UrlHttpManager;
 import es.gob.afirma.core.misc.http.UrlHttpManagerFactory;
@@ -56,7 +56,7 @@ public final class CommManager  extends CommManagerOldVersion{
 
 	private static final String OPERATION_NOTIFICATION_SERVICE_REGISTER = "13"; //$NON-NLS-1$
 
-//	private static final String OPERATION_CLAVE_LOGIN_REQUEST = "14"; //$NON-NLS-1$
+	private static final String OPERATION_CLAVE_LOGIN_REQUEST = "14"; //$NON-NLS-1$
 
 	private static final String OPERATION_CLAVE_LOGIN_VALIDATION = "15"; //$NON-NLS-1$
 
@@ -83,7 +83,8 @@ public final class CommManager  extends CommManagerOldVersion{
 		super();
 	}
 
-	/** Reinicia la confifuraci&oacute;n del gestor. */
+	/** Reinicia la confifuraci&oacute;n del gestor para
+	 * permitir que luego se inicie una nueva conexi&oacute; con el servicio proxy. */
 	public static void resetConfig() {
 		instance = null;
 	}
@@ -103,7 +104,7 @@ public final class CommManager  extends CommManagerOldVersion{
 				+ PARAMETER_NAME_DATA + "=" + dataB64UrlSafe;
 	}
 
-	public FirePreSignResult claveFirmaPreSignRequests(final SignRequest[] requests) throws IOException, SAXException {
+	public FirePreSignResult firePreSignRequests(final SignRequest[] requests) throws IOException, SAXException {
 		final String dataB64UrlSafe = prepareParam(
 				XmlRequestsFactory.createClaveFirmaPreSignRequest(requests)
 		);
@@ -112,7 +113,7 @@ public final class CommManager  extends CommManagerOldVersion{
 				OPERATION_PRESIGN_CLAVE_FIRMA, dataB64UrlSafe)));
 	}
 
-	public RequestResult[] claveFirmaPostSignRequests(final FirePreSignResult firePreSignResult) throws IOException, SAXException {
+	public RequestResult[] firePostSignRequests(final FirePreSignResult firePreSignResult) throws IOException, SAXException {
 		final String dataB64UrlSafe = prepareParam(
 				XmlRequestsFactory.createClaveFirmaPostSignRequest(firePreSignResult)
 		);
@@ -121,28 +122,35 @@ public final class CommManager  extends CommManagerOldVersion{
 				OPERATION_POSTSIGN_CLAVE_FIRMA, dataB64UrlSafe)));
 	}
 
-//	public RequestResult claveConnectGetUrl() throws Exception {
-//
-//		final UrlHttpManager urlManager = UrlHttpManagerFactory.getInstalledManager();
-//
-//		String xml = "<claveRequest />"; //$NON-NLS-1$
-//
-//		String url = this.signFolderProxyUrl + createUrlParams(OPERATION_CLAVE_LOGIN_REQUEST, xml); //$NON-NLS-1$
-//
-//		String xmlResponse = new String(urlManager.readUrl(url, UrlHttpMethod.POST));
-//
-//		System.out.println("Respuesta a la peticion de login a clave:\n" + xmlResponse); //$NON-NLS-1$
-//
-//		Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder()
-//				.parse(new InputSource(new StringReader(xmlResponse)));
-//
-//		return ClaveUrlRequestResponseParser.parse(doc);
-//	}
+	public ClaveLoginResult claveLoginRequest() throws Exception {
 
-	public RequestResult claveConnectValidateLogin() throws Exception {
+		String xml = "<lgnrq />"; //$NON-NLS-1$
+
+		String url = this.signFolderProxyUrl + createUrlParams(OPERATION_CLAVE_LOGIN_REQUEST, xml); //$NON-NLS-1$
+
+		ConnectionResponse response = getRemoteData(url);
+
+        InputStream is = response.getDataIs();
+		String xmlResponse = new String(AOUtil.getDataFromInputStream(is));
+		is.close();
+
+		Log.i(SFConstants.LOG_TAG," ===== Respuesta a la peticion de login a clave:\n" + xmlResponse); //$NON-NLS-1$
+
+		Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder()
+				.parse(new InputSource(new StringReader(xmlResponse)));
+
+        final ClaveLoginResult result = ClaveLoginRequestResponseParser.parse(doc);
+        result.setSessionId(response.getCookieId());
+
+        Log.i(SFConstants.LOG_TAG, "Session Id envidada desde el servidor: " + response.getCookieId());
+
+		return result;
+	}
+
+	public ValidationLoginResult claveLoginValidation(String tokenSaml) throws Exception {
 		final UrlHttpManager urlManager = UrlHttpManagerFactory.getInstalledManager();
 
-		String xml = "<claveLoginValidation />"; //$NON-NLS-1$
+		String xml = "<claveLoginValidation samltkn=\"" + tokenSaml + "\"/>"; //$NON-NLS-1$
 
 		String url = this.signFolderProxyUrl + createUrlParams(OPERATION_CLAVE_LOGIN_VALIDATION, xml); //$NON-NLS-1$
 
@@ -156,7 +164,7 @@ public final class CommManager  extends CommManagerOldVersion{
 		return ClaveLoginValidationResponseParser.parse(doc);
 	}
 
-	public RequestResult loginRequest() throws Exception {
+	public RequestResult loginRequest() throws OldProxyException, IOException, SAXException {
 
 		// --------------------------
 		// Llamada al metodo de login
@@ -164,27 +172,25 @@ public final class CommManager  extends CommManagerOldVersion{
 		String xml = "<lgnrq />"; //$NON-NLS-1$
 		String url = this.signFolderProxyUrl + createUrlParams(OPERATION_LOGIN_REQUEST, xml); //$NON-NLS-1$
 
-		Document doc = getRemoteDocument(url);
+		Document doc;
+		try {
+			doc = getRemoteDocument(url);
+		}
+		catch (UnknownHostException e) {
+			throw new OldProxyException("El proxy no soporta la nueva operacion de login");
+		}
 
 		return LoginTokenResponseParser.parse(doc);
 	}
 
-	public boolean tokenValidation(final RequestResult token, String cert, PrivateKeyEntry pke) throws Exception {
-
-		if (!token.isStatusOk()) {
-			throw new IllegalArgumentException("Se ha producido un error al pedir el login");
-		}
-
-		// Firma del token
-		final AOPkcs1Signer signer = new AOPkcs1Signer();
-		final byte[] pkcs1 = signer.sign(Base64.decode(token.getId()), "SHA256withRSA", pke.getPrivateKey(), pke.getCertificateChain(), null); //$NON-NLS-1$
+	public ValidationLoginResult tokenValidation(final byte[] pkcs1, String cert) throws Exception {
 
 		// Enviamos el token firmado a validar
 		String xml = "<rqtvl><cert>" + cert + "</cert><pkcs1>" + Base64.encode(pkcs1) + "</pkcs1></rqtvl>"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 		String url = this.signFolderProxyUrl + createUrlParams(OPERATION_LOGIN_VALIDATION, xml); //$NON-NLS-1$
 		Document doc = getRemoteDocument(url);
 
-		return LoginValidationResponseParser.parse(doc).isStatusOk();
+		return LoginValidationResponseParser.parse(doc);
 	}
 
 	private static String createUrlParams(final String op, final String data) {
@@ -265,7 +271,7 @@ public final class CommManager  extends CommManagerOldVersion{
 			final int numPage, final int pageSize) throws SAXException,
 			IOException {
 		PartialSignRequestsList rsl;
-		if(!oldProxy) {
+		if (!oldProxy) {
 			final String dataB64UrlSafe = prepareParam(XmlRequestsFactory
 					.createRequestListRequest(signRequestState,
 							AppPreferences.getInstance().getSupportedFormats(), filters, numPage,
@@ -314,13 +320,11 @@ public final class CommManager  extends CommManagerOldVersion{
 	 *         petici&oacute;n.
 	 * @throws IOException
 	 *             Si ocurre algun error durante el proceso
-	 * @throws CertificateEncodingException
-	 *             Cuando el certificado est&aacute; mal codificado.
 	 * @throws SAXException
 	 *             Si ocurren errores analizando el XML de respuesta
 	 */
 	public RequestResult postSignRequests(final TriphaseRequest[] requests) throws IOException,
-			CertificateEncodingException, SAXException {
+			SAXException {
 		final String dataB64UrlSafe;
 		if(!oldProxy) {
 			dataB64UrlSafe = prepareParam(XmlRequestsFactory
@@ -376,8 +380,10 @@ public final class CommManager  extends CommManagerOldVersion{
 	public RequestAppConfiguration getApplicationList(final String certB64)
 			throws SAXException, IOException {
 		this.certb64 = certB64;
+
+		// Preparamos a peticion. En caso de usarse el proxy nuevo, no se necesita el certificado
 		final String dataB64UrlSafe = prepareParam(
-				XmlRequestsFactory.createAppListRequest(certB64));
+				XmlRequestsFactory.createAppListRequest(this.oldProxy ? certB64 : null));
 
 		return ApplicationListResponseParser.parse(
 				getRemoteDocument(prepareUrl(OPERATION_APP_LIST, dataB64UrlSafe)));
@@ -417,11 +423,10 @@ public final class CommManager  extends CommManagerOldVersion{
 	 * @param filename Nombre del fichero.
 	 * @param mimetype MIME-Type del documento.
 	 * @return Datos del documento.
-	 * @throws SAXException Cuando se encuentra un XML mal formado.
 	 * @throws IOException Cuando existe alg&uacute;n problema en la lectura/escritura
 	 *                     de XML o al recuperar la respuesta del servidor. */
 	public DocumentData getPreviewDocument(final String documentId,
-			final String filename, final String mimetype) throws SAXException, IOException {
+			final String filename, final String mimetype) throws IOException {
 
 		if(!oldProxy) {
 			return getPreview(OPERATION_PREVIEW_DOCUMENT, documentId, filename, mimetype);
@@ -435,11 +440,10 @@ public final class CommManager  extends CommManagerOldVersion{
 	 * @param documentId Identificador del documento.
 	 * @param filename Nombre del fichero.
 	 * @return Datos del documento.
-	 * @throws SAXException Cuando se encuentra un XML mal formado.
 	 * @throws IOException Cuando existe alg&uacute;n problema en la lectura/escritura
 	 *                     de XML o al recuperar la respuesta del servidor. */
 	public DocumentData getPreviewSign(final String documentId,
-			final String filename) throws SAXException, IOException {
+			final String filename) throws IOException {
 
 		if(!oldProxy) {
 			return getPreview(OPERATION_PREVIEW_SIGN, documentId,
@@ -456,11 +460,10 @@ public final class CommManager  extends CommManagerOldVersion{
 	 * @param filename Nombre del fichero.
 	 * @param mimetype MIME-Type del documento.
 	 * @return Datos del documento.
-	 * @throws SAXException Cuando se encuentra un XML mal formado.
 	 * @throws IOException Cuando existe alg&uacute;n problema en la lectura/escritura
 	 *                     de XML o al recuperar la respuesta del servidor. */
 	public DocumentData getPreviewReport(final String documentId,
-			final String filename, final String mimetype) throws SAXException, IOException {
+			final String filename, final String mimetype) throws IOException {
 
 		if(!oldProxy) {
 			return getPreview(OPERATION_PREVIEW_REPORT, documentId,
@@ -573,24 +576,14 @@ public final class CommManager  extends CommManagerOldVersion{
 	 */
 	private Document getRemoteDocument(final String url) throws SAXException, IOException {
 
-		if (url.startsWith(HTTPS)) {
-			try {
-				AndroidUrlHttpManager.disableSslChecks();
-			}
-			catch(final Exception e) {
-				Log.w(SFConstants.LOG_TAG,
-						"No se ha podido ajustar la confianza SSL, es posible que no se pueda completar la conexion: " + e //$NON-NLS-1$
-						);
-			}
-		}
+		final InputStream is = getRemoteDocumentIs(url);
+		byte[] data = AOUtil.getDataFromInputStream(is);
 
-		final InputStream is = AndroidUrlHttpManager.getRemoteDataByPost(url, this.timeout);
-		final Document doc = this.db.parse(is);
+		Log.w(SFConstants.LOG_TAG, "XML recibido: " + new String(data));
+
+		final Document doc = this.db.parse(new ByteArrayInputStream(data));
 		is.close();
 
-		if (url.startsWith(HTTPS)) {
-			AndroidUrlHttpManager.enableSslChecks();
-		}
 		return doc;
 	}
 
@@ -603,28 +596,40 @@ public final class CommManager  extends CommManagerOldVersion{
 	 *             Error en la lectura del documento.
 	 */
 	public InputStream getRemoteDocumentIs(final String url) throws IOException {
-
-		if (url.startsWith(HTTPS)) {
-			try {
-				AndroidUrlHttpManager.disableSslChecks();
-			}
-			catch(final Exception e) {
-				Log.w(SFConstants.LOG_TAG,
-						"No se ha podido ajustar la confianza SSL, es posible que no se pueda completar la conexion: " + e //$NON-NLS-1$
-						);
-			}
-		}
-
-		final InputStream is = AndroidUrlHttpManager.getRemoteDataByPost(url, this.timeout);
-
-		if (url.startsWith(HTTPS)) {
-			AndroidUrlHttpManager.enableSslChecks();
-		}
-
-		Log.d(SFConstants.LOG_TAG, "Se ha obtenido el flujo de entrada de los datos"); //$NON-NLS-1$
-
-		return is;
+		final ConnectionResponse response = getRemoteData(url);
+		return response.getDataIs();
 	}
+
+    /**
+     * Obtiene el flujo de entrada de los datos a descargar.
+     * @param url URL de donde descargar los datos.
+     * @return Flujo de datos para la descarga.
+     * @throws IOException
+     *             Error en la lectura del documento.
+     */
+    private ConnectionResponse getRemoteData(final String url) throws IOException {
+
+        if (url.startsWith(HTTPS)) {
+            try {
+                AndroidUrlHttpManager.disableSslChecks();
+            }
+            catch(final Exception e) {
+                Log.w(SFConstants.LOG_TAG,
+                        "No se ha podido ajustar la confianza SSL, es posible que no se pueda completar la conexion: " + e //$NON-NLS-1$
+                );
+            }
+        }
+
+        final ConnectionResponse response = AndroidUrlHttpManager.getRemoteDataByPost(url, this.timeout);
+
+        if (url.startsWith(HTTPS)) {
+            AndroidUrlHttpManager.enableSslChecks();
+        }
+
+        Log.d(SFConstants.LOG_TAG, "Se ha obtenido el flujo de entrada de los datos"); //$NON-NLS-1$
+
+        return response;
+    }
 
 	/** Verifica si la URL de proxy configurada es correcta.
 	 * @return <code>true</code> si es correcta, <code>false</code> si no lo es. */
@@ -651,5 +656,27 @@ public final class CommManager  extends CommManagerOldVersion{
 
 	public void setOldProxy() {
 		oldProxy = true;
+	}
+
+
+	private static void printText(String text) {
+
+		if (text == null || text.isEmpty()) {
+			return;
+		}
+
+		Log.i(SFConstants.LOG_TAG, "===========");
+		if (text.length() <= 4000) {
+			Log.i(SFConstants.LOG_TAG, text);
+		}
+		else {
+			int idx = 0;
+			while (text.length() - idx > 4000) {
+				Log.i(SFConstants.LOG_TAG, text.substring(idx, idx + 4000));
+				idx += 4000;
+			}
+			Log.i(SFConstants.LOG_TAG, text.substring(idx));
+		}
+		Log.i(SFConstants.LOG_TAG, "===========");
 	}
 }

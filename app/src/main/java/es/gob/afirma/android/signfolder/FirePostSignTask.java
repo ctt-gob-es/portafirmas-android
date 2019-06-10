@@ -10,11 +10,9 @@ import java.util.TimerTask;
 import es.gob.afirma.android.signfolder.proxy.CommManager;
 import es.gob.afirma.android.signfolder.proxy.FirePreSignResult;
 import es.gob.afirma.android.signfolder.proxy.RequestResult;
-import es.gob.afirma.android.signfolder.proxy.TriphaseRequest;
-import es.gob.afirma.core.signers.TriphaseData;
 
 /** Tarea de conexi&oacute;n con clave en Android. */
-public final class ClaveFirmaPostSignTask extends AsyncTask<Void, Void, RequestResult[]> {
+public final class FirePostSignTask extends AsyncTask<Void, Void, RequestResult[]> {
 
 	private final Context context;
 	private FirePreSignResult firePreSignResult;
@@ -29,7 +27,7 @@ public final class ClaveFirmaPostSignTask extends AsyncTask<Void, Void, RequestR
 
 		public void run() {
 			mTask.cancel(true);
-			ClaveFirmaPostSignTask.listener.firePostSignFailed(new InterruptedException("Tiempo de espera agotado"));
+			FirePostSignTask.listener.firePostSignFailed(new InterruptedException("Tiempo de espera agotado"));
 		}
 	}
 
@@ -38,7 +36,7 @@ public final class ClaveFirmaPostSignTask extends AsyncTask<Void, Void, RequestR
 	 * @param context Contexto padre.
      * @param listener Listener para gestionar los resultados de la operaci&oacute;n.
 	 */
-	public ClaveFirmaPostSignTask(final FirePreSignResult firePreSignResult, final Context context, final ClaveFirmaPostSignListener listener) {
+	public FirePostSignTask(final FirePreSignResult firePreSignResult, final Context context, final ClaveFirmaPostSignListener listener) {
 		this.firePreSignResult = firePreSignResult;
 		this.context = context;
 		this.listener = listener;
@@ -54,7 +52,7 @@ public final class ClaveFirmaPostSignTask extends AsyncTask<Void, Void, RequestR
 		// Recuperamos de FIRe los resultados de firma que deben ser los PKCS#1
 		RequestResult[] requestResults = null;
 		try {
-			requestResults = com.claveFirmaPostSignRequests(this.firePreSignResult);
+			requestResults = com.firePostSignRequests(this.firePreSignResult);
 		} catch (Exception e) {
 			Log.e(SFConstants.LOG_TAG, "Error en la llamada al servicio de PostFirma de FIRe", e);
 			this.t = e;

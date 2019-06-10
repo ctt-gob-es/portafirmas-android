@@ -3,82 +3,117 @@ package es.gob.afirma.android.signfolder;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnKeyListener;
-import android.os.AsyncTask;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.webkit.CookieManager;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
-import es.gob.afirma.android.signfolder.ClaveCheckLoginTask.ClaveCheckLoginListener;
+import java.net.HttpCookie;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import es.gob.afirma.android.network.AndroidUrlHttpManager;
 import es.gob.afirma.android.signfolder.proxy.CommManager;
 
 /** Actividad para entrada con usuario y contrase&ntilde;a en Cl@ve. */
-public final class ClaveWebViewActivity extends Activity implements ClaveCheckLoginListener {
+public final class ClaveWebViewActivity extends Activity {
 
 	/** Dialogo para mostrar mensajes al usuario */
 	private MessageDialog messageDialog = null;
 
 	/** Tag para la presentaci&oacute;n de di&aacute;logos */
-	private final static String DIALOG_TAG = "dialog"; //$NON-NLS-1$
+	private static final String DIALOG_TAG = "dialog"; //$NON-NLS-1$
 
 	/** Di&aacute;logo para confirmar el cierre de la sesi&oacute;n. */
 	private final static int DIALOG_CONFIRM_EXIT = 12;
+
+	static final String EXTRA_RESOURCE_URL = "url";
+    static final String EXTRA_RESOURCE_COOKIE_ID = "cookieId";
+
+	static final String RESULT_BOOLEAN_AUTHORIZED = "authorized";
+
+	static final String RESULT_STRING_TOKEN_SAML = "tokensaml";
 
 	MessageDialog getMessageDialog() {
 		return this.messageDialog;
 	}
 
 	public void onCreate(Bundle savedInstanceState) {
-		final Context context = this;
 
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_webview);
 
-
 		WebView webView = (WebView) findViewById(R.id.webView);
 
+		webView.setWebViewClient(new WebViewClient() {
 
-		WebSettings webSettings = webView.getSettings();
-		webSettings.setBuiltInZoomControls(true);
-
-
-		String url = super.getIntent().getExtras().getString("urlString");
-		webView.loadUrl(url);
-		webView.setWebViewClient(new WebViewClient(){
 			@Override
-			public boolean shouldOverrideUrlLoading(WebView view, String url) {
-				if(view != null && view.getHitTestResult() != null && view.getHitTestResult().getType() > 0){
-					// Si el usuario hace click en algun enlace de la pagina
-					ClaveCheckLoginTask cct = new ClaveCheckLoginTask(ClaveWebViewActivity.this, ClaveWebViewActivity.this);
-					showProgressDialog(getString(R.string.dialog_msg_clave), cct);
-					cct.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+			public void onPageStarted(WebView view, String url, Bitmap favicon) {
+				Log.i(SFConstants.LOG_TAG, "---- Inicio de pagina: " + url);
+				int pathPos = url.lastIndexOf('/') + 1;
+				if (pathPos == 0) {
+					return;
+				}
 
-					//En el post execute de la tarea obtendria el dni del usuario con una nueva tarea
-					return true;
-				} else {
-					// Sin que el usuario interaccione
-					return false;
+				int endPos = url.indexOf('?', pathPos);
+				String path = endPos != -1 ? url.substring(pathPos, endPos) : url.substring(pathPos);
+
+				// Cerramos el webview si somos redirigidos a la pagina "ok" o "error"
+                // devolviendo el resultado pertinente en cada caso
+
+				if (path.equals("ok")) {
+					setResult(Activity.RESULT_OK);
+					closeActivity();
 				}
-			}
-			private int counter = 0;
-			@Override
-			public void onPageFinished(WebView view, String url) {
-				if(counter == 0) {
-					counter++;
-				}
-				else {
-					// La segunda vez significa que se ha enviado un formulario de la pagina
-					ClaveCheckLoginTask cct = new ClaveCheckLoginTask(ClaveWebViewActivity.this, ClaveWebViewActivity.this);
-					showProgressDialog(getString(R.string.dialog_msg_clave), cct);
-					cct.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+				else if (path.equals("error")) {
+					Intent result = new Intent();
+					result.putExtra("errorParams", url.substring(endPos + 1));
+					setResult(Activity.RESULT_FIRST_USER, result);
+					closeActivity();
 				}
 			}
 		});
+
+		// Configuramos el WebView para que cargue la misma sesion que la aplicacion Java
+        final CookieManager cookieManager = CookieManager.getInstance();
+        cookieManager.setAcceptCookie(true);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            cookieManager.setAcceptThirdPartyCookies(webView, true);
+        }
+
+        String url = super.getIntent().getStringExtra(EXTRA_RESOURCE_URL);
+        String cookieId = super.getIntent().getStringExtra(EXTRA_RESOURCE_COOKIE_ID);
+        if (cookieId != null) {
+            cookieManager.setCookie(url, cookieId);
+        }
+
+        // Insertamos la referencia a la Cookie en la cabecera de la peticion
+        final String cookie = cookieManager.getCookie(url);
+        Log.w(SFConstants.LOG_TAG, "---- Cookie del WebView: " + cookie);
+
+        final Map<String, String> headers = new HashMap<>();
+        if (cookie != null) {
+            headers.put("Cookie", cookie);
+        }
+
+        // Habilitamos los permisos del WebView
+        final WebSettings webSettings = webView.getSettings();
+        webSettings.setJavaScriptEnabled(true);
+
+        webView.loadUrl(url, headers);
 	}
 
 	private ProgressDialog progressDialog = null;
@@ -90,8 +125,8 @@ public final class ClaveWebViewActivity extends Activity implements ClaveCheckLo
 	}
 
 	/** Muestra un di&aacute;logo de espera con un mensaje. */
-	@Override
-	public void showProgressDialog(final String message, final ClaveCheckLoginTask cclt) {
+
+	public void showProgressDialog(final String message, final ClaveLoginTask cclt) {
 		runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
@@ -119,7 +154,6 @@ public final class ClaveWebViewActivity extends Activity implements ClaveCheckLo
 	}
 
 	/** Cierra el activity liberando recursos. */
-	@Override
 	public void closeActivity() {
 		finish();
 	}
@@ -136,8 +170,7 @@ public final class ClaveWebViewActivity extends Activity implements ClaveCheckLo
 		}
 	}
 
-	@Override
-	public void errorClaveLogin(final ClaveCheckLoginTask cclt) {
+	public void errorClaveLogin(final ClaveLoginTask cclt) {
 		showErrorDialog(getString(R.string.dialog_msg_clave_login_fail));
 	}
 
@@ -158,16 +191,16 @@ public final class ClaveWebViewActivity extends Activity implements ClaveCheckLo
 		alert.show();
 	}
 
-	@Override
 	public void dismissDialog() {
 		dismissProgressDialog();
 	}
 
-	@Override
-	public void onBackPressed() {
-		// Preguntamos si debe cerrarse la sesion
-		showConfirmExitDialog();
-	}
+
+//	@Override
+//	public void onBackPressed() {
+//		// Preguntamos si debe cerrarse la sesion
+//		showConfirmExitDialog();
+//	}
 
 	/**
 	 * Muestra un mensaje al usuario pidiendo confirmacion para cerrar la

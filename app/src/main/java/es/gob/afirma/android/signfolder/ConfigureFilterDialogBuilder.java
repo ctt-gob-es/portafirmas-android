@@ -460,8 +460,12 @@ final class ConfigureFilterDialogBuilder {
 		KeyValueSpinnerAdapter(final String[] ids, final String[] names, final Context context) {
 			super(context, android.R.layout.simple_spinner_item);
 			setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-			for (int i = 0; i < ids.length; i++) {
-				super.add(new KeyValuePair(ids[i], names[i]));
+			if (ids != null && names != null) {
+				for (int i = 0; i < ids.length; i++) {
+					if (ids[i] != null && names[i] != null) {
+						super.add(new KeyValuePair(ids[i], names[i]));
+					}
+				}
 			}
 		}
 	}

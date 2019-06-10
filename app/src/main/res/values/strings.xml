@@ -2,11 +2,11 @@
 <resources>
 
     <string name="app_name">Port@firmas</string>
-    <string name="app_title">Port@firmas v1.3.1</string>
+    <string name="app_title">Port@firmas v1.4</string>
     <string name="close">Cerrar</string>
     <string name="error">Error</string>
     <string name="server_select">Servidores Portafirmas</string>
-    <string name="enable_clavefirma">Firma con Cl@ve Firma</string>
+    <string name="enable_clavefirma">Usar certificados remotos</string>
     <string name="configure_notifications">Configuraci\u00F3n de notificaciones</string>
     <string name="title_notifications">Notificaci\u00F3n Portafirmas</string>
     <string name="enable_notifications">Habilitar notificaciones</string>
@@ -42,6 +42,7 @@
     <string name="ref">Referencia</string>
     <string name="date">Fecha</string>
     <string name="expdate">Fecha de caducidad</string>
+    <string name="message">Mensaje</string>
     <string name="application">Aplicaci\u00F3n</string>
     <string name="rejectReason">Motivo de rechazo</string>
     <string name="senders">Remitentes</string>
@@ -60,8 +61,7 @@
     <string name="label_presentation_text">Portafirmas es el aplicativo m\u00F3vil de las administraciones p\u00FAblicas para acceder a sus servicios de portafirmas. Para poder acceder al servicio deber\u00E1n haberle dado de alta en el sistema y disponer del certificado digital necesario para su autenticaci\u00F3n importado en su dispositivo.</string>
     <string name="label_presentation_text_mini">Portafirmas es el aplicativo m\u00F3vil de las administraciones p\u00FAblicas para acceder a sus servicios de portafirmas. Para acceder al servicio deber\u00E1n haberle dado de alta en el sistema y disponer del certificado digital necesario para su autenticaci\u00F3n importado en su dispositivo.</string>
     <string name="button_import_cert">Importar certificado</string>
-    <string name="button_login_local">Acceder con certificado</string>
-    <string name="button_login_cloud">Acceder con Cl@ve</string>
+    <string name="button_login">Acceder</string>
     <string name="signline_header">L\u00EDnea %1$d de</string>
     <string name="sign_dialog_sign">Se va a firmar 1 petici\u00F3n.</string>
     <string name="sign_dialog_signs">Se van a firmar %d peticiones.</string>
@@ -104,6 +104,10 @@
     <string name="filter_order_attribute_date">Fecha</string>
     <string name="filter_order_attribute_subject">Asunto</string>
     <string name="filter_order_attribute_app">Aplicaci\u00F3n</string>
+
+    <string name="nopermtobrowsekeystore">Es necesario conceder permisos para cargar un almac\u00E9n de certificados del dispositivo</string>
+    <string name="nopermtopreviewdocs">Es necesario conceder permisos para guardar temporalmente los documentos en local</string>
+    <string name="nopermtoopenhelp">Es necesario conceder permisos para extraer el fichero de ayuda</string>
 
     <string name="error_msg_select_any_request">Seleccione al menos una solicitud de firma</string>
     <string name="error_msg_certificate_encoding">Error de codificaci\u00F3n del certificado</string>
@@ -155,10 +159,9 @@
     <string name="select">Seleccionar</string>
 
     <string name="dialog_msg_accessing_keystore">Accediendo al almac\u00E9n\u002E\u002E\u002E</string>
-    <string name="dialog_msg_connection">Estableciendo conexi\u00F3n...</string>
+    <string name="dialog_msg_connecting">Estableciendo conexi\u00F3n...</string>
     <string name="dialog_msg_authenticating">Autenticando usuario\u002E\u002E\u002E</string>
-    <string name="dialog_msg_configurating">Configurando la aplicaci\u00F3n\u002E\u002E\u002E</string>
-    <string name="dialog_msg_clave">Conectando con Cl@ve Firma</string>
+    <string name="dialog_msg_clave">Conectando con Cl@ve</string>
     <string name="dialog_msg_clave_login_fail">Error de validaci\u00F3n con Cl@ve</string>
     <string name="dialog_msg_loading">Cargando\u002E\u002E\u002E</string>
     <string name="dialog_msg_signing_1">Firmando petici\u00F3n\u002E\u002E\u002E</string>
@@ -219,6 +222,8 @@
     <string name="error_file_not_support">No se ha encontrado una aplicación que soporte el tipo de fichero descargado.</string>
     <string name="error_loading_app_configuration">No se pudo conectar con el servidor. Compruebe la URL del servicio de Portafirmas. </string>
     <string name="error_account_not_validated">El certificado de acceso seleccionado no es v\u00E1lido.</string>
+
+    <string name="error_logging_with_clave">No se ha autorizado correctamente el acceso.</string>
 
     <!-- Titulos -->
     <string name="error_loading_app_configuration_title">Error de conexi\u00F3n </string>

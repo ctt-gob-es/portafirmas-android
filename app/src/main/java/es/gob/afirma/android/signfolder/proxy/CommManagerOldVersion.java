@@ -15,6 +15,7 @@ import org.xml.sax.SAXException;
 
 import android.util.Log;
 import es.gob.afirma.android.network.AndroidUrlHttpManager;
+import es.gob.afirma.android.network.ConnectionResponse;
 import es.gob.afirma.android.signfolder.AppPreferences;
 import es.gob.afirma.android.signfolder.SFConstants;
 import es.gob.afirma.android.util.Base64;
@@ -244,7 +245,8 @@ public class CommManagerOldVersion {
 			}
 		}
 
-		final InputStream is = AndroidUrlHttpManager.getRemoteDataByPost(url, this.timeout);
+		final ConnectionResponse response = AndroidUrlHttpManager.getRemoteDataByPost(url, this.timeout);
+		final InputStream is = response.getDataIs();
 		final Document doc = this.db.parse(is);
 		is.close();
 
@@ -275,7 +277,8 @@ public class CommManagerOldVersion {
 			}
 		}
 
-		final InputStream is = AndroidUrlHttpManager.getRemoteDataByPost(url, this.timeout);
+		final ConnectionResponse response = AndroidUrlHttpManager.getRemoteDataByPost(url, this.timeout);
+		final InputStream is = response.getDataIs();
 
 		if (url.startsWith(HTTPS)) {
 			AndroidUrlHttpManager.enableSslChecks();

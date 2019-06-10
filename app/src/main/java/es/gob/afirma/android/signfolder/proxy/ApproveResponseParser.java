@@ -8,10 +8,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 /**
- * Analizador de XML de respuesta de la petic&oacute;n de visto bueno de solicitudes de firma.
- *
- * @author Carlos Gamuci
- */
+ * Analizador de XML de respuesta de la petic&oacute;n de visto bueno de solicitudes de firma. */
 public class ApproveResponseParser {
 
 	private static final String APPROVE_RESPONSE_NODE = "apprq"; //$NON-NLS-1$

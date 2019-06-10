@@ -8,11 +8,9 @@ import es.gob.afirma.android.signfolder.proxy.CommManager;
 import es.gob.afirma.android.signfolder.proxy.PartialSignRequestsList;
 import es.gob.afirma.android.signfolder.proxy.SignRequest;
 
-/** Tarea as&iacute;ncrona para la carga de peticiones de firma en una lista de peticiones.
- * @author Carlos Gamuci. */
+/** Tarea as&iacute;ncrona para la carga de peticiones de firma en una lista de peticiones. */
 final class LoadSignRequestsTask extends AsyncTask<Void, Void, PartialSignRequestsList> {
 
-	private final String certEncodedB64;
 	private final String state;
 	private final String[] filters;
 	private final CommManager commManager;
@@ -27,15 +25,17 @@ final class LoadSignRequestsTask extends AsyncTask<Void, Void, PartialSignReques
 
 	/**
 	 * Crea la tarea asincrona para la carga de peticiones de firma.
-	 * @param commManager Manejador de las comunicaciones para el rechazo de las peticiones.
+	 *
 	 * @param state Estado de las peticiones que se solicitan (pendiente, rechazadas o firmadas).
+     * @param numPage N&uacute;mero de la p&aacute;gina de resultados del listado que se desea obtener.
+     * @param pageSize Tama&ntilde;o de cada p&aacute;gina de resultados.
 	 * @param filters Filtros que han de cumplir las peticiones.
+     * @param commManager Manejador de las comunicaciones para el rechazo de las peticiones.
 	 * @param listener Manejador para el postproceso de las peticiones de firma cargadas.
 	 */
-	LoadSignRequestsTask(final String certEncodedB64, final String state, final int numPage, final int pageSize, final List<String> filters, final CommManager commManager, final LoadSignRequestListener listener) {
-		this.certEncodedB64 = certEncodedB64;
+	LoadSignRequestsTask(final String state, final int numPage, final int pageSize, final List<String> filters, final CommManager commManager, final LoadSignRequestListener listener) {
 		this.state = state;
-		this.filters = filters != null ? filters.toArray(new String[filters.size()]) : null;
+		this.filters = filters != null ? filters.toArray(new String[0]) : null;
 		this.commManager = commManager;
 		this.listener = listener;
 		this.numPage = numPage;

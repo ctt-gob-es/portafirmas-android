@@ -1,5 +1,28 @@
 package es.gob.afirma.android.signfolder;
 
+import android.Manifest;
+import android.app.ProgressDialog;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnKeyListener;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.net.ConnectivityManager;
+import android.os.AsyncTask;
+import android.os.Build;
+import android.os.Bundle;
+import android.security.KeyChain;
+import android.security.KeyChainException;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
+import android.util.Log;
+import android.view.KeyEvent;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.Toast;
+
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -7,25 +30,6 @@ import java.io.InputStream;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.util.List;
-
-import android.app.ProgressDialog;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.DialogInterface.OnKeyListener;
-import android.content.Intent;
-import android.net.ConnectivityManager;
-import android.os.AsyncTask;
-import android.os.Build;
-import android.os.Bundle;
-import android.security.KeyChain;
-import android.security.KeyChainException;
-import android.support.v4.app.FragmentActivity;
-import android.util.Log;
-import android.view.KeyEvent;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
-import android.widget.Toast;
 
 import es.gob.afirma.android.crypto.LoadKeyStoreManagerTask;
 import es.gob.afirma.android.crypto.LoadKeyStoreManagerTask.KeystoreManagerListener;
@@ -36,16 +40,20 @@ import es.gob.afirma.android.gcm.RecoverNotificationTokenAsyncTask;
 import es.gob.afirma.android.gcm.RecoverNotificationTokenAsyncTask.RecoverNotificationTokenListener;
 import es.gob.afirma.android.signfolder.LoadConfigurationDataTask.LoadConfigurationListener;
 import es.gob.afirma.android.signfolder.LoginOptionsDialogBuilder.LoginOptionsListener;
+import es.gob.afirma.android.signfolder.proxy.ClaveLoginResult;
 import es.gob.afirma.android.signfolder.proxy.CommManager;
 import es.gob.afirma.android.signfolder.proxy.RequestAppConfiguration;
+import es.gob.afirma.android.signfolder.proxy.ValidationLoginResult;
 import es.gob.afirma.android.util.Base64;
 
 /** Actividad para entrada con usuario y contrase&ntilde;a al servicio de Portafirmas. */
-public final class LoginActivity extends FragmentActivity implements KeystoreManagerListener,
+public final class LoginActivity extends WebViewParentActivity implements KeystoreManagerListener,
                                                                      	PrivateKeySelectionListener,
 																		LoginOptionsListener,
 																		LoadConfigurationListener,
-																		RecoverNotificationTokenListener {
+																		RecoverNotificationTokenListener,
+																		ClaveLoginTask.ClaveLoginRequestListener,
+																		LoginListener {
 
 	private final static String EXTRA_RESOURCE_TITLE = "es.gob.afirma.signfolder.title"; //$NON-NLS-1$
 	private final static String EXTRA_RESOURCE_EXT = "es.gob.afirma.signfolder.exts"; //$NON-NLS-1$
@@ -53,6 +61,10 @@ public final class LoginActivity extends FragmentActivity implements KeystoreMan
 	private final static String CERTIFICATE_EXTS = ".p12,.pfx"; //$NON-NLS-1$
 
 	private final static int SELECT_CERT_REQUEST_CODE = 1;
+
+	private final static int PERMISSION_TO_BROWSE_FILE = 21;
+
+    private final static int PERMISSION_TO_OPEN_HELP = 22;
 
 	/** Dialogo para mostrar mensajes al usuario */
 	private MessageDialog messageDialog = null;
@@ -107,33 +119,92 @@ public final class LoginActivity extends FragmentActivity implements KeystoreMan
 	/** @param v Vista sobre la que se hace clic. */
 	public void onClick(final View v) {
 
-		//Boton Acceder con certificado local
-		if(v.getId() == R.id.button_acceder_local){
+		//Boton Acceder
+		if (v.getId() == R.id.button_acceder) {
+
+			// Reiniciamos la conexion con el servicio proxy
+			// y comprobamos que tenemos conexion con el
 			CommManager.resetConfig();
 			if (!CommManager.getInstance().verifyProxyUrl()) {
 				showErrorDialog(getString(R.string.error_msg_proxy_no_config));
 				return;
 			}
 
-			loadKeyStore();
+			// Acceso con certificado local
+			if (!AppPreferences.getInstance().isCloudCertEnabled()) {
+			    // Iniciamos la carga del certificado
+				loadKeyStore();
+			}
+			// Acceso con certificado en la nube
+			else {
+			    // Ejecutamos la tarea de conexion con Clave
+				ClaveLoginTask loginTask = new ClaveLoginTask(this);
+				showProgressDialog(getString(R.string.dialog_msg_clave), this, loginTask);
+				loginTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+			}
 		}
-		// TODO
-		/*
-		//Boton Acceder con Cl@ave
-		else if(v.getId() == R.id.button_login_cloud){
-				CommManager.resetConfig();
-				if (!CommManager.getInstance().verifyProxyUrl()) {
-					showErrorDialog(getString(R.string.error_msg_proxy_no_config));
-					return;
-				}
-
-			ClaveFirmaPreSignTask cct = new ClaveFirmaPreSignTask(this, this, this);
-			showProgressDialog(getString(R.string.dialog_msg_clave),null,null);
-			cct.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-			}*/
 		// Boton importar certificados
 		else {
-			browseKeyStore();
+
+			// Comprobamos si tenemos permisos para cargar el almacen de certificados en disco
+    		boolean storagePerm = (
+					ContextCompat.checkSelfPermission(
+							this,
+							Manifest.permission.WRITE_EXTERNAL_STORAGE
+					) == PackageManager.PERMISSION_GRANTED
+			);
+
+			if (storagePerm) {
+				browseKeyStore();
+			}
+			else {
+                requestPermissions(
+                        PERMISSION_TO_BROWSE_FILE,
+				        new String[]{ Manifest.permission.WRITE_EXTERNAL_STORAGE });
+			}
+		}
+	}
+
+	private void requestPermissions(int requestCode, String[] permissions) {
+		ActivityCompat.requestPermissions(
+				this,
+				permissions,
+                requestCode
+		);
+	}
+
+	@Override
+	public void onRequestPermissionsResult(int requestCode,
+										   @NonNull String[] permissions,
+										   @NonNull int[] grantResults) {
+		super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+		switch (requestCode) {
+			case PERMISSION_TO_BROWSE_FILE: {
+				if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+					Log.i(SFConstants.LOG_TAG, "Permisos condedicos para abrir el explorador de ficheros");
+					browseKeyStore();
+				}
+				else {
+					Toast.makeText(
+							this,
+							getString(R.string.nopermtobrowsekeystore),
+							Toast.LENGTH_LONG
+					).show();
+				}
+			}
+            case PERMISSION_TO_OPEN_HELP: {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Log.i(SFConstants.LOG_TAG, "Permisos concedidos para abrir el fichero de ayuda");
+                    openHelp();
+                }
+                else {
+                    Toast.makeText(
+                            this,
+                            getString(R.string.nopermtoopenhelp),
+                            Toast.LENGTH_LONG
+                    ).show();
+                }
+            }
 		}
 	}
 
@@ -141,7 +212,7 @@ public final class LoginActivity extends FragmentActivity implements KeystoreMan
 	public void loadKeyStore() {
 
 		LoadKeyStoreManagerTask lksmt = new LoadKeyStoreManagerTask(this, this);
-		showProgressDialog(getString(R.string.dialog_msg_accessing_keystore),lksmt,null);
+		showProgressDialog(getString(R.string.dialog_msg_accessing_keystore),this, lksmt);
 		lksmt.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 		}
 
@@ -175,7 +246,7 @@ public final class LoginActivity extends FragmentActivity implements KeystoreMan
 	@Override
 	public synchronized void keySelected(final KeySelectedEvent kse) {
 
-		showProgressDialog(getString(R.string.dialog_msg_authenticating),null,null);
+		showProgressDialog(getString(R.string.dialog_msg_authenticating),this);
 
 		final String alias;
 		final byte[] certEncoded;
@@ -210,8 +281,7 @@ public final class LoginActivity extends FragmentActivity implements KeystoreMan
 		// Cuando se instala el certificado desde el dialogo de seleccion, Android da a elegir certificado
 		// en 2 ocasiones y en la segunda se produce un "java.lang.AssertionError". Se ignorara este error.
 		catch (final Throwable e) {
-			Log.e(SFConstants.LOG_TAG, "Error al obtener el certificado para la autenticacion: " + e); //$NON-NLS-1$
-			e.printStackTrace();
+			Log.e(SFConstants.LOG_TAG, "Error al obtener el certificado para la autenticacion: " + e, e); //$NON-NLS-1$
 			showErrorDialog(ErrorManager.getErrorMessage(ErrorManager.ERROR_PKE));
 			return;
 		}
@@ -219,19 +289,14 @@ public final class LoginActivity extends FragmentActivity implements KeystoreMan
 		dismissProgressDialog();
 
 		try {
-			// Se prueba si la operacion de login esta soportada (Proxy v2.2). Si no lo abordamos como proxy antiguo
-			//showProgressDialog(getString(R.string.dialog_msg_connection), null, null);
-			//CommManager.getInstance().loginRequest();
-
 			// Proxy nuevo (v2.2)
 			final LoginRequestValidationTask lrvt = new LoginRequestValidationTask(
 					Base64.encode(certEncoded),
 					alias,
 					CommManager.getInstance(),
 					this,
-					this,
 					keyEntry);
-			showProgressDialog(getString(R.string.dialog_msg_configurating), null, lrvt);
+			showProgressDialog(getString(R.string.dialog_msg_connecting), this, lrvt);
 
 			lrvt.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 		} catch (IllegalArgumentException e) {
@@ -240,7 +305,7 @@ public final class LoginActivity extends FragmentActivity implements KeystoreMan
 					CommManager.getInstance(), this, this);
 			CommManager.getInstance().setOldProxy();
 			lcdt.execute();
-		} catch (Exception e1) {
+		} catch (Exception e) {
 			// Error al conectar con el servidor
 			showErrorDialog(getString(R.string.error_msg_communicating_server));
 		}
@@ -253,13 +318,8 @@ public final class LoginActivity extends FragmentActivity implements KeystoreMan
     public boolean onCreateOptionsMenu(final Menu menu) {
     	getMenuInflater().inflate(R.menu.activity_login_options_menu, menu);
 		MenuItem item = menu.findItem(R.id.clavefirma);
-		boolean claveFirmaEnabled = AppPreferences.getInstance().getEnabledClavefirma();
-		if(claveFirmaEnabled) {
-			item.setChecked(true);
-		}
-		else {
-			item.setChecked(false);
-		}
+		boolean cloudCertEnabled = AppPreferences.getInstance().isCloudCertEnabled();
+		item.setChecked(cloudCertEnabled);
         return true;
     }
 
@@ -274,22 +334,38 @@ public final class LoginActivity extends FragmentActivity implements KeystoreMan
     	}
     	// Configurar el uso de Clave/FIRe
     	else if (item.getItemId() == R.id.clavefirma) {
-			boolean claveFirmaEnabled = AppPreferences.getInstance().getEnabledClavefirma();
-			if(claveFirmaEnabled) {
-				AppPreferences.getInstance().setEnabledClavefirma(false);
-				item.setChecked(false);
-			}
-			else {
-				AppPreferences.getInstance().setEnabledClavefirma(true);
-				item.setChecked(true);
-			}
+    	    // Activamos/desactivamos la propiedad
+			boolean cloudCertEnabled = AppPreferences.getInstance().isCloudCertEnabled();
+			AppPreferences.getInstance().setCloudCertEnabled(!cloudCertEnabled);
+			item.setChecked(!cloudCertEnabled);
 		}
 		// Abrir ayuda
 		else if (item.getItemId() == R.id.help) {
-    		OpenHelpDocumentTask task = new OpenHelpDocumentTask(this);
-    		task.execute();
+            boolean storagePerm = (
+                    ContextCompat.checkSelfPermission(
+                            this,
+                            Manifest.permission.WRITE_EXTERNAL_STORAGE
+                    ) == PackageManager.PERMISSION_GRANTED
+            );
+
+            if (storagePerm) {
+                openHelp();
+            }
+            else {
+                requestPermissions(
+                        PERMISSION_TO_OPEN_HELP,
+                        new String[]{ Manifest.permission.WRITE_EXTERNAL_STORAGE });
+            }
 		}
     	return true;
+    }
+
+    /**
+     * Abre el fichero de ayuda de la aplicaci&oacute;n.
+     */
+    private void openHelp() {
+        OpenHelpDocumentTask task = new OpenHelpDocumentTask(this);
+        task.execute();
     }
 
 	/**
@@ -312,55 +388,93 @@ public final class LoginActivity extends FragmentActivity implements KeystoreMan
 		}
 		this.messageDialog.setMessage(message);
 		this.messageDialog.setContext(this);
-		this.messageDialog.setTitle(title == null ? getString(R.string.error) : title);
+		if (title != null) {
+            this.messageDialog.setTitle(title);
+        }
 
 		try {
 			runOnUiThread(new Runnable() {
 				@Override
 				public void run() {
-					getMessageDialog().show(getSupportFragmentManager(), "ErrorDialog"); //$NON-NLS-1$;
+					try {
+						getMessageDialog().show(getSupportFragmentManager(), "ErrorDialog"); //$NON-NLS-1$;
+					}
+					catch (Exception e) {
+						Log.e(SFConstants.LOG_TAG, "No se ha podido mostrar el mensaje de error: " + e, e); //$NON-NLS-1$
+					}
 				}
 			});
-		} catch (final Exception e) {
-			Log.e(SFConstants.LOG_TAG, "No se ha podido mostrar el mensaje de error: " + e); //$NON-NLS-1$
-			e.printStackTrace();
+		} catch (final Exception e2) {
+			Log.e(SFConstants.LOG_TAG, "Error en el hilo que muestra el mensaje de error: " + e2); //$NON-NLS-1$
 		}
 	}
 
 
 
+//	/** Muestra un di&aacute;logo de espera con un mensaje. */
+//	private void showProgressDialog(final String message, final LoadKeyStoreManagerTask lksmt,
+//								final LoginRequestValidationTask lcdt) {
+//		runOnUiThread(new Runnable() {
+//			@Override
+//			public void run() {
+//				try {
+//					setProgressDialog(ProgressDialog.show(LoginActivity.this, null, message, true));
+//					getProgressDialog().setOnKeyListener(new OnKeyListener() {
+//						@Override
+//						public boolean onKey(final DialogInterface dialog, final int keyCode, final KeyEvent event) {
+//							if (keyCode == KeyEvent.KEYCODE_BACK) {
+//								if(lksmt != null){
+//									lksmt.cancel(true);
+//								}else if(lcdt != null){
+//									lcdt.cancel(true);
+//									if (lcdt.timer != null) {
+//										lcdt.timer.cancel();
+//									}
+//								}
+//								dismissProgressDialog();
+//								return true;
+//							}
+//							return false;
+//						}
+//					});
+//
+//				}catch (final Exception e) {
+//					Log.e(SFConstants.LOG_TAG, "No se ha podido mostrar el dialogo de progreso: " + e); //$NON-NLS-1$
+//				}
+//			}
+//		});
+//	}
+
 	/** Muestra un di&aacute;logo de espera con un mensaje. */
-	private void showProgressDialog(final String message, final LoadKeyStoreManagerTask lksmt,
-								final LoginRequestValidationTask lcdt) {
+	private void showProgressDialog(final String message, final Context ctx, final AsyncTask... tasks) {
 		runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
 				try {
-					//TODO: Descomentar si se quiere un titulo en el dialogo de espera
-					//setProgressDialog(ProgressDialog.show(LoginActivity.this, LoginActivity.this.getString(R.string.loading), message, true));
-					setProgressDialog(ProgressDialog.show(LoginActivity.this, null, message, true));
-					getProgressDialog().setOnKeyListener(new OnKeyListener() {
-						@Override
-						public boolean onKey(final DialogInterface dialog, final int keyCode, final KeyEvent event) {
-							if (keyCode == KeyEvent.KEYCODE_BACK) {
-								if(lksmt!=null){
-									lksmt.cancel(true);
-								}else if(lcdt!=null){
-									lcdt.cancel(true);
-									if (lcdt.timer != null) {
-										lcdt.timer.cancel();
+					setProgressDialog(ProgressDialog.show(ctx, null, message, true));
+				}catch (final Exception e) {
+					Log.e(SFConstants.LOG_TAG, "No se ha podido mostrar el dialogo de progreso: " + e, e); //$NON-NLS-1$
+					return;
+				}
+
+				// Definimos el comportamiento para cancelar los dialogos de espera
+				getProgressDialog().setOnKeyListener(new OnKeyListener() {
+					@Override
+					public boolean onKey(final DialogInterface dialog, final int keyCode, final KeyEvent event) {
+						if (keyCode == KeyEvent.KEYCODE_BACK) {
+							if (tasks != null) {
+								for (AsyncTask task : tasks) {
+									if (task != null) {
+										task.cancel(true);
 									}
 								}
-								dismissProgressDialog();
-								return true;
 							}
-							return false;
+							dismissProgressDialog();
+							return true;
 						}
-					});
-
-				}catch (final Exception e) {
-					Log.e(SFConstants.LOG_TAG, "No se ha podido mostrar el dialogo de progreso: " + e); //$NON-NLS-1$
-				}
+						return false;
+					}
+				});
 			}
 		});
 	}
@@ -398,8 +512,7 @@ public final class LoginActivity extends FragmentActivity implements KeystoreMan
 				is.close();
 			} catch (final IOException e) {
 				showErrorDialog(getString(R.string.error_loading_selected_file, filename));
-				Log.e(SFConstants.LOG_TAG, "Error al cargar el fichero: " + e.toString()); //$NON-NLS-1$
-				e.printStackTrace();
+				Log.e(SFConstants.LOG_TAG, "Error al cargar el fichero: " + e.toString(), e); //$NON-NLS-1$
 				return;
 			}
 
@@ -407,11 +520,28 @@ public final class LoginActivity extends FragmentActivity implements KeystoreMan
 			intent.putExtra(KeyChain.EXTRA_PKCS12, baos.toByteArray());
 			startActivity(intent);
 		}
-	}
+		else if (requestCode == WEBVIEW_REQUEST_CODE) {
 
-	@Override
-	public void dismissDialog() {
-		dismissProgressDialog();
+			final boolean authorized =  data != null &&
+					data.getBooleanExtra(ClaveWebViewActivity.RESULT_BOOLEAN_AUTHORIZED, false);
+
+			if (authorized) {
+				final String tokenSaml = data.getStringExtra(ClaveWebViewActivity.RESULT_STRING_TOKEN_SAML);
+
+				// Validamos el acceso con Cl@ve
+				final ClaveValidateLoginTask task = new ClaveValidateLoginTask(
+						tokenSaml,
+						CommManager.getInstance(),
+						this);
+				showProgressDialog(getString(R.string.dialog_msg_authenticating), this, task);
+
+				task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+			}
+			else {
+				showErrorDialog(getString(R.string.error_logging_with_clave));
+				Log.e(SFConstants.LOG_TAG, "Error al acceder con Cl@ve"); //$NON-NLS-1$
+			}
+		}
 	}
 
 	@Override
@@ -444,8 +574,8 @@ public final class LoginActivity extends FragmentActivity implements KeystoreMan
 		intent.setClass(this, PetitionListActivity.class);
 		intent.putExtra(PetitionListActivity.EXTRA_RESOURCE_CERT_B64, certEncodedB64);
 		intent.putExtra(PetitionListActivity.EXTRA_RESOURCE_CERT_ALIAS, alias);
-		intent.putExtra(PetitionListActivity.EXTRA_RESOURCE_APP_IDS, appConfig.getAppIdsList().toArray(new String[appConfig.getAppIdsList().size()]));
-		intent.putExtra(PetitionListActivity.EXTRA_RESOURCE_APP_NAMES, appConfig.getAppNamesList().toArray(new String[appConfig.getAppNamesList().size()]));
+		intent.putStringArrayListExtra(PetitionListActivity.EXTRA_RESOURCE_APP_IDS, appConfig.getAppIdsList());
+		intent.putStringArrayListExtra(PetitionListActivity.EXTRA_RESOURCE_APP_NAMES, appConfig.getAppNamesList());
 
 		startActivity(intent);
 	}
@@ -454,6 +584,7 @@ public final class LoginActivity extends FragmentActivity implements KeystoreMan
 	@Override
 	protected void onSaveInstanceState(final Bundle outState) {
 	    //No call for super(). Bug on API Level > 11.
+		super.onSaveInstanceState(outState);
 	}
 
 	@Override
@@ -475,5 +606,36 @@ public final class LoginActivity extends FragmentActivity implements KeystoreMan
 	public void updateNotificationToken(String token) {
 		Log.i(SFConstants.LOG_TAG, "Token para notificaciones: " + token);
 		AppPreferences.getInstance().setCurrentToken(token);
+	}
+
+    @Override
+    public void claveLoginRequestResult(ClaveLoginResult loginResult) {
+	    // Si fallo la conexion, mostramos un error
+        if (!loginResult.isStatusOk()) {
+            showErrorDialog(loginResult.getErrorMsg());
+            return;
+        }
+
+		// Si no, se abre un WebView que cargue la URL recibida y desde la que el usuario
+		// podra autenticarse
+        openWebViewActivity(loginResult.getRedirectionUrl(), loginResult.getSessionId());
+    }
+
+    @Override
+	public void loginResult(ValidationLoginResult result) {
+
+		if (result.isStatusOk()) {
+			final LoadConfigurationDataTask lcdt = new LoadConfigurationDataTask(
+					result.getCertificateB64(),
+                    result.getCertAlias(),
+					CommManager.getInstance(),
+					this,
+					this);
+			lcdt.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+		}
+		else {
+			showErrorDialog(
+					getString(R.string.error_loading_app_configuration));
+		}
 	}
 }

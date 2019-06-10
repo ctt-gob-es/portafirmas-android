@@ -1,14 +1,12 @@
 package es.gob.afirma.android.signfolder.proxy;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 
 
-/** Analizador de XML para la obtenci&oacute;n de la lista de aplicaciones activas.
- * @author Carlos Gamuci */
+/** Analizador de XML para la obtenci&oacute;n de la lista de aplicaciones activas. */
 final class ApplicationListResponseParser {
 
 	private static final String APP_LIST_NODE = "appConf"; //$NON-NLS-1$
@@ -32,8 +30,8 @@ final class ApplicationListResponseParser {
 					"' y aparece: " + doc.getDocumentElement().getNodeName()); //$NON-NLS-1$
 		}
 
-		final List<String> appIds = new ArrayList<String>();
-		final List<String> appNames = new ArrayList<String>();
+		final ArrayList<String> appIds = new ArrayList<>();
+		final ArrayList<String> appNames = new ArrayList<>();
 		final NodeList appNodes = doc.getDocumentElement().getChildNodes();
 		for (int i = 0; i < appNodes.getLength(); i++) {
 			// Nos aseguramos de procesar solo nodos de tipo Element
@@ -44,9 +42,7 @@ final class ApplicationListResponseParser {
 			try {
 				appIds.add(appNodes.item(i).getAttributes().getNamedItem(APP_ID_ATTR).getNodeValue());
 				final String appName = XmlUtils.getTextContent(appNodes.item(i));
-				if (appName != null) {
-					appNames.add(normalizeValue(appName));
-				}
+				appNames.add(normalizeValue(appName));
 			} catch (final Exception e) {
 				throw new IllegalArgumentException("Se encontro un nodo de aplicacion no valido: " + e, e); //$NON-NLS-1$
 			}

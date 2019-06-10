@@ -11,8 +11,10 @@
 package es.gob.afirma.android.network;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStreamWriter;
+import java.net.CookieHandler;
+import java.net.CookieManager;
+import java.net.CookiePolicy;
 import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.net.URL;
@@ -29,9 +31,15 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
-/** Implementacion de ua clase para la lectura del contenido de una URL.
- * @author Carlos Gamuci */
+/** Implementacion de una clase para la lectura del contenido de una URL. */
 public final class AndroidUrlHttpManager {
+
+
+	static {
+		final CookieManager cookieManager = new CookieManager();
+		cookieManager.setCookiePolicy(CookiePolicy.ACCEPT_ALL);
+		CookieHandler.setDefault(cookieManager);
+	}
 
 	private AndroidUrlHttpManager() {
 		// No permitimos la instanciacion
@@ -50,7 +58,6 @@ public final class AndroidUrlHttpManager {
 			public void checkClientTrusted(final X509Certificate[] certs, final String authType) { /* No hacemos nada */ }
 			@Override
 			public void checkServerTrusted(final X509Certificate[] certs, final String authType) {  /* No hacemos nada */  }
-
 		}
 	};
 
@@ -61,7 +68,7 @@ public final class AndroidUrlHttpManager {
 	 * se interpreta como un timeout infinito. Si se indica -1, se usar&aacute; el por defecto de Java.
 	 * @return Contenido de la URL
 	 * @throws IOException Si no se puede leer la URL */
-	public static InputStream getRemoteDataByPost(final String url, final int timeout) throws IOException {
+	public static ConnectionResponse getRemoteDataByPost(final String url, final int timeout) throws IOException {
 		if (url == null) {
 			throw new IllegalArgumentException("La URL a leer no puede ser nula"); //$NON-NLS-1$
 		}
@@ -86,15 +93,53 @@ public final class AndroidUrlHttpManager {
 		writer.write(urlParameters);
 		writer.flush();
 
-		return conn.getInputStream();
+		// Componemos la respuesta
+		final ConnectionResponse response = new ConnectionResponse();
+		response.setDataIs(conn.getInputStream());
+        response.setCookieId(extractCookieId(conn));
+
+		return response;
+	}
+
+	private static String extractCookieId(HttpURLConnection conn) {
+
+	    String cookieId = null;
+
+		String cookieField = conn.getHeaderField("Set-Cookie");
+		if (cookieField == null) {
+			cookieField = conn.getHeaderField("Set-Cookie2");
+		}
+		if (cookieField != null) {
+			String[] params = cookieField.split(";");
+			for (String param : params) {
+				if (param.trim().startsWith("JSESSIONID=")) {
+					cookieId = param.trim();
+					break;
+				}
+			}
+		}
+		return cookieId;
 	}
 
 	/** Lee una URL HTTP o HTTPS por GET. En HTTPS no se hacen comprobaciones del certificado servidor.
 	 * @param url URL a leer
 	 * @return Contenido de la URL
 	 * @throws IOException Si no se puede leer la URL */
-	public static InputStream getRemoteDataByGet(final String url) throws IOException {
-		return new URL(url).openStream();
+	public static ConnectionResponse getRemoteDataByGet(final String url) throws IOException {
+        if (url == null) {
+            throw new IllegalArgumentException("La URL a leer no puede ser nula"); //$NON-NLS-1$
+        }
+
+        final URL uri = new URL(url);
+        final HttpURLConnection conn = (HttpURLConnection) uri.openConnection(Proxy.NO_PROXY);
+        conn.setRequestMethod("GET"); //$NON-NLS-1$
+
+        // Componemos la respuesta
+        final ConnectionResponse response = new ConnectionResponse();
+        response.setDataIs(conn.getInputStream());
+        response.setCookieId(extractCookieId(conn));
+
+        return response;
 	}
 
 	/** Habilita las comprobaciones por defecto de las conexiones SSL. */
@@ -117,6 +162,4 @@ public final class AndroidUrlHttpManager {
 			}
 		});
 	}
-
-
 }

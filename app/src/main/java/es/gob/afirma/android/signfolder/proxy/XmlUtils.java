@@ -6,7 +6,6 @@ import org.w3c.dom.NodeList;
 /**
  * Clase con m&eacute;todos de utilidad para el parseo de documentos XML mediante DOM
  * manteniendo la compatibilidad con JME.
- * @author Carlos Gamuci
  * @author Tom&aacute;s Garc&iacute;a-Mer&aacute;s
  */
 final class XmlUtils {

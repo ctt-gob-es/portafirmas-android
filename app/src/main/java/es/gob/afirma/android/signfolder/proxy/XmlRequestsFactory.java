@@ -253,9 +253,11 @@ final class XmlRequestsFactory {
 
 		final StringBuffer sb = new StringBuffer(XML_HEADER);
 		sb.append("<rqtconf>"); //$NON-NLS-1$
-		/*sb.append(XML_CERT_OPEN);
-		sb.append(certEncodedB64);
-		sb.append(XML_CERT_CLOSE);*/
+		if (certEncodedB64 != null) {
+			sb.append(XML_CERT_OPEN);
+			sb.append(certEncodedB64);
+			sb.append(XML_CERT_CLOSE);
+		}
 		sb.append("</rqtconf>"); //$NON-NLS-1$
 
 	    return sb.toString();

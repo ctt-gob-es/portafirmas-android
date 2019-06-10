@@ -8,10 +8,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 /**
- * Analizador de XML de respuesta de la petic&oacute;n de rechazo de solicitudes de firma.
- *
- * @author Carlos Gamuci
- */
+ * Analizador de XML de respuesta de la petic&oacute;n de rechazo de solicitudes de firma. */
 public class RejectsResponseParser {
 
 	private static final String REJECTS_RESPONSE_NODE = "rjcts"; //$NON-NLS-1$

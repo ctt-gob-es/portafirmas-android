@@ -7,8 +7,7 @@ import es.gob.afirma.android.signfolder.proxy.RequestResult;
 import es.gob.afirma.android.signfolder.proxy.SignRequest;
 
 /** Tarea as&iacute;ncrona para la aprobaci&oacute;n (visto bueno) de peticiones de firma.
- * Despu&eacute;s de la aprobaci&oacute;n se actualiza la lista con las peticiones pendientes.
- * @author Carlos Gamuci */
+ * Despu&eacute;s de la aprobaci&oacute;n se actualiza la lista con las peticiones pendientes. */
 final class ApproveRequestsTask extends AsyncTask<Void, Void, RequestResult[]> {
 
 	private final String[] requestIds;

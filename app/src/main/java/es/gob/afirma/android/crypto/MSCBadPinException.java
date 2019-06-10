@@ -2,10 +2,7 @@ package es.gob.afirma.android.crypto;
 
 /**
  * Excepci&oacute;n que identifica un error en la inserci&oacute;n del PIN de
- * una tarjeta cript&oacute;grafica interna.
- * 
- * @author Carlos Gamuci
- */
+ * una tarjeta cript&oacute;grafica interna. */
 public class MSCBadPinException extends Exception {
 
 	/** Serial ID. */

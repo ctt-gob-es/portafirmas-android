@@ -6,8 +6,7 @@ import java.util.Iterator;
 
 import es.gob.afirma.android.util.Base64;
 
-/** Datos temporales de un documento para su firma en tres fases
- * @author Carlos Gamuci Mill&aacute;n */
+/** Datos temporales de un documento para su firma en tres fases. */
 public final class TriphaseSignDocumentRequest {
 
 	static final String CRYPTO_OPERATION_SIGN = "sign"; //$NON-NLS-1$

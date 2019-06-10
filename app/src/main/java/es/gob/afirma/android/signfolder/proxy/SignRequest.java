@@ -1,8 +1,7 @@
 package es.gob.afirma.android.signfolder.proxy;
 
 
-/** Petici&oacute;n de firma.
- * @author Carlos Gamuci */
+/** Petici&oacute;n de firma. */
 public class  SignRequest {
 
 	/** Estado de solicitud de firma pendiente de firmar. */

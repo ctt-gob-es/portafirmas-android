@@ -17,23 +17,18 @@ public class SaveFileTask extends AsyncTask<Void, Void, File> {
 
 	private final InputStream dataIs;
 	private final String filename;
-	private final boolean extDir;
 	private final SaveFileListener listener;
 	private final Activity activity;
 
 	/** Crea una tarea para descarga de fichero en segundo plano.
 	 * @param dataIs Flujo de lectura de los datos del fichero.
 	 * @param filename Nombre del fichero a guardar.
-	 * @param extDir Si se establece a <code>true</code> se guarda en un directorio externo,
-	 *               si se establece a <code>false</code> de guardar&aacute; en un directorio interno.
 	 * @param listener Clase a la que notificar el sesultado de la tarea.
 	 * @param activity Actividad que invoca a la tarea.
 	 */
-	public SaveFileTask(final InputStream dataIs, final String filename,
-			final boolean extDir, final SaveFileListener listener, final Activity activity) {
+	public SaveFileTask(final InputStream dataIs, final String filename, final SaveFileListener listener, final Activity activity) {
 		this.dataIs = dataIs;
 		this.filename = filename;
-		this.extDir = extDir;
 		this.listener = listener;
 		this.activity = activity;
 	}
@@ -41,45 +36,48 @@ public class SaveFileTask extends AsyncTask<Void, Void, File> {
 	@Override
 	protected File doInBackground(final Void... arg0) {
 
-		File outFile;
-		if (this.extDir) {
-			int i = 0;
-			do {
-				outFile = new File(
-					Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-					generateFileName(this.filename, i++)
-				);
-			} while (outFile.exists());
+		if (!isExternalStorageWritable()) {
+            Log.e(SFConstants.LOG_TAG, "No se encuentra disponible el almacenamiento externo para guardar del fichero"); //$NON-NLS-1$
+		    return null;
+        }
 
-			Log.i(SFConstants.LOG_TAG, "Se intenta guardar en el directorio externo el fichero: " + outFile.getAbsolutePath()); //$NON-NLS-1$
-			try {
-				final FileOutputStream fos = new FileOutputStream(outFile);
-				writeData(this.dataIs, fos);
-				fos.close();
-				this.dataIs.close();
-			}
-			catch (final Exception e) {
-				Log.e(SFConstants.LOG_TAG, "Error al guardar el fichero en un directorio externo: " + e); //$NON-NLS-1$
-				return null;
-			}
-		}
-		else {
-			try {
+        File outFile = null;
+        int i = 0;
+        do {
+            outFile = new File(
+                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+                    generateFileName(this.filename, i++)
+            );
+        } while (outFile.exists());
 
-				Log.i(SFConstants.LOG_TAG, "Se intenta guardar en el directorio interno el fichero: " + new File(this.activity.getFilesDir(), this.filename).getAbsolutePath()); //$NON-NLS-1$
-				final FileOutputStream fos = this.activity.openFileOutput(this.filename, Context.MODE_WORLD_READABLE);
-				writeData(this.dataIs, fos);
-				fos.close();
-				this.dataIs.close();
-				outFile = new File(this.activity.getFilesDir(), this.filename);
-			}
-			catch (final Exception e) {
-				Log.e(SFConstants.LOG_TAG, "Error al guardar el fichero en un directorio interno: " + e); //$NON-NLS-1$
-				return null;
-			}
-		}
+        Log.i(SFConstants.LOG_TAG, "Se intenta guardar en disco el fichero: " + outFile.getAbsolutePath()); //$NON-NLS-1$
+
+        try {
+            final FileOutputStream fos = new FileOutputStream(outFile);
+            writeData(this.dataIs, fos);
+            fos.close();
+            this.dataIs.close();
+        }
+        catch (final Exception e) {
+            Log.e(SFConstants.LOG_TAG, "Error al guardar el fichero en un directorio externo: " + e); //$NON-NLS-1$
+            return null;
+        }
+
+		Log.i(SFConstants.LOG_TAG, "Fichero guardado con exito: " + outFile.exists());
 
 		return outFile;
+	}
+
+	/**
+	 * Comprueba si el almac&eacute;n externo esta disponible para lectura y escritura.
+	 * @return {@code true} si est&aacute; disponible, {@code false} en caso contrario.
+	 */
+	public static boolean isExternalStorageWritable() {
+		String state = Environment.getExternalStorageState();
+		if (Environment.MEDIA_MOUNTED.equals(state)) {
+			return true;
+		}
+		return false;
 	}
 
 	/**

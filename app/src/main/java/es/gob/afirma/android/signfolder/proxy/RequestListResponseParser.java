@@ -10,8 +10,7 @@ import org.w3c.dom.NodeList;
 
 import es.gob.afirma.android.signfolder.proxy.SignRequest.RequestType;
 
-/** Analizador de XML para la generaci&oacute;n de listas de peticiones de firma.
- * @author Carlos Gamuci */
+/** Analizador de XML para la generaci&oacute;n de listas de peticiones de firma. */
 final class RequestListResponseParser {
 
 	private static final String LIST_NODE = "list"; //$NON-NLS-1$

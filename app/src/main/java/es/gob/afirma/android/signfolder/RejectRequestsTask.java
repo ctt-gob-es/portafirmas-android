@@ -8,8 +8,7 @@ import es.gob.afirma.android.signfolder.proxy.RequestResult;
 import es.gob.afirma.android.signfolder.proxy.SignRequest;
 
 /** Tarea as&iacute;ncrona para el rechazo de peticiones de firma. Despu&eacute;s
- * del rechazo actualiza la lista con las peticiones pendientes.
- * @author Carlos Gamuci */
+ * del rechazo actualiza la lista con las peticiones pendientes. */
 final class RejectRequestsTask extends AsyncTask<Void, Void, RequestResult[]> {
 
 	private final String[] requestIds;

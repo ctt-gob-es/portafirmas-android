@@ -9,8 +9,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Vector;
 
+import android.Manifest;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
@@ -27,7 +29,11 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.security.KeyChainException;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.content.ContextCompat;
+import android.support.v4.content.FileProvider;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -58,15 +64,15 @@ import es.gob.afirma.android.signfolder.proxy.SignRequest;
 import es.gob.afirma.android.signfolder.proxy.SignRequest.RequestType;
 import es.gob.afirma.android.signfolder.proxy.SignRequestDocument;
 
-/** @author Carlos Gamuci */
+/** Actividad con el detalle de las peticiones. */
 public final class PetitionDetailsActivity extends FragmentActivity implements LoadSignRequestDetailsListener,
                                                                          DownloadDocumentListener,
                                                                          OperationRequestListener,
                                                                          PrivateKeySelectionListener,
                                                                          DialogFragmentListener,
 		LoadConfigurationDataTask.LoadConfigurationListener,
-		ClaveFirmaPreSignTask.ClaveFirmaPreSignListener,
-		ClaveFirmaPostSignTask.ClaveFirmaPostSignListener
+		FirePreSignTask.ClaveFirmaPreSignListener,
+		FirePostSignTask.ClaveFirmaPostSignListener
 {
 
 	static final String EXTRA_RESOURCE_CERT_B64 = "es.gob.afirma.signfolder.cert"; //$NON-NLS-1$
@@ -80,6 +86,8 @@ public final class PetitionDetailsActivity extends FragmentActivity implements L
 	static final int RESULT_REJECT_FAILED = 4;
 	static final int RESULT_SESSION_FAILED = 5;
 	static final int RESULT_SESSION_CLOSED = 6;
+
+	private static final int REQUEST_WRITE_STORAGE = 112;
 
 	private static final String PDF_MIMETYPE = "application/pdf"; //$NON-NLS-1$
 	private static final String PDF_FILE_EXTENSION = ".pdf"; //$NON-NLS-1$
@@ -151,6 +159,9 @@ public final class PetitionDetailsActivity extends FragmentActivity implements L
 		return this.dialog;
 	}
 
+	private DocItem selectedDocItem = null;
+	private boolean writePerm = false;
+
 	@Override
     public void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -176,6 +187,14 @@ public final class PetitionDetailsActivity extends FragmentActivity implements L
 		setupTab(this.getResources().getString(R.string.sign_lines),2);
 		setupTab(this.getResources().getString(R.string.docs),3);
      	getTabHost().setCurrentTab(0);
+
+     	// Comprobamos si tenemos permisos de escritura, por si tenemos que descargar ficheros
+		writePerm = (
+				ContextCompat.checkSelfPermission(
+						this,
+						Manifest.permission.WRITE_EXTERNAL_STORAGE
+				) == PackageManager.PERMISSION_GRANTED
+		);
 	}
 
 	/**
@@ -261,6 +280,21 @@ public final class PetitionDetailsActivity extends FragmentActivity implements L
 				details.getExpirationDate() != null ?
 						details.getExpirationDate() : getString(R.string.no_detail_data));
     	((TextView) findViewById(R.id.applicationValue)).setText(details.getApp());
+
+    	if (details.getMessage() != null) {
+            ((TextView) findViewById(R.id.messageValue)).setText(
+                    details.getMessage() != null ?
+                            details.getMessage() : ""
+            );
+        }
+
+		if (findViewById(R.id.rejectReasonValue) != null) {
+			((TextView) findViewById(R.id.rejectReasonValue)).setText(
+					details.getRejectReason() != null ?
+							details.getRejectReason() : getString(R.string.no_detail_data)
+			);
+		}
+
 		if (findViewById(R.id.rejectReasonValue) != null) {
 			((TextView) findViewById(R.id.rejectReasonValue)).setText(
 					details.getRejectReason() != null ?
@@ -387,10 +421,23 @@ public final class PetitionDetailsActivity extends FragmentActivity implements L
 	/**
 	 * Muestra un mensaje solicitando confirmacion al usuario para descargar y previsualizar
 	 * el fichero seleccionado.
-	 * @param docId Identificador del documento seleccionado.
 	 */
-	void showConfirmPreviewDialog(final String docId, final String filename, final String mimetype, final int docType) {
+	private void showConfirmPreviewDialog() {
 
+		if (selectedDocItem == null) {
+			return;
+		}
+
+		// Si tenemos permisos de escritura, procedemos a la descarga. Si no, los pedimos
+		if (writePerm) {
+			downloadDocument(selectedDocItem.docId, selectedDocItem.name, selectedDocItem.mimetype, selectedDocItem.docType);
+		}
+		else {
+			requestStoragePerm();
+		}
+	}
+
+	private void downloadDocument(final String docId, final String filename, final String mimetype, final int docType) {
 		final OnClickListener listener = new OnClickListener() {
 			@Override
 			public void onClick(final DialogInterface dlg, final int which) {
@@ -398,7 +445,8 @@ public final class PetitionDetailsActivity extends FragmentActivity implements L
 						new DownloadFileTask(docId, docType,
 								filename,
 								mimetype,
-								docType == DownloadFileTask.DOCUMENT_TYPE_SIGN, CommManager.getInstance(), PetitionDetailsActivity.this, PetitionDetailsActivity.this);
+								true,
+								CommManager.getInstance(), PetitionDetailsActivity.this, PetitionDetailsActivity.this);
 				dlfTask.execute();
 				showProgressDialogDownloadFile(getString(R.string.loading_doc), dlfTask);
 			}
@@ -426,6 +474,43 @@ public final class PetitionDetailsActivity extends FragmentActivity implements L
 				confirmPreviewDialog.show(getSupportFragmentManager(), "ConfirmDialog"); //$NON-NLS-1$;
 			}
 		});
+	}
+
+	private void requestStoragePerm() {
+		ActivityCompat.requestPermissions(
+				this,
+				new String[]{
+						Manifest.permission.WRITE_EXTERNAL_STORAGE
+				},
+				REQUEST_WRITE_STORAGE
+		);
+	}
+
+	@Override
+	public void onRequestPermissionsResult(int requestCode,
+										   @NonNull String[] permissions,
+										   @NonNull int[] grantResults) {
+		super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+		switch (requestCode) {
+			case REQUEST_WRITE_STORAGE: {
+
+				if (selectedDocItem == null) {
+					return;
+				}
+
+				if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+					Log.i(SFConstants.LOG_TAG, "Concedido permiso de escritura en memoria");
+					downloadDocument(selectedDocItem.docId, selectedDocItem.name, selectedDocItem.mimetype, selectedDocItem.docType);
+				}
+				else {
+					Toast.makeText(
+							this,
+							getString(R.string.nopermtopreviewdocs),
+							Toast.LENGTH_LONG
+					).show();
+				}
+			}
+		}
 	}
 
 	/**
@@ -649,7 +734,7 @@ public final class PetitionDetailsActivity extends FragmentActivity implements L
     	private String addDotMiles(final long number) {
 
     		final String nString = Long.toString(number);
-    		final StringBuffer buffer = new StringBuffer();
+    		final StringBuilder buffer = new StringBuilder();
     		if (nString.length() > 3) {
     			int dotPos = nString.length() % 3;
     			if (dotPos > 0) {
@@ -671,9 +756,11 @@ public final class PetitionDetailsActivity extends FragmentActivity implements L
 
         @Override
 		public void onClick(final View v) {
-			showConfirmPreviewDialog(this.docId, this.name, this.mimetype, this.docType);
+    		PetitionDetailsActivity.this.selectedDocItem = this;
+			showConfirmPreviewDialog();
 		}
     }
+
     /**
      * Adaptador para la lista de l&iacute;neas de firma.
      */
@@ -681,7 +768,7 @@ public final class PetitionDetailsActivity extends FragmentActivity implements L
 
     	private final LayoutInflater mInflater;
 
-    	public SignLineArrayAdapter(final Context context, final List<RequestDetailAdapterItem> objects) {
+    	private SignLineArrayAdapter(final Context context, final List<RequestDetailAdapterItem> objects) {
     		super(context, 0, objects);
     		this.mInflater = LayoutInflater.from(context);
 		}
@@ -703,7 +790,7 @@ public final class PetitionDetailsActivity extends FragmentActivity implements L
 
     	@Override
     	public int getItemViewType(final int position) {
-    		return getItem(position).getViewType();
+            return getItem(position).getViewType();
     	}
 
     	@Override
@@ -713,7 +800,9 @@ public final class PetitionDetailsActivity extends FragmentActivity implements L
     }
 
 	@Override
-	public void downloadDocumentSuccess(final File documentFile, final String filename, final String mimetype, final int docType) {
+	public void downloadDocumentSuccess(final File documentFile, final String filename,
+                                        final String mimetype, final int docType,
+                                        final boolean externalDir) {
 		dismissProgressDialog();
 		if (this.tempDocuments == null) {
 			this.tempDocuments = new ArrayList<File>();
@@ -722,7 +811,7 @@ public final class PetitionDetailsActivity extends FragmentActivity implements L
 
 		// Si el fichero no es de firma, lo abrimos
 		if (docType != DownloadFileTask.DOCUMENT_TYPE_SIGN) {
-			openFile(documentFile, mimetype);
+			openFile(documentFile, mimetype, externalDir);
 		}
 		else {
 			try {
@@ -765,17 +854,29 @@ public final class PetitionDetailsActivity extends FragmentActivity implements L
 	 * @param documentFile Documento que se debe abrir.
 	 * @param mimetype Tipo del documento.
 	 */
-	private void openFile(final File documentFile, final String mimetype) {
+	private void openFile(final File documentFile, final String mimetype, final boolean external) {
 
 		Log.i(SFConstants.LOG_TAG, "Abrimos el documento descargado con el MimeType: " + mimetype);
 
+		Uri fileUri;
+        if (external) {
+            fileUri = Uri.fromFile(documentFile);
+        }
+        else {
+            fileUri = FileProvider.getUriForFile(
+                    this,
+                    getPackageName() + ".fileprovider",
+                    documentFile);
+            this.grantUriPermission(getPackageName(), fileUri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        }
+
 		if (mimetype != null && mimetype.equals(PDF_MIMETYPE) ||
 				documentFile.getName().toLowerCase(Locale.US).endsWith(PDF_FILE_EXTENSION)) {
-			viewPdf(documentFile);
+			viewPdf(fileUri);
 		}
 		else {
 			final Intent intent = new Intent(Intent.ACTION_VIEW);
-			intent.setDataAndType(Uri.fromFile(documentFile), mimetype);
+			intent.setDataAndType(fileUri, mimetype);
 			try {
 				this.startActivity(intent);
 			} catch (final ActivityNotFoundException e) {
@@ -797,13 +898,13 @@ public final class PetitionDetailsActivity extends FragmentActivity implements L
 		}
 	}
 
-	private void viewPdf (final File file) {
+	private void viewPdf (final Uri fileUri) {
         final String adobePackage = "com.adobe.reader"; //$NON-NLS-1$
         final String gdrivePackage = "com.google.android.apps.viewer"; //$NON-NLS-1$
         boolean isGdriveInstalled = false;
 
         final Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.setDataAndType(Uri.fromFile(file), PDF_MIMETYPE);
+        intent.setDataAndType(fileUri, PDF_MIMETYPE);
 
         final PackageManager pm = getApplicationContext().getPackageManager();
         final List<ResolveInfo> list = pm.queryIntentActivities(intent, 0);
@@ -936,7 +1037,7 @@ public final class PetitionDetailsActivity extends FragmentActivity implements L
 
 			// Dependiendo de si firmamos con Cl@ve Firma o con certificado local,
 			// iniciaremos las llamadas a FIRe o cargaremos el certificado local
-			if(AppPreferences.getInstance().getEnabledClavefirma()) {
+			if(AppPreferences.getInstance().isCloudCertEnabled()) {
 				Log.i(SFConstants.LOG_TAG, "Iniciamos firma con Cl@ve Firma");
 				doSignWithClaveFirma();
 			}
@@ -955,7 +1056,7 @@ public final class PetitionDetailsActivity extends FragmentActivity implements L
 	 */
 	private void doSignWithClaveFirma() {
 		// Se inicia el WebView
-		ClaveFirmaPreSignTask cct = new ClaveFirmaPreSignTask(new SignRequest[] { this.reqDetails }, this, this);
+		FirePreSignTask cct = new FirePreSignTask(new SignRequest[] { this.reqDetails }, this, this);
 		//showProgressDialog(getString(R.string.dialog_msg_clave),null);
 		cct.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
@@ -1008,7 +1109,7 @@ public final class PetitionDetailsActivity extends FragmentActivity implements L
 
 				Log.w(SFConstants.LOG_TAG, "Iniciamos la AsyncTask de la PostFirma");
 				// Se inicia el WebView
-				ClaveFirmaPostSignTask cct = new ClaveFirmaPostSignTask(this.firePreSignResult, this, this);
+				FirePostSignTask cct = new FirePostSignTask(this.firePreSignResult, this, this);
 				//showProgressDialog(getString(R.string.dialog_msg_clave),null);
 				cct.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 			}
@@ -1027,11 +1128,6 @@ public final class PetitionDetailsActivity extends FragmentActivity implements L
     	new ApproveRequestsTask(
     			this.reqDetails.getId(), CommManager.getInstance(), this).execute();
     }
-
-	@Override
-	public void dismissDialog() {
-		dismissProgressDialog();
-	}
 
 	@Override
 	public void configurationLoadSuccess(RequestAppConfiguration appConfig, String certB64, String certAlias) {

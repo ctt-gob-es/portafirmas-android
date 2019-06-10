@@ -1,37 +1,35 @@
 package es.gob.afirma.android.signfolder.proxy;
 
 import java.util.ArrayList;
-import java.util.List;
 
-/** Configuracion de la aplicaci&oacute;n.
- * @author Carlos Gamuci */
+/** Configuracion de la aplicaci&oacute;n. */
 public final class RequestAppConfiguration {
 
-	private List<String> appIdsList;
-	private List<String> appNamesList;
+	private ArrayList<String> appIdsList;
+	private ArrayList<String> appNamesList;
 
 	RequestAppConfiguration() {
-		this.appIdsList = new ArrayList<String>();
-		this.appNamesList = new ArrayList<String>();
+		this.appIdsList = new ArrayList<>();
+		this.appNamesList = new ArrayList<>();
 	}
 
 	/** Obtiene la lista de identificadores de la aplicaci&oacute;n.
 	 * @return Lista de identificadores de la aplicaci&oacute;n. */
-	public List<String> getAppIdsList() {
+	public ArrayList<String> getAppIdsList() {
 		return this.appIdsList;
 	}
 
-	void setAppIdsList(final List<String> appIdsList) {
+	void setAppIdsList(final ArrayList<String> appIdsList) {
 		this.appIdsList = appIdsList;
 	}
 
 	/** Obtiene la lista de nombres de la aplicaci&oacute;n.
 	 * @return Lista de nombres de la aplicaci&oacute;n. */
-	public List<String> getAppNamesList() {
+	public ArrayList<String> getAppNamesList() {
 		return this.appNamesList;
 	}
 
-	void setAppNamesList(final List<String> appNamesList) {
+	void setAppNamesList(final ArrayList<String> appNamesList) {
 		this.appNamesList = appNamesList;
 	}
 }

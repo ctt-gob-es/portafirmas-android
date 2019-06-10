@@ -56,7 +56,9 @@ final class OpenHelpDocumentTask extends AsyncTask<Void, Void, File> {
 		}
 
 		// Calculamos la ruta de guardado del documento de ayuda
-		File helpFile = new File(getActivity().getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), helpFilename);
+		File helpFile = new File(
+				Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+				helpFilename);
 
 		boolean exist = helpFile.exists();
 

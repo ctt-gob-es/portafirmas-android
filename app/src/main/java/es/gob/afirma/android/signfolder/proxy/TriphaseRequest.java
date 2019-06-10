@@ -1,9 +1,7 @@
 package es.gob.afirma.android.signfolder.proxy;
 
 /**
- * Petici&oacute;n de fase de firma de documentos.
- * @author Carlos Gamuci Mill&aacute;n
- */
+ * Petici&oacute;n de fase de firma de documentos. */
 public class TriphaseRequest {
 
 	/** Referencia de la petici&oacute;n. */

@@ -5,7 +5,7 @@
 
     <item android:id="@+id/clavefirma"
             android:title="@string/enable_clavefirma"
-            android:visible="false"
+            android:visible="true"
             android:checkable="true"></item>
 
     <item android:id="@+id/help" android:alphabeticShortcut="H" android:title="@string/help"></item>

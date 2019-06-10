@@ -8,7 +8,7 @@
    
     <TextView 
         android:id="@+id/tvDescriptionView"
-        android:layout_width="fill_parent"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/dialog_msg_confirm_description_sign_approve"
         android:textColor="@color/black"
@@ -16,7 +16,7 @@
     
     <TextView 
         android:id="@+id/tvSign"
-        android:layout_width="fill_parent"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textColor="@color/black"
         android:textAppearance="?android:attr/textAppearanceLarge"
@@ -28,7 +28,7 @@
     
     <TextView 
         android:id="@+id/tvApprove"
-        android:layout_width="fill_parent"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textColor="@color/black"
         android:textAppearance="?android:attr/textAppearanceLarge"
@@ -40,7 +40,7 @@
     
       <TextView 
         android:id="@+id/tvQuestionView"
-        android:layout_width="fill_parent"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/dialog_msg_confirm_question_sign_approve"
         android:textColor="@color/black"

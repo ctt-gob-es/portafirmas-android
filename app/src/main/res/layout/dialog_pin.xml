@@ -9,7 +9,7 @@
     <TextView
         android:id="@+id/tvPin"
         android:filterTouchesWhenObscured="true"
-        android:layout_width="fill_parent"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/dialog_pin"
         android:textColor="@color/black"
@@ -18,7 +18,7 @@
     <EditText
         android:id="@+id/etPin"
         android:filterTouchesWhenObscured="true"
-        android:layout_width="fill_parent"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:inputType="textPassword"
 	    android:hint="@string/security_code_hint"

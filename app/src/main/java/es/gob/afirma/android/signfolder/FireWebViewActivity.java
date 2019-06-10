@@ -7,19 +7,17 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnKeyListener;
 import android.content.Intent;
-import android.net.http.SslError;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
-import android.webkit.SslErrorHandler;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
-import es.gob.afirma.android.signfolder.ClaveCheckLoginTask.ClaveCheckLoginListener;
 import es.gob.afirma.android.signfolder.proxy.CommManager;
+import es.gob.afirma.android.signfolder.proxy.RequestResult;
 
 /** Actividad para entrada con usuario y contrase&ntilde;a en Cl@ve. */
-public final class FireWebViewActivity extends Activity implements ClaveCheckLoginListener {
+public final class FireWebViewActivity extends Activity implements FirePostSignTask.ClaveFirmaPostSignListener {
 
 	public static final int REQUEST_CODE = 7;
 
@@ -48,9 +46,6 @@ public final class FireWebViewActivity extends Activity implements ClaveCheckLog
 
 		WebView webView = (WebView) findViewById(R.id.webView);
 
-//		WebSettings webSettings = webView.getSettings();
-//		webSettings.setBuiltInZoomControls(true);
-
 		Bundle extras = super.getIntent().getExtras();
 		String url = extras.getString(EXTRA_PARAM_URL);
 		String trId = extras.getString(EXTRA_PARAM_TRANSACTION_ID);
@@ -59,6 +54,8 @@ public final class FireWebViewActivity extends Activity implements ClaveCheckLog
 		Log.w(SFConstants.LOG_TAG, "------------ Transaccion: " + trId);
 
 		webView.setWebViewClient(new WebViewClient(){
+
+
 
 			/* Comportamiento al cargar una nueva URL. */
 			@Override
@@ -105,8 +102,7 @@ public final class FireWebViewActivity extends Activity implements ClaveCheckLog
 	}
 
 	/** Muestra un di&aacute;logo de espera con un mensaje. */
-	@Override
-	public void showProgressDialog(final String message, final ClaveCheckLoginTask cclt) {
+	public void showLoginProgressDialog(final String message, final ClaveLoginTask cclt) {
 		runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
@@ -134,7 +130,6 @@ public final class FireWebViewActivity extends Activity implements ClaveCheckLog
 	}
 
 	/** Cierra el activity liberando recursos. */
-	@Override
 	public void closeActivity() {
 		finish();
 	}
@@ -151,8 +146,7 @@ public final class FireWebViewActivity extends Activity implements ClaveCheckLog
 		}
 	}
 
-	@Override
-	public void errorClaveLogin(final ClaveCheckLoginTask cclt) {
+	public void errorClaveLogin(final ClaveLoginTask cclt) {
 		showErrorDialog(getString(R.string.dialog_msg_clave_login_fail));
 	}
 
@@ -173,7 +167,6 @@ public final class FireWebViewActivity extends Activity implements ClaveCheckLog
 		alert.show();
 	}
 
-	@Override
 	public void dismissDialog() {
 		dismissProgressDialog();
 	}
@@ -215,4 +208,13 @@ public final class FireWebViewActivity extends Activity implements ClaveCheckLog
 		alert.show();
 	}
 
+	@Override
+	public void firePostSignSuccess(RequestResult[] requestResults) {
+
+	}
+
+	@Override
+	public void firePostSignFailed(Throwable cause) {
+
+	}
 }

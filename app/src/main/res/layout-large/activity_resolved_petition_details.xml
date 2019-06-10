@@ -1,16 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    android:orientation="vertical" >
-    
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#fffafafa">
  
 	<TabHost 
 	    android:id="@android:id/tabhost"
-	    android:layout_width="fill_parent"
-	    android:layout_height="match_parent"
-	   
-	   >
+	    android:layout_width="match_parent"
+	    android:layout_height="match_parent" >
 	
 	    <LinearLayout
 	        android:layout_width="match_parent"
@@ -20,7 +18,8 @@
 	        <TabWidget
 	            android:id="@android:id/tabs"
 	            android:layout_width="match_parent"
-	            android:layout_height="wrap_content" >
+	            android:layout_height="wrap_content"
+                android:background="@drawable/tab_selector" >
 	        </TabWidget>
 	
 	          <FrameLayout
@@ -35,7 +34,7 @@
 	            <LinearLayout
 	                android:id="@+id/tab1"
 	                android:layout_width="match_parent"
-	                android:layout_height="match_parent"
+	                android:layout_height="wrap_content"
 	                android:baselineAligned="false"
 	                android:orientation="vertical"
 					android:paddingTop="30dp"
@@ -45,7 +44,7 @@
 					    <!-- Asunto -->
 		                <LinearLayout
 		                    android:id="@+id/tableRow1"
-		                    android:layout_width="fill_parent"
+		                    android:layout_width="match_parent"
 		                    android:layout_height="wrap_content"
 		                    android:minHeight="50dp"
 		                    android:layout_marginBottom="10dp"
@@ -53,7 +52,7 @@
 		
 		                    <TextView
 		                        android:id="@+id/subjectField"
-		                        android:layout_width="fill_parent"
+		                        android:layout_width="match_parent"
 		                        android:layout_height="wrap_content"
 		                        android:text="@string/subject"
 		                        android:textIsSelectable="false"
@@ -66,18 +65,19 @@
 		                        />
 							<TextView
 		                        android:id="@+id/subjectValue"
-		                        android:layout_width="wrap_content"
+		                        android:layout_width="match_parent"
 		                        android:layout_height="wrap_content"
 		                        android:textIsSelectable="true"
 		                        android:textAppearance="?android:attr/textAppearanceMedium"
 								android:layout_marginLeft="30dp"
+								android:layout_marginStart="30dp"
 								android:layout_marginTop="10dp" />
 		                </LinearLayout>
 		
 		                <!--  Referencia -->		                
 		                <LinearLayout
 		                    android:id="@+id/tableRow2"
-		                    android:layout_width="fill_parent"
+		                    android:layout_width="match_parent"
 		                    android:layout_height="wrap_content"
 		                    android:minHeight="50dp"
 		                    android:layout_marginBottom="10dp"
@@ -85,7 +85,7 @@
 		
 		                    <TextView
 		                        android:id="@+id/referenceField"
-		                        android:layout_width="fill_parent"
+		                        android:layout_width="match_parent"
 		                        android:layout_height="wrap_content"
 		                        android:text="@string/ref"
 		                        android:textIsSelectable="false"
@@ -99,18 +99,19 @@
 		
 		                    <TextView
 		                        android:id="@+id/referenceValue"
-		                        android:layout_width="wrap_content"
+		                        android:layout_width="match_parent"
 		                        android:layout_height="wrap_content"
 		                        android:textIsSelectable="true"
 		                        android:textAppearance="?android:attr/textAppearanceMedium"
 								android:layout_marginLeft="30dp"
+								android:layout_marginStart="30dp"
 								android:layout_marginTop="10dp"/>
 		                </LinearLayout>
 		
 		                <!-- Fecha -->
 		                <LinearLayout
 		                    android:id="@+id/tableRow3"
-		                    android:layout_width="fill_parent"
+		                    android:layout_width="match_parent"
 		                    android:layout_height="wrap_content"
 		                    android:minHeight="50dp"
 		                    android:layout_marginBottom="10dp"
@@ -118,7 +119,7 @@
 		
 		                    <TextView
 		                        android:id="@+id/dateField"
-		                        android:layout_width="fill_parent"
+		                        android:layout_width="match_parent"
 		                        android:layout_height="wrap_content"
 		                        android:text="@string/date"
 		                      	android:textIsSelectable="false"
@@ -132,51 +133,53 @@
 		
 		                    <TextView
 		                        android:id="@+id/dateValue"
-		                        android:layout_width="wrap_content"
+		                        android:layout_width="match_parent"
 		                        android:layout_height="wrap_content"
 		                        android:textIsSelectable="true"
 		                        android:textAppearance="?android:attr/textAppearanceMedium"
 								android:layout_marginLeft="30dp"
+								android:layout_marginStart="30dp"
 								android:layout_marginTop="10dp" />
 		                </LinearLayout>
 
-					<!-- Fecha de caducidad-->
-					<LinearLayout
-						android:id="@+id/tableRow4"
-						android:layout_width="fill_parent"
-						android:layout_height="wrap_content"
-						android:minHeight="50dp"
-						android:layout_marginBottom="10dp"
-						android:orientation="vertical"  >
-
-						<TextView
-							android:id="@+id/expDateField"
-							android:layout_width="fill_parent"
+						<!-- Fecha de caducidad -->
+						<LinearLayout
+							android:id="@+id/tableRow4"
+							android:layout_width="match_parent"
 							android:layout_height="wrap_content"
-							android:text="@string/expdate"
-							android:textIsSelectable="false"
-							android:textAppearance="?android:attr/textAppearanceLarge"
-							style="@style/SignLine_Item"
-							android:layout_marginTop="6dp"
-							android:background="#EFEFEF"
-							android:layout_marginLeft="20dp"
-							android:layout_marginRight="20dp"
-							/>
+							android:minHeight="50dp"
+							android:layout_marginBottom="10dp"
+							android:orientation="vertical"  >
 
-						<TextView
-							android:id="@+id/expDateValue"
-							android:layout_width="wrap_content"
-							android:layout_height="wrap_content"
-							android:textIsSelectable="true"
-							android:textAppearance="?android:attr/textAppearanceMedium"
-							android:layout_marginLeft="30dp"
-							android:layout_marginTop="10dp" />
-					</LinearLayout>
+							<TextView
+								android:id="@+id/expDateField"
+								android:layout_width="match_parent"
+								android:layout_height="wrap_content"
+								android:text="@string/expdate"
+								android:textIsSelectable="false"
+								android:textAppearance="?android:attr/textAppearanceLarge"
+								style="@style/SignLine_Item"
+								android:layout_marginTop="6dp"
+								android:background="#EFEFEF"
+								android:layout_marginLeft="20dp"
+								android:layout_marginRight="20dp"
+								/>
+
+							<TextView
+								android:id="@+id/expDateValue"
+								android:layout_width="match_parent"
+								android:layout_height="wrap_content"
+								android:textIsSelectable="true"
+								android:textAppearance="?android:attr/textAppearanceMedium"
+								android:layout_marginLeft="30dp"
+								android:layout_marginStart="30dp"
+								android:layout_marginTop="10dp" />
+						</LinearLayout>
 				
 						<!-- Aplicacion -->		                
 		                <LinearLayout
 		                    android:id="@+id/tableRow5"
-		                    android:layout_width="fill_parent"
+		                    android:layout_width="match_parent"
 		                    android:layout_height="wrap_content"
 		                    android:minHeight="50dp"
 		                    android:layout_marginBottom="10dp"
@@ -184,7 +187,7 @@
 		
 		                    <TextView
 		                        android:id="@+id/applicationField"
-		                        android:layout_width="fill_parent"
+		                        android:layout_width="match_parent"
 		                        android:layout_height="wrap_content"
 		                        android:text="@string/application"
 		                        android:textIsSelectable="false"
@@ -198,18 +201,19 @@
 		
 		                    <TextView
 		                        android:id="@+id/applicationValue"
-		                        android:layout_width="200dp"
+		                        android:layout_width="match_parent"
 		                        android:layout_height="wrap_content"
 		                        android:textIsSelectable="true"
 		                        android:textAppearance="?android:attr/textAppearanceMedium"
 								android:layout_marginTop="10dp"
-								android:layout_marginLeft="30dp" />
+								android:layout_marginLeft="30dp"
+								android:layout_marginStart="30dp" />
 		                </LinearLayout>
 
-		                <!-- Remitente -->		                
+		                <!-- Remitentes -->
 		                <LinearLayout
 		                    android:id="@+id/tableRow6"
-		                    android:layout_width="fill_parent"
+		                    android:layout_width="match_parent"
 		                    android:layout_height="wrap_content"
 		                    android:minHeight="50dp"
 		                    android:layout_marginBottom="10dp"
@@ -217,7 +221,7 @@
 		
 		                    <TextView
 		                        android:id="@+id/sendersField"
-		                        android:layout_width="fill_parent"
+		                        android:layout_width="match_parent"
 		                        android:layout_height="wrap_content"
 		                        android:text="@string/senders"
 		                        android:textIsSelectable="false"
@@ -228,15 +232,50 @@
 						        android:layout_marginLeft="20dp" 
 						        android:layout_marginRight="20dp" 
 		                        />
-		
+
 		                    <ListView
 		                        android:id="@+id/listSenders"
 		                        android:layout_width="match_parent"
 		                        android:layout_height="wrap_content"
 		                        android:layout_marginLeft="30dp"
+								android:layout_marginStart="30dp"
 		                        android:layout_marginTop="10dp" >
 		                    </ListView>
 		                </LinearLayout>
+
+						<!-- Mensaje -->
+						<LinearLayout
+							android:id="@+id/tableRow7"
+							android:layout_width="match_parent"
+							android:layout_height="wrap_content"
+							android:minHeight="50dp"
+							android:layout_marginBottom="10dp"
+							android:orientation="vertical"  >
+
+							<TextView
+								android:id="@+id/messageField"
+								android:layout_width="match_parent"
+								android:layout_height="wrap_content"
+								android:text="@string/message"
+								android:textIsSelectable="false"
+								android:textAppearance="?android:attr/textAppearanceLarge"
+								style="@style/SignLine_Item"
+								android:layout_marginTop="6dp"
+								android:background="#EFEFEF"
+								android:layout_marginLeft="20dp"
+								android:layout_marginRight="20dp"
+								/>
+
+							<TextView
+								android:id="@+id/messageValue"
+								android:layout_width="match_parent"
+								android:layout_height="wrap_content"
+								android:textIsSelectable="true"
+								android:textAppearance="?android:attr/textAppearanceMedium"
+								android:layout_marginTop="10dp"
+								android:layout_marginLeft="30dp"
+								android:layout_marginStart="30dp" />
+						</LinearLayout>
 		          
 	            </LinearLayout>
 				</ScrollView>
@@ -262,7 +301,7 @@
 	                    android:id="@+id/listSignLines"
 	                    android:layout_width="match_parent"
 	                    android:layout_weight="1"
-	                    android:layout_height="wrap_content" >
+	                    android:layout_height="0dp" >
 	                </ListView>
 				</LinearLayout>
 	            

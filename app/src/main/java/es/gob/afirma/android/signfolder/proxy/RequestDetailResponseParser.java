@@ -9,8 +9,7 @@ import org.w3c.dom.NodeList;
 
 import es.gob.afirma.android.signfolder.proxy.SignRequest.RequestType;
 
-/** Analizador de XML de respuesta del detalle de una petici&oacute;n de firma.
- * @author Carlos Gamuci */
+/** Analizador de XML de respuesta del detalle de una petici&oacute;n de firma. */
 final class RequestDetailResponseParser {
 
 	private static final String DETAIL_RESPONSE_NODE = "dtl"; //$NON-NLS-1$
@@ -22,6 +21,7 @@ final class RequestDetailResponseParser {
 
 
 	private static final String SUBJECT_NODE = "subj"; //$NON-NLS-1$
+	private static final String MESSAGE_NODE = "msg"; //$NON-NLS-1$
 	private static final String SENDERS_NODE = "snders"; //$NON-NLS-1$
 	private static final String SENDER_NODE = "snder"; //$NON-NLS-1$
 	private static final String DATE_NODE = "date"; //$NON-NLS-1$
@@ -92,8 +92,14 @@ final class RequestDetailResponseParser {
 		}
 		reqDetail.setSubject(normalizeValue(XmlUtils.getTextContent(paramsNodes.item(index))));
 
-		// Configuramos los remitentes
+		// Configuramos el mensaje de la peticion (no obligatorio)
 		index = XmlUtils.nextNodeElementIndex(paramsNodes, ++index);
+		if (index != -1 && MESSAGE_NODE.equalsIgnoreCase(paramsNodes.item(index).getNodeName())) {
+			reqDetail.setMessage(XmlUtils.getTextContent(paramsNodes.item(index)));
+			index = XmlUtils.nextNodeElementIndex(paramsNodes, ++index);
+		}
+
+		// Configuramos los remitentes
 		if (index == -1 || !SENDERS_NODE.equalsIgnoreCase(paramsNodes.item(index).getNodeName())) {
 			throw new IllegalArgumentException("No se encontro el nodo '" + //$NON-NLS-1$
 					SENDERS_NODE + "' en la peticion con identificador " + reqDetail.getId()); //$NON-NLS-1$
@@ -130,10 +136,7 @@ final class RequestDetailResponseParser {
 
 		// Configuramos el motivo de rechazo (no obligatorio)
 		index = XmlUtils.nextNodeElementIndex(paramsNodes, ++index);
-		if (index == -1 || !REJECT_TEXT_NODE.equalsIgnoreCase(paramsNodes.item(index).getNodeName())) {
-			// No hay motivo de rechazo definido
-		}
-		else {
+		if (index != -1 && REJECT_TEXT_NODE.equalsIgnoreCase(paramsNodes.item(index).getNodeName())) {
 			reqDetail.setRejectReason(XmlUtils.getTextContent(paramsNodes.item(index)));
 			index = XmlUtils.nextNodeElementIndex(paramsNodes, ++index);
 		}

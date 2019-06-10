@@ -16,7 +16,7 @@ import es.gob.afirma.android.signfolder.proxy.SignRequest;
  * formato NONE para que realmente no se procesen (evitando que se vuelva a calcular las prefirmas).
  * Como resultado de esta operaci&oacute;n se obtendr&aacute; el identificador de transacci&oacute;n
  * y la URL de redirecci&oacute;n de FIRe en la que el usuario deber&aacute; autorizar la operaci&oacute;n. */
-public final class ClaveFirmaPreSignTask extends AsyncTask<Void, Void, FirePreSignResult> {
+public final class FirePreSignTask extends AsyncTask<Void, Void, FirePreSignResult> {
 
 	private final Context context;
 	private final SignRequest[] signRequests;
@@ -31,7 +31,7 @@ public final class ClaveFirmaPreSignTask extends AsyncTask<Void, Void, FirePreSi
 
 		public void run() {
 			mTask.cancel(true);
-			ClaveFirmaPreSignTask.listener.firePreSignFailed(new InterruptedException("Tiempo de espera agotado"));
+			FirePreSignTask.listener.firePreSignFailed(new InterruptedException("Tiempo de espera agotado"));
 		}
 	}
 
@@ -39,7 +39,7 @@ public final class ClaveFirmaPreSignTask extends AsyncTask<Void, Void, FirePreSi
 	 * @param context Contexto padre.
      * @param listener Listener para gestionar los resultados de la operaci&oacute;n.
 	 * @param reqs Peticiones de las que se desea realizar la firma. */
-	public ClaveFirmaPreSignTask(SignRequest[] reqs, final Context context, final ClaveFirmaPreSignListener listener) {
+	public FirePreSignTask(SignRequest[] reqs, final Context context, final ClaveFirmaPreSignListener listener) {
 		this.signRequests = reqs;
 		this.context = context;
 		this.listener = listener;
@@ -56,7 +56,7 @@ public final class ClaveFirmaPreSignTask extends AsyncTask<Void, Void, FirePreSi
 		// Mandamos todas las prefirmas a FIRe que ya estara configurado para que
 		// no vuelva a intentar generar las prefirmas y actue directamente sobre ellas
 		try {
-			firePreSignResult = com.claveFirmaPreSignRequests(this.signRequests);
+			firePreSignResult = com.firePreSignRequests(this.signRequests);
 			// Decodificamos la URL que se recibe en Base64 para evitar problemas de codificacion
 			firePreSignResult.setUrl(firePreSignResult.getURL());
 		} catch (Exception e) {

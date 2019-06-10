@@ -1,7 +1,6 @@
 package es.gob.afirma.android.signfolder.proxy;
 
-/** Informaci&oacute;n de un documento de una solicitud de firma.
- * @author Carlos Gamuci */
+/** Informaci&oacute;n de un documento de una solicitud de firma. */
 public final class SignRequestDocument extends RequestDocument {
 
 	static final String CRYPTO_OPERATION_SIGN = "sign"; //$NON-NLS-1$
