@@ -279,7 +279,7 @@ final class RequestDetailResponseParser {
 
 		final Vector<SignLine> signLinesList = new Vector<SignLine>();
 		boolean done = false;
-		String type = "FIRMA";
+		String type = REQUEST_TYPE_SIGN;
 		for (int i = 0; i < signLinesNode.getLength(); i++) {
 			// Nos aseguramos de procesar solo nodos de tipo Element
 			i = XmlUtils.nextNodeElementIndex(signLinesNode, i);
@@ -297,7 +297,14 @@ final class RequestDetailResponseParser {
 				if (attrs.getNamedItem(TYPE_ATTRIBUTE) != null) {
 					type = attrs.getNamedItem(TYPE_ATTRIBUTE).getNodeValue();
 				}
+				else {
+				    type = REQUEST_TYPE_SIGN;
+                }
 			}
+            else {
+                type = REQUEST_TYPE_SIGN;
+            }
+
 			final SignLine receiverList = new SignLine(type);
 			final NodeList recivers = signLinesNode.item(i).getChildNodes();
 			for (int j = 0; j < recivers.getLength(); j++) {
