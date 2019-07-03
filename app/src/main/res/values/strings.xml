@@ -224,6 +224,7 @@
     <string name="error_account_not_validated">El certificado de acceso seleccionado no es v\u00E1lido.</string>
 
     <string name="error_logging_with_clave">No se ha autorizado correctamente el acceso.</string>
+    <string name="error_logging_clave_connection">No se pudo conectar con Cl@ve.</string>
 
     <!-- Titulos -->
     <string name="error_loading_app_configuration_title">Error de conexi\u00F3n </string>

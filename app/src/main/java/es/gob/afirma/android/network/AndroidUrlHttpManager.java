@@ -10,8 +10,12 @@
 
 package es.gob.afirma.android.network;
 
+import org.w3c.dom.Document;
+import org.xml.sax.InputSource;
+
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.StringReader;
 import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.CookiePolicy;
@@ -30,6 +34,10 @@ import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+
+import es.gob.afirma.core.misc.http.UrlHttpManager;
+import es.gob.afirma.core.misc.http.UrlHttpManagerFactory;
+import es.gob.afirma.core.misc.http.UrlHttpMethod;
 
 /** Implementacion de una clase para la lectura del contenido de una URL. */
 public final class AndroidUrlHttpManager {
@@ -101,6 +109,11 @@ public final class AndroidUrlHttpManager {
 		return response;
 	}
 
+	/**
+	 * Extrae el identificador de sesi&oacute;n declarado por una conexi&oacute;n.
+	 * @param conn Conexi&oacute;n en base a la se puede haber generado una sesi&oacute;n.
+	 * @return Identificado de sesi&oacute;n o {@code null} si no se declar&oacute;.
+	 */
 	private static String extractCookieId(HttpURLConnection conn) {
 
 	    String cookieId = null;
@@ -125,7 +138,7 @@ public final class AndroidUrlHttpManager {
 	 * @param url URL a leer
 	 * @return Contenido de la URL
 	 * @throws IOException Si no se puede leer la URL */
-	public static ConnectionResponse getRemoteDataByGet(final String url) throws IOException {
+	static ConnectionResponse getRemoteDataByGet(final String url) throws IOException {
         if (url == null) {
             throw new IllegalArgumentException("La URL a leer no puede ser nula"); //$NON-NLS-1$
         }

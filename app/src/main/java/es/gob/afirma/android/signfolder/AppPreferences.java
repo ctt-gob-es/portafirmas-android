@@ -127,7 +127,7 @@ public final class AppPreferences {
 	 * Recupera el tiempo de TimeOut configurado para las conexiones de red.
 	 * @return Milisegundos de espera.
 	 */
-	public int getConnectionreadTimeout() {
+	public int getConnectionReadTimeout() {
 
 		if (config.containsKey(KEY_CONNECTION_READ_TIMEOUT)) {
 			try {

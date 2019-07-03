@@ -34,6 +34,24 @@ final class LoadConfigurationDataTask extends AsyncTask<Void, Void, RequestAppCo
 		this.listener = listener;
 	}
 
+	/**
+	 * Crea la tarea para la carga de la configuraci&oacute;n de la aplicaci&oacute;n
+	 * necesaria para su correcto funcionamiento.
+	 * @param certB64 Certificado para la autenticaci&oacute;n de la petici&oacute;n.
+	 * @param certAlias Alias del certificado para la autenticaci&oacute;n de la petici&oacute;n.
+	 * @param commManager Manejador de los servicios de comunicaci&oacute;n con el portafirmas.
+	 * @param context Contexto de la aplicaci&oacute;n.
+	 * @param listener Manejador del resultado de la operaci&oacute;n.
+	 */
+	LoadConfigurationDataTask(final CommManager commManager, final Context context,
+							  final LoadConfigurationListener listener) {
+		this.certB64 = null;
+		this.certAlias = null;
+		this.commManager = commManager;
+		this.context = context;
+		this.listener = listener;
+	}
+
 	@Override
 	protected RequestAppConfiguration doInBackground(final Void... args) {
 

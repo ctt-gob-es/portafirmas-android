@@ -53,7 +53,7 @@ public class CommManagerOldVersion {
 
 	CommManagerOldVersion() {
 		this.signFolderProxyUrl = AppPreferences.getInstance().getSelectedProxyUrl();
-		this.timeout = AppPreferences.getInstance().getConnectionreadTimeout();
+		this.timeout = AppPreferences.getInstance().getConnectionReadTimeout();
 
 		try {
 			this.db = DocumentBuilderFactory.newInstance().newDocumentBuilder();

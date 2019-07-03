@@ -522,32 +522,64 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
 		}
 		else if (requestCode == WEBVIEW_REQUEST_CODE) {
 
-			final boolean authorized =  data != null &&
-					data.getBooleanExtra(ClaveWebViewActivity.RESULT_BOOLEAN_AUTHORIZED, false);
+            if (resultCode == RESULT_OK) {
+                Log.e(SFConstants.LOG_TAG, "Acceso correcto con Cl@ve"); //$NON-NLS-1$
+                loadConfiguration();
+            }
+            else {
+                Log.e(SFConstants.LOG_TAG, "Error al acceder con Cl@ve"); //$NON-NLS-1$
+                String errorParams = data.getStringExtra("errorParams"); //$NON-NLS-1$
 
-			if (authorized) {
-				final String tokenSaml = data.getStringExtra(ClaveWebViewActivity.RESULT_STRING_TOKEN_SAML);
+                Log.e(SFConstants.LOG_TAG, "Parametros de error: " + errorParams);
+                //TODO: Diferenciar entre tipos de errores
+                if ("type=validation".equals(errorParams)) {
+                    showErrorDialog(getString(R.string.error_logging_with_clave));
+                }
+                else {
+                    showErrorDialog(getString(R.string.error_logging_with_clave));
+                }
+            }
 
-				// Validamos el acceso con Cl@ve
-				final ClaveValidateLoginTask task = new ClaveValidateLoginTask(
-						tokenSaml,
-						CommManager.getInstance(),
-						this);
-				showProgressDialog(getString(R.string.dialog_msg_authenticating), this, task);
-
-				task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-			}
-			else {
-				showErrorDialog(getString(R.string.error_logging_with_clave));
-				Log.e(SFConstants.LOG_TAG, "Error al acceder con Cl@ve"); //$NON-NLS-1$
-			}
+//			final boolean authorized =  data != null &&
+//					data.getBooleanExtra(ClaveWebViewActivity.RESULT_BOOLEAN_AUTHORIZED, false);
+//
+//			if (authorized) {
+//				final String tokenSaml = data.getStringExtra(ClaveWebViewActivity.RESULT_STRING_TOKEN_SAML);
+//
+//				// Validamos el acceso con Cl@ve
+//				final ClaveValidateLoginTask task = new ClaveValidateLoginTask(
+//						tokenSaml,
+//						CommManager.getInstance(),
+//						this);
+//				showProgressDialog(getString(R.string.dialog_msg_authenticating), this, task);
+//
+//				task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+//			}
+//			else {
+//				showErrorDialog(getString(R.string.error_logging_with_clave));
+//				Log.e(SFConstants.LOG_TAG, "Error al acceder con Cl@ve"); //$NON-NLS-1$
+//			}
 		}
 	}
 
 	@Override
 	public void configurationLoadSuccess(final RequestAppConfiguration appConfig, final String certEncoded, final String certAlias) {
-		access(certEncoded, certAlias, appConfig);
+        dismissProgressDialog();
+
+        final Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setClass(this, PetitionListActivity.class);
+        if (certEncoded != null) {
+            intent.putExtra(PetitionListActivity.EXTRA_RESOURCE_CERT_B64, certEncoded);
+        }
+        if (certAlias != null) {
+            intent.putExtra(PetitionListActivity.EXTRA_RESOURCE_CERT_ALIAS, certAlias);
+        }
+        intent.putStringArrayListExtra(PetitionListActivity.EXTRA_RESOURCE_APP_IDS, appConfig.getAppIdsList());
+        intent.putStringArrayListExtra(PetitionListActivity.EXTRA_RESOURCE_APP_NAMES, appConfig.getAppNamesList());
+
+        startActivity(intent);
 	}
+
 	@Override
 	public void configurationLoadError(final Throwable t) {
 		dismissProgressDialog();
@@ -560,24 +592,6 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
 			Log.w(SFConstants.LOG_TAG, "Error durante el proceso de login", t);
 			showErrorDialog(getString(R.string.error_account_not_validated), getString(R.string.error_account_not_validated_title));
 		}
-	}
-
-	/**
-	 * Valida la identidad del usuario y da acceso al portafirmas.
-	 * @param certEncodedB64 Certificado de autenticaci&oacute;n codificado en Base64 .
-	 */
-	private void access(final String certEncodedB64, final String alias, final RequestAppConfiguration appConfig) {
-
-		dismissProgressDialog();
-
-		final Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-		intent.setClass(this, PetitionListActivity.class);
-		intent.putExtra(PetitionListActivity.EXTRA_RESOURCE_CERT_B64, certEncodedB64);
-		intent.putExtra(PetitionListActivity.EXTRA_RESOURCE_CERT_ALIAS, alias);
-		intent.putStringArrayListExtra(PetitionListActivity.EXTRA_RESOURCE_APP_IDS, appConfig.getAppIdsList());
-		intent.putStringArrayListExtra(PetitionListActivity.EXTRA_RESOURCE_APP_NAMES, appConfig.getAppNamesList());
-
-		startActivity(intent);
 	}
 
 	//metodo vacio para evitar bugs en versiones superiores al api11
@@ -616,7 +630,7 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
             return;
         }
 
-		// Si no, se abre un WebView que cargue la URL recibida y desde la que el usuario
+		// Abrimos un WebView que carga la URL recibida y desde la que el usuario
 		// podra autenticarse
         openWebViewActivity(loginResult.getRedirectionUrl(), loginResult.getSessionId());
     }
@@ -638,4 +652,13 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
 					getString(R.string.error_loading_app_configuration));
 		}
 	}
+
+
+	public void loadConfiguration() {
+        final LoadConfigurationDataTask lcdt = new LoadConfigurationDataTask(
+                CommManager.getInstance(),
+                this,
+                this);
+        lcdt.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+    }
 }

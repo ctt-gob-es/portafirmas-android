@@ -578,13 +578,11 @@ public final class CommManager  extends CommManagerOldVersion{
 
 		final InputStream is = getRemoteDocumentIs(url);
 		byte[] data = AOUtil.getDataFromInputStream(is);
+		is.close();
 
 		Log.w(SFConstants.LOG_TAG, "XML recibido: " + new String(data));
 
-		final Document doc = this.db.parse(new ByteArrayInputStream(data));
-		is.close();
-
-		return doc;
+		return this.db.parse(new ByteArrayInputStream(data));
 	}
 
 

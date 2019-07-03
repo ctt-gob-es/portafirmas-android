@@ -73,11 +73,11 @@ public final class ClaveWebViewActivity extends Activity {
 				// Cerramos el webview si somos redirigidos a la pagina "ok" o "error"
                 // devolviendo el resultado pertinente en cada caso
 
-				if (path.equals("ok")) {
+				if (path.endsWith("/ok")) {
 					setResult(Activity.RESULT_OK);
 					closeActivity();
 				}
-				else if (path.equals("error")) {
+				else if (path.endsWith("/error")) {
 					Intent result = new Intent();
 					result.putExtra("errorParams", url.substring(endPos + 1));
 					setResult(Activity.RESULT_FIRST_USER, result);
