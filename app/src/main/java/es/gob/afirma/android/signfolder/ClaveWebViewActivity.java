@@ -62,7 +62,7 @@ public final class ClaveWebViewActivity extends Activity {
 			@Override
 			public void onPageStarted(WebView view, String url, Bitmap favicon) {
 				Log.i(SFConstants.LOG_TAG, "---- Inicio de pagina: " + url);
-				int pathPos = url.lastIndexOf('/') + 1;
+				int pathPos = url.lastIndexOf('/');
 				if (pathPos == 0) {
 					return;
 				}
@@ -70,14 +70,18 @@ public final class ClaveWebViewActivity extends Activity {
 				int endPos = url.indexOf('?', pathPos);
 				String path = endPos != -1 ? url.substring(pathPos, endPos) : url.substring(pathPos);
 
+				Log.i(SFConstants.LOG_TAG, "---- Particula final: " + path);
+
 				// Cerramos el webview si somos redirigidos a la pagina "ok" o "error"
                 // devolviendo el resultado pertinente en cada caso
 
-				if (path.endsWith("/ok")) {
+
+
+				if (path.startsWith("/ok")) {
 					setResult(Activity.RESULT_OK);
 					closeActivity();
 				}
-				else if (path.endsWith("/error")) {
+				else if (path.startsWith("/error")) {
 					Intent result = new Intent();
 					result.putExtra("errorParams", url.substring(endPos + 1));
 					setResult(Activity.RESULT_FIRST_USER, result);

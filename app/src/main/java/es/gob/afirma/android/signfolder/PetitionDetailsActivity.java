@@ -63,6 +63,7 @@ import es.gob.afirma.android.signfolder.proxy.SignLineElement;
 import es.gob.afirma.android.signfolder.proxy.SignRequest;
 import es.gob.afirma.android.signfolder.proxy.SignRequest.RequestType;
 import es.gob.afirma.android.signfolder.proxy.SignRequestDocument;
+import es.gob.afirma.android.signfolder.proxy.ValidationLoginResult;
 
 /** Actividad con el detalle de las peticiones. */
 public final class PetitionDetailsActivity extends FragmentActivity implements LoadSignRequestDetailsListener,
@@ -70,7 +71,6 @@ public final class PetitionDetailsActivity extends FragmentActivity implements L
                                                                          OperationRequestListener,
                                                                          PrivateKeySelectionListener,
                                                                          DialogFragmentListener,
-		LoadConfigurationDataTask.LoadConfigurationListener,
 		FirePreSignTask.ClaveFirmaPreSignListener,
 		FirePostSignTask.ClaveFirmaPostSignListener
 {
@@ -1128,16 +1128,6 @@ public final class PetitionDetailsActivity extends FragmentActivity implements L
     	new ApproveRequestsTask(
     			this.reqDetails.getId(), CommManager.getInstance(), this).execute();
     }
-
-	@Override
-	public void configurationLoadSuccess(RequestAppConfiguration appConfig, String certB64, String certAlias) {
-	}
-
-	@Override
-	public void configurationLoadError(Throwable t) {
-		dismissProgressDialog();
-		showToastMessage(getString(R.string.accesibility_icon_sign_ko));
-	}
 
 	@Override
 	public void requestOperationFinished(final int operation, final RequestResult requestResult) {

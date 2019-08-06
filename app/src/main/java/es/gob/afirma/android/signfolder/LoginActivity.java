@@ -300,16 +300,18 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
 
 			lrvt.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 		} catch (IllegalArgumentException e) {
-			// Proxy antiguo sin validacion
-			final LoadConfigurationDataTask lcdt = new LoadConfigurationDataTask(Base64.encode(certEncoded), alias,
-					CommManager.getInstance(), this, this);
+			// Proxy antiguo sin autenticacion (se valida cada peticion independiente)
 			CommManager.getInstance().setOldProxy();
+			final ValidationLoginResult loginResult = new ValidationLoginResult(true);
+			loginResult.setCertificateB64(Base64.encode(certEncoded));
+			loginResult.setCertAlias(alias);
+			final LoadConfigurationDataTask lcdt = new LoadConfigurationDataTask(loginResult,
+					CommManager.getInstance(), this, this);
 			lcdt.execute();
 		} catch (Exception e) {
 			// Error al conectar con el servidor
 			showErrorDialog(getString(R.string.error_msg_communicating_server));
 		}
-
 	}
 
 	// Definimos el menu de opciones de la aplicacion, cuyas opciones estan definidas
@@ -496,7 +498,7 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
 	protected void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
 		super.onActivityResult(requestCode, resultCode, data);
 
-		if (requestCode == SELECT_CERT_REQUEST_CODE && resultCode == RESULT_OK) {
+		if (requestCode == SELECT_CERT_REQUEST_CODE && resultCode == RESULT_OK && data != null) {
 
 			final String filename = data.getStringExtra(FileChooserActivity.RESULT_DATA_STRING_FILENAME);
 
@@ -528,7 +530,7 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
             }
             else {
                 Log.e(SFConstants.LOG_TAG, "Error al acceder con Cl@ve"); //$NON-NLS-1$
-                String errorParams = data.getStringExtra("errorParams"); //$NON-NLS-1$
+                String errorParams = data != null ? data.getStringExtra("errorParams") : null; //$NON-NLS-1$
 
                 Log.e(SFConstants.LOG_TAG, "Parametros de error: " + errorParams);
                 //TODO: Diferenciar entre tipos de errores
@@ -563,16 +565,16 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
 	}
 
 	@Override
-	public void configurationLoadSuccess(final RequestAppConfiguration appConfig, final String certEncoded, final String certAlias) {
+	public void configurationLoadSuccess(final RequestAppConfiguration appConfig, final ValidationLoginResult loginResult) {
         dismissProgressDialog();
 
         final Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setClass(this, PetitionListActivity.class);
-        if (certEncoded != null) {
-            intent.putExtra(PetitionListActivity.EXTRA_RESOURCE_CERT_B64, certEncoded);
+        if (loginResult.getCertificateB64() != null) {
+            intent.putExtra(PetitionListActivity.EXTRA_RESOURCE_CERT_B64, loginResult.getCertificateB64());
         }
-        if (certAlias != null) {
-            intent.putExtra(PetitionListActivity.EXTRA_RESOURCE_CERT_ALIAS, certAlias);
+        if (loginResult.getCertAlias() != null) {
+            intent.putExtra(PetitionListActivity.EXTRA_RESOURCE_CERT_ALIAS, loginResult.getCertAlias());
         }
         intent.putStringArrayListExtra(PetitionListActivity.EXTRA_RESOURCE_APP_IDS, appConfig.getAppIdsList());
         intent.putStringArrayListExtra(PetitionListActivity.EXTRA_RESOURCE_APP_NAMES, appConfig.getAppNamesList());
@@ -640,8 +642,7 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
 
 		if (result.isStatusOk()) {
 			final LoadConfigurationDataTask lcdt = new LoadConfigurationDataTask(
-					result.getCertificateB64(),
-                    result.getCertAlias(),
+					result,
 					CommManager.getInstance(),
 					this,
 					this);

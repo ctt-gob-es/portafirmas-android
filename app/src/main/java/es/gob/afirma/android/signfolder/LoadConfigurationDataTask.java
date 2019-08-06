@@ -5,12 +5,12 @@ import android.os.AsyncTask;
 import android.util.Log;
 import es.gob.afirma.android.signfolder.proxy.CommManager;
 import es.gob.afirma.android.signfolder.proxy.RequestAppConfiguration;
+import es.gob.afirma.android.signfolder.proxy.ValidationLoginResult;
 
 /** Carga los datos remotos necesarios para la configuraci&oacute;n de la aplicaci&oacute;n. */
 final class LoadConfigurationDataTask extends AsyncTask<Void, Void, RequestAppConfiguration> {
 
-	private final String certB64;
-	private final String certAlias;
+	private final ValidationLoginResult loginResult;
 	private final CommManager commManager;
 	private final Context context;
 	private final LoadConfigurationListener listener;
@@ -25,10 +25,9 @@ final class LoadConfigurationDataTask extends AsyncTask<Void, Void, RequestAppCo
 	 * @param context Contexto de la aplicaci&oacute;n.
 	 * @param listener Manejador del resultado de la operaci&oacute;n.
 	 */
-	LoadConfigurationDataTask(final String certB64, final String certAlias,
-			final CommManager commManager, final Context context, final LoadConfigurationListener listener) {
-		this.certB64 = certB64;
-		this.certAlias = certAlias;
+	LoadConfigurationDataTask(final ValidationLoginResult loginResult,
+							  final CommManager commManager, final Context context, final LoadConfigurationListener listener) {
+		this.loginResult = loginResult;
 		this.commManager = commManager;
 		this.context = context;
 		this.listener = listener;
@@ -37,16 +36,13 @@ final class LoadConfigurationDataTask extends AsyncTask<Void, Void, RequestAppCo
 	/**
 	 * Crea la tarea para la carga de la configuraci&oacute;n de la aplicaci&oacute;n
 	 * necesaria para su correcto funcionamiento.
-	 * @param certB64 Certificado para la autenticaci&oacute;n de la petici&oacute;n.
-	 * @param certAlias Alias del certificado para la autenticaci&oacute;n de la petici&oacute;n.
 	 * @param commManager Manejador de los servicios de comunicaci&oacute;n con el portafirmas.
 	 * @param context Contexto de la aplicaci&oacute;n.
 	 * @param listener Manejador del resultado de la operaci&oacute;n.
 	 */
 	LoadConfigurationDataTask(final CommManager commManager, final Context context,
 							  final LoadConfigurationListener listener) {
-		this.certB64 = null;
-		this.certAlias = null;
+		this.loginResult = null;
 		this.commManager = commManager;
 		this.context = context;
 		this.listener = listener;
@@ -57,9 +53,9 @@ final class LoadConfigurationDataTask extends AsyncTask<Void, Void, RequestAppCo
 
 		RequestAppConfiguration config;
     	try {
-    		config = this.commManager.getApplicationList(this.certB64);
+    		config = this.commManager.getApplicationList(this.loginResult.getDni());
     	} catch (final Exception e) {
-    		Log.w(SFConstants.LOG_TAG, "No se pudo obtener la lista de aplicaciones: " + e); //$NON-NLS-1$
+    		Log.w(SFConstants.LOG_TAG, "No se pudo obtener la lista de aplicaciones", e); //$NON-NLS-1$
     		config = null;
     		this.t = e;
     	}
@@ -77,7 +73,7 @@ final class LoadConfigurationDataTask extends AsyncTask<Void, Void, RequestAppCo
 	@Override
 	protected void onPostExecute(final RequestAppConfiguration appConfig) {
 		if (appConfig != null) {
-			this.listener.configurationLoadSuccess(appConfig, this.certB64, this.certAlias);
+			this.listener.configurationLoadSuccess(appConfig, this.loginResult);
 		}
 		else {
 			this.listener.configurationLoadError(this.t);
@@ -88,7 +84,7 @@ final class LoadConfigurationDataTask extends AsyncTask<Void, Void, RequestAppCo
 	 * configuraci&oacute;n de la aplicaci&oacute;n. */
 	interface LoadConfigurationListener {
 
-		void configurationLoadSuccess(RequestAppConfiguration appConfig, String certB64, String certAlias);
+		void configurationLoadSuccess(RequestAppConfiguration appConfig, ValidationLoginResult loginResult);
 
 		void configurationLoadError(Throwable t);
 	}
