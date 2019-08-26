@@ -1,9 +1,5 @@
 package es.gob.afirma.android.gui;
 
-import java.io.Serializable;
-import java.security.KeyStore;
-import java.util.ArrayList;
-
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
@@ -19,6 +15,11 @@ import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.ListView;
 import android.widget.RadioButton;
+
+import java.io.Serializable;
+import java.security.KeyStore;
+import java.util.ArrayList;
+
 import es.gob.afirma.android.crypto.AndroidJcaKeyStoreManager;
 import es.gob.afirma.android.crypto.LoadKeyStoreManagerTask.KeystoreManagerListener;
 import es.gob.afirma.android.signfolder.R;

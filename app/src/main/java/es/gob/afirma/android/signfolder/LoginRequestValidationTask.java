@@ -1,7 +1,6 @@
 package es.gob.afirma.android.signfolder;
 
 import android.os.AsyncTask;
-import android.util.Log;
 
 import java.security.KeyStore;
 import java.util.Timer;
@@ -13,6 +12,7 @@ import es.gob.afirma.android.signfolder.proxy.OldProxyException;
 import es.gob.afirma.android.signfolder.proxy.RequestResult;
 import es.gob.afirma.android.signfolder.proxy.ValidationLoginResult;
 import es.gob.afirma.android.util.Base64;
+import es.gob.afirma.android.util.PfLog;
 
 /** Carga los datos remotos necesarios para la configuraci&oacute;n de la aplicaci&oacute;n. */
 final class LoginRequestValidationTask extends AsyncTask<Void, Void, ValidationLoginResult> {
@@ -72,7 +72,7 @@ final class LoginRequestValidationTask extends AsyncTask<Void, Void, ValidationL
 
 			// Si no se ha lanzado un OldProxyException es que estamos ante un proxy seguro
 			CommManager.getInstance().setNewProxy();
-            Log.i(SFConstants.LOG_TAG, "Se ha encontrado una version segura del proxy"); //$NON-NLS-1$
+            PfLog.i(SFConstants.LOG_TAG, "Se ha encontrado una version segura del proxy"); //$NON-NLS-1$
 
 			if (!token.isStatusOk()) {
 				result.setErrorMsg("Error al solicitar el token de login");
@@ -89,11 +89,11 @@ final class LoginRequestValidationTask extends AsyncTask<Void, Void, ValidationL
             }
         } catch (final OldProxyException e) {
             // Proxy antiguo sin validacion
-            Log.w(SFConstants.LOG_TAG, "Login no necesario: Se trabaja con una version antigua del portafirmas"); //$NON-NLS-1$
+            PfLog.w(SFConstants.LOG_TAG, "Login no necesario: Se trabaja con una version antigua del portafirmas"); //$NON-NLS-1$
             CommManager.getInstance().setOldProxy();
             result.setStatusOk(true);
 		} catch (final Exception e) {
-			Log.w(SFConstants.LOG_TAG, "No se pudo realizar el login", e); //$NON-NLS-1$
+			PfLog.w(SFConstants.LOG_TAG, "No se pudo realizar el login", e); //$NON-NLS-1$
             result.setErrorMsg("No se pudo completar la autenticacion del usuario");
 		}
 		timer.cancel();

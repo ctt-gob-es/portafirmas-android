@@ -1,12 +1,11 @@
 package es.gob.afirma.android.crypto;
 
-import java.security.KeyStore.PrivateKeyEntry;
-import java.security.KeyStoreException;
-
 import android.app.Activity;
 import android.security.KeyChain;
 import android.security.KeyChainAliasCallback;
-import android.widget.Toast;
+
+import java.security.KeyStore.PrivateKeyEntry;
+import java.security.KeyStoreException;
 
 import es.gob.afirma.android.signfolder.CryptoConfiguration;
 

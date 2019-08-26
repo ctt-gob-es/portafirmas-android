@@ -1,13 +1,14 @@
 package es.gob.afirma.android.signfolder;
 
-import java.io.File;
-
 import android.app.Activity;
 import android.os.AsyncTask;
-import android.util.Log;
+
+import java.io.File;
+
 import es.gob.afirma.android.signfolder.SaveFileTask.SaveFileListener;
 import es.gob.afirma.android.signfolder.proxy.CommManager;
 import es.gob.afirma.android.signfolder.proxy.DocumentData;
+import es.gob.afirma.android.util.PfLog;
 
 /** Tarea as&iacute;ncrona para la previsualizaci&oacute;n de documentos. */
 final class DownloadFileTask extends AsyncTask<Void, Void, DocumentData> implements SaveFileListener {
@@ -101,7 +102,7 @@ final class DownloadFileTask extends AsyncTask<Void, Void, DocumentData> impleme
 			}
 
 		} catch (final Exception e) {
-    		Log.w(SFConstants.LOG_TAG, "No se pudo descargar el documento para su previsualizacion: " + e); //$NON-NLS-1$
+    		PfLog.w(SFConstants.LOG_TAG, "No se pudo descargar el documento para su previsualizacion: " + e); //$NON-NLS-1$
     		return null;
     	}
 

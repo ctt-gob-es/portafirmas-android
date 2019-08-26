@@ -1,5 +1,10 @@
 package es.gob.afirma.android.crypto;
 
+import android.app.Activity;
+import android.content.Context;
+import android.hardware.usb.UsbDevice;
+import android.hardware.usb.UsbManager;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.security.KeyStore;
@@ -8,14 +13,10 @@ import java.security.Provider;
 import java.security.Security;
 import java.util.Properties;
 
-import android.app.Activity;
-import android.content.Context;
-import android.hardware.usb.UsbDevice;
-import android.hardware.usb.UsbManager;
-import android.util.Log;
 import es.gob.afirma.android.crypto.LoadKeyStoreManagerTask.KeystoreManagerListener;
 import es.gob.afirma.android.gui.PinDialog;
 import es.gob.afirma.android.signfolder.SFConstants;
+import es.gob.afirma.android.util.PfLog;
 
 /** Factor&iacute;a de gestores de contrase&ntilde;as y claves para Android. */
 public final class KeyStoreManagerFactory {
@@ -64,16 +65,16 @@ public final class KeyStoreManagerFactory {
 				return;
 			}
 			catch (final ClassNotFoundException e) {
-				Log.w(ES_GOB_AFIRMA, "No se encuentran las bibliotecas de acceso al DNIe: " + e.toString()); //$NON-NLS-1$
+				PfLog.w(ES_GOB_AFIRMA, "No se encuentran las bibliotecas de acceso al DNIe: " + e.toString()); //$NON-NLS-1$
 			}
 			catch (final NoSuchMethodException e) {
-				Log.w(ES_GOB_AFIRMA, "No se encuentran las bibliotecas de acceso al DNIe: " + e.toString()); //$NON-NLS-1$
+				PfLog.w(ES_GOB_AFIRMA, "No se encuentran las bibliotecas de acceso al DNIe: " + e.toString()); //$NON-NLS-1$
 			}
 			catch (final KeyStoreException e) {
-				Log.w(ES_GOB_AFIRMA, "Se ha encontrado un CCID USB, pero no un DNIe en el: " + e); //$NON-NLS-1$
+				PfLog.w(ES_GOB_AFIRMA, "Se ha encontrado un CCID USB, pero no un DNIe en el: " + e); //$NON-NLS-1$
 			}
 			catch (final Exception e) {
-				Log.w(ES_GOB_AFIRMA, "No se ha podido instanciar el controlador del DNIe: " + e); //$NON-NLS-1$
+				PfLog.w(ES_GOB_AFIRMA, "No se ha podido instanciar el controlador del DNIe: " + e); //$NON-NLS-1$
 			}
 		}
 
@@ -118,12 +119,12 @@ public final class KeyStoreManagerFactory {
 			);
 
 			Security.addProvider(provider);
-			Log.i(SFConstants.LOG_TAG, "Anadido el proveedor AET: " + provider.getName());  //$NON-NLS-1$
+			PfLog.i(SFConstants.LOG_TAG, "Anadido el proveedor AET: " + provider.getName());  //$NON-NLS-1$
 
 			// Obtenemos el almacen unicamente para ver si falla
 			KeyStore.getInstance(AET_PKCS11_STORE, provider);
 
-			Log.i(ES_GOB_AFIRMA, "Se ha instanciado correctamente el proveedor AET");  //$NON-NLS-1$
+			PfLog.i(ES_GOB_AFIRMA, "Se ha instanciado correctamente el proveedor AET");  //$NON-NLS-1$
 
 			// A partir de este punto, si falla, terminamos con error y no devolvemos el almacen de Android, mostrando
 			// un dialogo de error al usuario
@@ -137,7 +138,7 @@ public final class KeyStoreManagerFactory {
 			return;
 		}
 		catch (final Exception e) {
-			Log.w(ES_GOB_AFIRMA, "No se ha detectado una MSC: " + e); //$NON-NLS-1$
+			PfLog.w(ES_GOB_AFIRMA, "No se ha detectado una MSC: " + e); //$NON-NLS-1$
 		}
 
 		ksfl.setKeyStore(new Android4KeyStoreManager(activity));

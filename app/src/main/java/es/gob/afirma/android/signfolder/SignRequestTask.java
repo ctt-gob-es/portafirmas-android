@@ -1,19 +1,20 @@
 package es.gob.afirma.android.signfolder;
 
+import android.content.ActivityNotFoundException;
+import android.os.AsyncTask;
+
+import org.xml.sax.SAXException;
+
 import java.io.IOException;
 import java.security.PrivateKey;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 
-import org.xml.sax.SAXException;
-
-import android.content.ActivityNotFoundException;
-import android.os.AsyncTask;
-import android.util.Log;
 import es.gob.afirma.android.signfolder.proxy.CommManager;
 import es.gob.afirma.android.signfolder.proxy.RequestResult;
 import es.gob.afirma.android.signfolder.proxy.SignRequest;
 import es.gob.afirma.android.util.AOException;
+import es.gob.afirma.android.util.PfLog;
 
 /** Tarea que ejecuta una firma electr&oacute;nica a trav&eacute;s de un AOSigner.
  * La operaci&oacute;n puede ser firma simple, cofirma o contrafirma (de nodos hoja
@@ -56,17 +57,17 @@ final class SignRequestTask extends AsyncTask<Void, Void, RequestResult>{
 			result = TriSigner.sign(this.signRequest, this.pk, this.certificateChain, this.comm);
 		}
 		catch (final CertificateEncodingException e) {
-			Log.e(SFConstants.LOG_TAG, "Error al codificar el certificado de firma: " + e); //$NON-NLS-1$
+			PfLog.e(SFConstants.LOG_TAG, "Error al codificar el certificado de firma: " + e); //$NON-NLS-1$
 			this.t = e;
 			e.printStackTrace();
 		}
 		catch (final IOException e) {
-			Log.e(SFConstants.LOG_TAG, "Error en la comunicacion con el servidor: " + e); //$NON-NLS-1$
+			PfLog.e(SFConstants.LOG_TAG, "Error en la comunicacion con el servidor: " + e); //$NON-NLS-1$
 			this.t = e;
 			e.printStackTrace();
 		}
 		catch (final SAXException e) {
-			Log.e(SFConstants.LOG_TAG, "Error en las respuesta devuelta por el servicio de firma: " + e); //$NON-NLS-1$
+			PfLog.e(SFConstants.LOG_TAG, "Error en las respuesta devuelta por el servicio de firma: " + e); //$NON-NLS-1$
 			this.t = e;
 			e.printStackTrace();
 		}
@@ -77,16 +78,16 @@ final class SignRequestTask extends AsyncTask<Void, Void, RequestResult>{
 			// Solo se dara este error (hasta la fecha) cuando se intente cargar el dialogo de PIN de
 			// una tarjeta criptografica
 			if (e.getCause() != null && e.getCause() instanceof AOException && e.getCause().getCause() instanceof ActivityNotFoundException) {
-				Log.e(SFConstants.LOG_TAG, "Error al intentar cargar el dialogo de PIN de una tarjeta criptografica: " + e); //$NON-NLS-1$
+				PfLog.e(SFConstants.LOG_TAG, "Error al intentar cargar el dialogo de PIN de una tarjeta criptografica: " + e); //$NON-NLS-1$
 				this.t = e;
 			}
 			else {
-				Log.e(SFConstants.LOG_TAG, "Error durante la operacion de firma: " + e); //$NON-NLS-1$
+				PfLog.e(SFConstants.LOG_TAG, "Error durante la operacion de firma: " + e); //$NON-NLS-1$
 				this.t = e;
 			}
 		}
 		catch (final Throwable e) {
-			Log.e(SFConstants.LOG_TAG, "Error grave durante la operacion de firma: " + e); //$NON-NLS-1$
+			PfLog.e(SFConstants.LOG_TAG, "Error grave durante la operacion de firma: " + e); //$NON-NLS-1$
 			this.t = e;
 
 			e.printStackTrace();

@@ -8,7 +8,7 @@
     <string name="server_select">Servidores Portafirmas</string>
     <string name="enable_clavefirma">Usar certificados remotos</string>
     <string name="configure_notifications">Configuraci\u00F3n de notificaciones</string>
-    <string name="title_notifications">Notificaci\u00F3n Portafirmas</string>
+    <string name="title_notifications">Port@firmas:\u0020</string>
     <string name="enable_notifications">Habilitar notificaciones</string>
     <string name="disable_notifications">Deshabilitar notificaciones</string>
     <string name="aviso">Aviso</string>
@@ -144,7 +144,7 @@
 
 
     <string name="title_activity_cert_chooser">Importar certificado</string>
-    <string name="title_clave_login">Login con Clave</string>
+    <string name="title_clave_login">Autenticaci\u00F3n con Cl@ve</string>
     <string name="file_chooser_directorio_actual">Directorio actual:</string>
     <string name="file_chooser_directorio">Directorio</string>
     <string name="file_chooser_directorio_padre">Directorio padre</string>
@@ -159,7 +159,7 @@
     <string name="select">Seleccionar</string>
 
     <string name="dialog_msg_accessing_keystore">Accediendo al almac\u00E9n\u002E\u002E\u002E</string>
-    <string name="dialog_msg_connecting">Estableciendo conexi\u00F3n...</string>
+    <string name="dialog_msg_connecting">Estableciendo conexi\u00F3n\u2026</string>
     <string name="dialog_msg_authenticating">Autenticando usuario\u002E\u002E\u002E</string>
     <string name="dialog_msg_clave">Conectando con Cl@ve</string>
     <string name="dialog_msg_clave_login_fail">Error de validaci\u00F3n con Cl@ve</string>
@@ -223,7 +223,8 @@
     <string name="error_loading_app_configuration">No se pudo conectar con el servidor. Compruebe la URL del servicio de Portafirmas. </string>
     <string name="error_account_not_validated">El certificado de acceso seleccionado no es v\u00E1lido.</string>
 
-    <string name="error_logging_with_clave">No se ha autorizado correctamente el acceso.</string>
+    <string name="error_logging_with_clave">No se ha completado la autenticaci\u00F3n del usuario.</string>
+    <string name="error_logging_no_dni">No se ha podido obtener la identidad del usuario.</string>
     <string name="error_logging_clave_connection">No se pudo conectar con Cl@ve.</string>
 
     <!-- Titulos -->

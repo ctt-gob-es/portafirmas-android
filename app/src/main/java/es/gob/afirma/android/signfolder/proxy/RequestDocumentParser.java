@@ -1,11 +1,10 @@
 package es.gob.afirma.android.signfolder.proxy;
 
-import android.util.Log;
-
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import es.gob.afirma.android.signfolder.SFConstants;
+import es.gob.afirma.android.util.PfLog;
 
 /**
  * Analizador de XML con la informaci&oacute;n requerida para la firma de documentos.
@@ -58,7 +57,7 @@ public class RequestDocumentParser {
 			try {
 				size = Integer.parseInt(XmlUtils.getTextContent(childNodes.item(elementIndex)));
 			} catch (NumberFormatException e) {
-				Log.w(SFConstants.LOG_TAG, "No se ha indicado un tamano de documento valido: " + XmlUtils.getTextContent(childNodes.item(elementIndex))); //$NON-NLS-1$
+				PfLog.w(SFConstants.LOG_TAG, "No se ha indicado un tamano de documento valido: " + XmlUtils.getTextContent(childNodes.item(elementIndex))); //$NON-NLS-1$
 			}
 			elementIndex = XmlUtils.nextNodeElementIndex(childNodes, ++elementIndex);
 		}

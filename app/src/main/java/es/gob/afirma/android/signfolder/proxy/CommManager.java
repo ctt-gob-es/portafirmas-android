@@ -1,5 +1,9 @@
 package es.gob.afirma.android.signfolder.proxy;
 
+import org.w3c.dom.Document;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,18 +17,13 @@ import java.security.cert.X509Certificate;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 
-import org.w3c.dom.Document;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-
-import android.util.Log;
-
 import es.gob.afirma.android.network.AndroidUrlHttpManager;
 import es.gob.afirma.android.network.ConnectionResponse;
 import es.gob.afirma.android.signfolder.AppPreferences;
 import es.gob.afirma.android.signfolder.SFConstants;
 import es.gob.afirma.android.util.AOUtil;
 import es.gob.afirma.android.util.Base64;
+import es.gob.afirma.android.util.PfLog;
 import es.gob.afirma.core.misc.http.UrlHttpManager;
 import es.gob.afirma.core.misc.http.UrlHttpManagerFactory;
 import es.gob.afirma.core.misc.http.UrlHttpMethod;
@@ -104,21 +103,21 @@ public final class CommManager  extends CommManagerOldVersion{
 				+ PARAMETER_NAME_DATA + "=" + dataB64UrlSafe;
 	}
 
-	public FirePreSignResult firePreSignRequests(final SignRequest[] requests) throws IOException, SAXException {
+	public FireLoadDataResult firePrepareSigns(final SignRequest[] requests) throws IOException, SAXException {
 		final String dataB64UrlSafe = prepareParam(
-				XmlRequestsFactory.createClaveFirmaPreSignRequest(requests)
+				XmlRequestsFactory.createFireLoadDataRequest(requests)
 		);
 
-		return PresignsClaveFirmaResponseParser.parse(getRemoteDocument(prepareUrl(
+		return FireLoadDataResponseParser.parse(getRemoteDocument(prepareUrl(
 				OPERATION_PRESIGN_CLAVE_FIRMA, dataB64UrlSafe)));
 	}
 
-	public RequestResult[] firePostSignRequests(final FirePreSignResult firePreSignResult) throws IOException, SAXException {
+	public FireSignResult fireSignRequests() throws IOException, SAXException {
 		final String dataB64UrlSafe = prepareParam(
-				XmlRequestsFactory.createClaveFirmaPostSignRequest(firePreSignResult)
+				XmlRequestsFactory.createFireSignRequest()
 		);
 
-		return PostsignsClaveFirmaResponseParser.parse(getRemoteDocument(prepareUrl(
+		return FireSignResponseParser.parse(getRemoteDocument(prepareUrl(
 				OPERATION_POSTSIGN_CLAVE_FIRMA, dataB64UrlSafe)));
 	}
 
@@ -134,7 +133,7 @@ public final class CommManager  extends CommManagerOldVersion{
 		String xmlResponse = new String(AOUtil.getDataFromInputStream(is));
 		is.close();
 
-		Log.i(SFConstants.LOG_TAG," ===== Respuesta a la peticion de login a clave:\n" + xmlResponse); //$NON-NLS-1$
+		PfLog.i(SFConstants.LOG_TAG," ===== Respuesta a la peticion de login a clave:\n" + xmlResponse); //$NON-NLS-1$
 
 		Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder()
 				.parse(new InputSource(new StringReader(xmlResponse)));
@@ -142,7 +141,7 @@ public final class CommManager  extends CommManagerOldVersion{
         final ClaveLoginResult result = ClaveLoginRequestResponseParser.parse(doc);
         result.setSessionId(response.getCookieId());
 
-        Log.i(SFConstants.LOG_TAG, "Session Id envidada desde el servidor: " + response.getCookieId());
+        PfLog.i(SFConstants.LOG_TAG, "Session Id envidada desde el servidor: " + response.getCookieId());
 
 		return result;
 	}
@@ -537,8 +536,8 @@ public final class CommManager  extends CommManagerOldVersion{
 	 * 			Token de registro en GCM.
 	 * @param device
 	 * 			Identificador de dispositivo.
-	 * @param certB64
-	 * 			Certificado en base 64 del usuario.
+	 * @param dni
+	 * 			DNI del usuario.
 	 * @return Resultado del proceso de alta en el sistema de notificaciones.
 	 * 			Indica
 	 * @throws SAXException
@@ -547,7 +546,7 @@ public final class CommManager  extends CommManagerOldVersion{
 	 *             Cuando existe alg&uacute;n problema en la lectura/escritura
 	 *             de XML o al recuperar la respuesta del servidor.
 	 */
-	public NotificationRegistryResult registerOnNotificationService(final String token, final String device, final String certB64) throws SAXException, IOException {
+	public NotificationRegistryResult registerOnNotificationService(final String token, final String device, final String dni) throws SAXException, IOException {
 
 		// El antiguo proxy no admite la operacion de registro en el sistema de notificaciones
 		if (oldProxy) {
@@ -556,7 +555,7 @@ public final class CommManager  extends CommManagerOldVersion{
 
 		// Componentemos el XML con la peticion
 		final String dataB64UrlSafe = prepareParam(XmlRequestsFactory
-					.createRegisterNotificationRequest(token, device, certB64));
+					.createRegisterNotificationRequest(token, device, dni));
 
 		// Realizamos la peticion
 		return RegisterOnNotificationParser.parse(
@@ -580,7 +579,7 @@ public final class CommManager  extends CommManagerOldVersion{
 		byte[] data = AOUtil.getDataFromInputStream(is);
 		is.close();
 
-		Log.w(SFConstants.LOG_TAG, "XML recibido: " + new String(data));
+		PfLog.w(SFConstants.LOG_TAG, "XML recibido: " + new String(data));
 
 		return this.db.parse(new ByteArrayInputStream(data));
 	}
@@ -612,7 +611,7 @@ public final class CommManager  extends CommManagerOldVersion{
                 AndroidUrlHttpManager.disableSslChecks();
             }
             catch(final Exception e) {
-                Log.w(SFConstants.LOG_TAG,
+                PfLog.w(SFConstants.LOG_TAG,
                         "No se ha podido ajustar la confianza SSL, es posible que no se pueda completar la conexion: " + e //$NON-NLS-1$
                 );
             }
@@ -624,7 +623,7 @@ public final class CommManager  extends CommManagerOldVersion{
             AndroidUrlHttpManager.enableSslChecks();
         }
 
-        Log.d(SFConstants.LOG_TAG, "Se ha obtenido el flujo de entrada de los datos"); //$NON-NLS-1$
+        PfLog.d(SFConstants.LOG_TAG, "Se ha obtenido el flujo de entrada de los datos"); //$NON-NLS-1$
 
         return response;
     }
@@ -657,24 +656,26 @@ public final class CommManager  extends CommManagerOldVersion{
 	}
 
 
-	private static void printText(String text) {
-
-		if (text == null || text.isEmpty()) {
-			return;
-		}
-
-		Log.i(SFConstants.LOG_TAG, "===========");
-		if (text.length() <= 4000) {
-			Log.i(SFConstants.LOG_TAG, text);
-		}
-		else {
-			int idx = 0;
-			while (text.length() - idx > 4000) {
-				Log.i(SFConstants.LOG_TAG, text.substring(idx, idx + 4000));
-				idx += 4000;
-			}
-			Log.i(SFConstants.LOG_TAG, text.substring(idx));
-		}
-		Log.i(SFConstants.LOG_TAG, "===========");
-	}
+//	private static void printText(String text) {
+//
+//		if (text == null || text.isEmpty()) {
+//			return;
+//		}
+//
+//		final int TEXT_LIMIT = 4000;
+//
+//		PfLog.i(SFConstants.LOG_TAG, "===========");
+//		if (text.length() <= TEXT_LIMIT) {
+//			PfLog.i(SFConstants.LOG_TAG, text);
+//		}
+//		else {
+//			int idx = 0;
+//			while (text.length() - idx > TEXT_LIMIT) {
+//				PfLog.i(SFConstants.LOG_TAG, text.substring(idx, idx + TEXT_LIMIT));
+//				idx += TEXT_LIMIT;
+//			}
+//			PfLog.i(SFConstants.LOG_TAG, text.substring(idx));
+//		}
+//		PfLog.i(SFConstants.LOG_TAG, "===========");
+//	}
 }

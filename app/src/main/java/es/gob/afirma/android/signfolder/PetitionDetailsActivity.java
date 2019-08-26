@@ -1,17 +1,5 @@
 package es.gob.afirma.android.signfolder;
 
-import java.io.File;
-import java.security.KeyStore.PrivateKeyEntry;
-import java.security.KeyStoreException;
-import java.security.PrivateKey;
-import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
-import java.util.Vector;
-
 import android.Manifest;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
@@ -31,10 +19,8 @@ import android.os.Bundle;
 import android.security.KeyChainException;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -48,13 +34,24 @@ import android.widget.ListView;
 import android.widget.TabHost;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.io.File;
+import java.security.KeyStore.PrivateKeyEntry;
+import java.security.KeyStoreException;
+import java.security.PrivateKey;
+import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
+import java.util.Vector;
+
 import es.gob.afirma.android.crypto.MobileKeyStoreManager.KeySelectedEvent;
 import es.gob.afirma.android.crypto.MobileKeyStoreManager.PrivateKeySelectionListener;
 import es.gob.afirma.android.signfolder.DownloadFileTask.DownloadDocumentListener;
 import es.gob.afirma.android.signfolder.LoadPetitionDetailsTask.LoadSignRequestDetailsListener;
 import es.gob.afirma.android.signfolder.proxy.CommManager;
-import es.gob.afirma.android.signfolder.proxy.FirePreSignResult;
-import es.gob.afirma.android.signfolder.proxy.RequestAppConfiguration;
+import es.gob.afirma.android.signfolder.proxy.FireLoadDataResult;
 import es.gob.afirma.android.signfolder.proxy.RequestDetail;
 import es.gob.afirma.android.signfolder.proxy.RequestDocument;
 import es.gob.afirma.android.signfolder.proxy.RequestResult;
@@ -63,19 +60,19 @@ import es.gob.afirma.android.signfolder.proxy.SignLineElement;
 import es.gob.afirma.android.signfolder.proxy.SignRequest;
 import es.gob.afirma.android.signfolder.proxy.SignRequest.RequestType;
 import es.gob.afirma.android.signfolder.proxy.SignRequestDocument;
-import es.gob.afirma.android.signfolder.proxy.ValidationLoginResult;
+import es.gob.afirma.android.util.PfLog;
 
 /** Actividad con el detalle de las peticiones. */
-public final class PetitionDetailsActivity extends FragmentActivity implements LoadSignRequestDetailsListener,
+public final class PetitionDetailsActivity extends WebViewParentActivity implements LoadSignRequestDetailsListener,
                                                                          DownloadDocumentListener,
                                                                          OperationRequestListener,
                                                                          PrivateKeySelectionListener,
                                                                          DialogFragmentListener,
-		FirePreSignTask.ClaveFirmaPreSignListener,
-		FirePostSignTask.ClaveFirmaPostSignListener
+		FireLoadDataTask.FireLoadDataListener,
+		FireSignTask.FireSignListener
 {
 
-	static final String EXTRA_RESOURCE_CERT_B64 = "es.gob.afirma.signfolder.cert"; //$NON-NLS-1$
+	static final String EXTRA_RESOURCE_DNI = "es.gob.afirma.signfolder.dni"; //$NON-NLS-1$
 	static final String EXTRA_RESOURCE_CERT_ALIAS = "es.gob.afirma.signfolder.alias"; //$NON-NLS-1$
 	static final String EXTRA_RESOURCE_REQUEST_ID = "es.gob.afirma.signfolder.requestId"; //$NON-NLS-1$
 	static final String EXTRA_RESOURCE_REQUEST_STATE = "es.gob.afirma.signfolder.requestState"; //$NON-NLS-1$
@@ -123,7 +120,7 @@ public final class PetitionDetailsActivity extends FragmentActivity implements L
 	/** Identificador de la firma XAdES por defecto. */
 	public static final String SIGN_FORMAT_XADES = "XAdES"; //$NON-NLS-1$
 
-	private String certB64 = null;
+	private String dni = null;
 	private String certAlias = null;
 
 	private RequestDetail reqDetails = null;
@@ -133,7 +130,7 @@ public final class PetitionDetailsActivity extends FragmentActivity implements L
 	private List<File> tempDocuments = null;
 
 	/** Informacion trifasica que se obtiene en la prefirma y reutiliza en la postfirma. */
-	private FirePreSignResult firePreSignResult = null;
+	private FireLoadDataResult firePreSignResult = null;
 
 	private ProgressDialog progressDialog = null;
 	ProgressDialog getProgressDialog() {
@@ -227,10 +224,11 @@ public final class PetitionDetailsActivity extends FragmentActivity implements L
 		super.onStart();
 
 		this.requestState = getIntent().getStringExtra(EXTRA_RESOURCE_REQUEST_STATE);
-		if (getIntent() != null && getIntent().getStringExtra(EXTRA_RESOURCE_REQUEST_ID) != null &&
-				getIntent().getStringExtra(EXTRA_RESOURCE_CERT_B64) != null &&
-				getIntent().getStringExtra(EXTRA_RESOURCE_CERT_ALIAS) != null) {
-			this.certB64 = getIntent().getStringExtra(EXTRA_RESOURCE_CERT_B64);
+		if (getIntent() != null &&
+				getIntent().getStringExtra(EXTRA_RESOURCE_REQUEST_ID) != null &&
+				(getIntent().getStringExtra(EXTRA_RESOURCE_DNI) != null ||
+						getIntent().getStringExtra(EXTRA_RESOURCE_CERT_ALIAS) != null)) {
+			this.dni = getIntent().getStringExtra(EXTRA_RESOURCE_DNI);
 			this.certAlias = getIntent().getStringExtra(EXTRA_RESOURCE_CERT_ALIAS);
 
 			if (this.reqDetails != null) {
@@ -239,21 +237,12 @@ public final class PetitionDetailsActivity extends FragmentActivity implements L
 			else {
 				final LoadPetitionDetailsTask lpdt = new LoadPetitionDetailsTask(
 						getIntent().getStringExtra(EXTRA_RESOURCE_REQUEST_ID),
-						this.certB64,
 						CommManager.getInstance(),
 						this);
-				showProgressDialog(getString(R.string.dialog_msg_loading),lpdt);
+				showProgressDialog(getString(R.string.dialog_msg_loading), lpdt);
 				lpdt.execute();
 			}
 		}
-	}
-
-	/**
-	 * M&eacute;todo para el acceso al certificado de firma desde las clases internas usadas por la Activity.
-	 * @return Certificado en base 64.
-	 */
-	String getCertB64() {
-		return this.certB64;
 	}
 
     /**
@@ -314,7 +303,7 @@ public final class PetitionDetailsActivity extends FragmentActivity implements L
 
     	// Listado de remitentes en la pestana de detalle
     	final ListView sendersList = (ListView) findViewById(R.id.listSenders);
-    	sendersList.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, details.getSenders()));
+    	sendersList.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, details.getSenders()));
 
         // Listado de documentos en la pestana de documentos
 		final List<SignRequestDocument> documentsList = Arrays.asList(details.getDocs());
@@ -499,7 +488,7 @@ public final class PetitionDetailsActivity extends FragmentActivity implements L
 				}
 
 				if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-					Log.i(SFConstants.LOG_TAG, "Concedido permiso de escritura en memoria");
+					PfLog.i(SFConstants.LOG_TAG, "Concedido permiso de escritura en memoria");
 					downloadDocument(selectedDocItem.docId, selectedDocItem.name, selectedDocItem.mimetype, selectedDocItem.docType);
 				}
 				else {
@@ -822,7 +811,7 @@ public final class PetitionDetailsActivity extends FragmentActivity implements L
 					}
 				});
 			} catch (final Exception e) {
-				Log.w(SFConstants.LOG_TAG, "No se pudo informar de que la firma se guardo correctamente: " + e); //$NON-NLS-1$
+				PfLog.w(SFConstants.LOG_TAG, "No se pudo informar de que la firma se guardo correctamente: " + e); //$NON-NLS-1$
 				e.printStackTrace();
 			}
 		}
@@ -856,7 +845,7 @@ public final class PetitionDetailsActivity extends FragmentActivity implements L
 	 */
 	private void openFile(final File documentFile, final String mimetype, final boolean external) {
 
-		Log.i(SFConstants.LOG_TAG, "Abrimos el documento descargado con el MimeType: " + mimetype);
+		PfLog.i(SFConstants.LOG_TAG, "Abrimos el documento descargado con el MimeType: " + mimetype);
 
 		Uri fileUri;
         if (external) {
@@ -881,7 +870,7 @@ public final class PetitionDetailsActivity extends FragmentActivity implements L
 				this.startActivity(intent);
 			} catch (final ActivityNotFoundException e) {
 
-				Log.w(SFConstants.LOG_TAG, "No se pudo abrir el fichero guardado: " + e); //$NON-NLS-1$
+				PfLog.w(SFConstants.LOG_TAG, "No se pudo abrir el fichero guardado: " + e); //$NON-NLS-1$
 				e.printStackTrace();
 
 				final MessageDialog md = new MessageDialog();
@@ -909,7 +898,7 @@ public final class PetitionDetailsActivity extends FragmentActivity implements L
         final PackageManager pm = getApplicationContext().getPackageManager();
         final List<ResolveInfo> list = pm.queryIntentActivities(intent, 0);
         if (list.isEmpty()) {
-            Log.w(SFConstants.LOG_TAG, "No hay visor pdf instalado"); //$NON-NLS-1$
+            PfLog.w(SFConstants.LOG_TAG, "No hay visor pdf instalado"); //$NON-NLS-1$
             new AlertDialog.Builder(PetitionDetailsActivity.this)
                 .setTitle(R.string.error)
                 .setMessage(R.string.no_pdf_viewer_msg)
@@ -940,7 +929,7 @@ public final class PetitionDetailsActivity extends FragmentActivity implements L
                 return;
             }
 
-            Log.i(SFConstants.LOG_TAG, "Ni Adobe ni Gdrive instalado"); //$NON-NLS-1$
+            PfLog.i(SFConstants.LOG_TAG, "Ni Adobe ni Gdrive instalado"); //$NON-NLS-1$
             new AlertDialog.Builder(PetitionDetailsActivity.this)
                 .setTitle(R.string.aviso)
                 .setMessage(R.string.no_adobe_reader_msg)
@@ -966,7 +955,7 @@ public final class PetitionDetailsActivity extends FragmentActivity implements L
 
 		if (this.tempDocuments != null) {
 			for (final File doc : this.tempDocuments) {
-				Log.i(SFConstants.LOG_TAG, "Se intenta borrar el fichero: " + doc.getAbsolutePath()); //$NON-NLS-1$
+				PfLog.i(SFConstants.LOG_TAG, "Se intenta borrar el fichero: " + doc.getAbsolutePath()); //$NON-NLS-1$
 				doc.delete();
 			}
 		}
@@ -1038,11 +1027,11 @@ public final class PetitionDetailsActivity extends FragmentActivity implements L
 			// Dependiendo de si firmamos con Cl@ve Firma o con certificado local,
 			// iniciaremos las llamadas a FIRe o cargaremos el certificado local
 			if(AppPreferences.getInstance().isCloudCertEnabled()) {
-				Log.i(SFConstants.LOG_TAG, "Iniciamos firma con Cl@ve Firma");
-				doSignWithClaveFirma();
+				PfLog.i(SFConstants.LOG_TAG, "Iniciamos firma con Cl@ve Firma");
+				doSignWithFire();
 			}
 			else {
-				Log.i(SFConstants.LOG_TAG, "Iniciamos firma con certificado local");
+				PfLog.i(SFConstants.LOG_TAG, "Iniciamos firma con certificado local");
 				new LoadSelectedPrivateKeyTask(this.certAlias, this, this).execute();
 			}
     	} else {
@@ -1054,10 +1043,9 @@ public final class PetitionDetailsActivity extends FragmentActivity implements L
 	/**
 	 * Inicia el proceso de firma con Cl@ve Firma.
 	 */
-	private void doSignWithClaveFirma() {
+	private void doSignWithFire() {
 		// Se inicia el WebView
-		FirePreSignTask cct = new FirePreSignTask(new SignRequest[] { this.reqDetails }, this, this);
-		//showProgressDialog(getString(R.string.dialog_msg_clave),null);
+		FireLoadDataTask cct = new FireLoadDataTask(new SignRequest[] { this.reqDetails }, this);
 		cct.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 
@@ -1069,7 +1057,7 @@ public final class PetitionDetailsActivity extends FragmentActivity implements L
 			pke = kse.getPrivateKeyEntry();
 		}
 		catch (final KeyChainException e) {
-			Log.e(SFConstants.LOG_TAG, "Error al recuperar la clave privada seleccionada: " + e); //$NON-NLS-1$
+			PfLog.e(SFConstants.LOG_TAG, "Error al recuperar la clave privada seleccionada: " + e); //$NON-NLS-1$
 			if ("4.1.1".equals(Build.VERSION.RELEASE) || "4.1.0".equals(Build.VERSION.RELEASE) || "4.1".equals(Build.VERSION.RELEASE)) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 				showToastMessage(ErrorManager.getErrorMessage(ErrorManager.ERROR_PKE_ANDROID_4_1));
 				closeActivity();
@@ -1080,14 +1068,14 @@ public final class PetitionDetailsActivity extends FragmentActivity implements L
 			return;
 		}
 		catch (final KeyStoreException e) {
-			Log.e(SFConstants.LOG_TAG, "El usuario no selecciono un certificado: " + e); //$NON-NLS-1$
+			PfLog.e(SFConstants.LOG_TAG, "El usuario no selecciono un certificado: " + e); //$NON-NLS-1$
 			showToastMessage(ErrorManager.getErrorMessage(ErrorManager.ERROR_CANCELLED_OPERATION));
 			return;
 		}
 		// Cuando se instala el certificado desde el dialogo de seleccion, Android da a elegir certificado
 		// en 2 ocasiones y en la segunda se produce un "java.lang.AssertionError". Se ignorara este error.
 		catch (final Throwable e) {
-			Log.e(SFConstants.LOG_TAG, "Error desconocido en la seleccion del certificado: " + e.toString()); //$NON-NLS-1$
+			PfLog.e(SFConstants.LOG_TAG, "Error desconocido en la seleccion del certificado: " + e.toString()); //$NON-NLS-1$
 			showToastMessage(ErrorManager.getErrorMessage(ErrorManager.ERROR_PKE));
 			return;
 		}
@@ -1103,17 +1091,28 @@ public final class PetitionDetailsActivity extends FragmentActivity implements L
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 
 		// Obtenemos la respuesta tras autorizar la operacion en Cl@ve Firma
-		if (requestCode == FireWebViewActivity.REQUEST_CODE) {
+		if (requestCode == WebViewParentActivity.WEBVIEW_REQUEST_CODE) {
 			// Si la peticion ha sido correcta iniciamos la finalizacion de firma
 			if (resultCode == RESULT_OK) {
 
-				Log.w(SFConstants.LOG_TAG, "Iniciamos la AsyncTask de la PostFirma");
-				// Se inicia el WebView
-				FirePostSignTask cct = new FirePostSignTask(this.firePreSignResult, this, this);
-				//showProgressDialog(getString(R.string.dialog_msg_clave),null);
-				cct.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+				PfLog.i(SFConstants.LOG_TAG, "Se han cargado correctamente los datos en FIRe");
+
+				FireSignTask signTask = new FireSignTask(this);
+				signTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+			}
+			else if (resultCode == RESULT_CANCELED) {
+				PfLog.i(SFConstants.LOG_TAG, "Operacion de firma cancelada por el usuario");
+				dismissProgressDialog();
 			}
 			else {
+				PfLog.e(SFConstants.LOG_TAG, "Error al cargar los datos en FIRe"); //$NON-NLS-1$
+				String errorType = data != null ? data.getStringExtra("type") : null; //$NON-NLS-1$
+
+				PfLog.e(SFConstants.LOG_TAG, "Tipo de error: " + errorType);
+
+				dismissProgressDialog();
+
+				// TODO: Diferenciar segun tipo de error
 				showToastMessage(getString(R.string.toast_msg_fire_comunication_ko));
 			}
 		}
@@ -1121,7 +1120,7 @@ public final class PetitionDetailsActivity extends FragmentActivity implements L
 
     private void rejectRequest(final String reason) {
     	new RejectRequestsTask(
-    			this.reqDetails.getId(), this.certB64, CommManager.getInstance(), this, reason).execute();
+    			this.reqDetails.getId(), CommManager.getInstance(), this, reason).execute();
     }
 
     private void approveRequest() {
@@ -1141,7 +1140,7 @@ public final class PetitionDetailsActivity extends FragmentActivity implements L
 			closeActivity();
 		}
 		else {
-			Log.e(SFConstants.LOG_TAG, "Ha fallado la operacion"); //$NON-NLS-1$
+			PfLog.e(SFConstants.LOG_TAG, "Ha fallado la operacion"); //$NON-NLS-1$
 
 			final int msgId = operation == OperationRequestListener.REJECT_OPERATION ?
 					R.string.error_msg_rejecting_request :
@@ -1155,7 +1154,7 @@ public final class PetitionDetailsActivity extends FragmentActivity implements L
 
 		dismissProgressDialog();
 
-		Log.e(SFConstants.LOG_TAG, "Ha fallado la operacion con la excepcion: " + t, t); //$NON-NLS-1$
+		PfLog.e(SFConstants.LOG_TAG, "Ha fallado la operacion con la excepcion: " + t, t); //$NON-NLS-1$
 
 		final int msgId = operation == OperationRequestListener.REJECT_OPERATION ?
 				R.string.error_msg_rejecting_request :
@@ -1217,7 +1216,7 @@ public final class PetitionDetailsActivity extends FragmentActivity implements L
 						});
 					}
 				} catch (final Exception e) {
-					Log.e(SFConstants.LOG_TAG, "No se ha podido mostrar el dialogo de progreso: " + e); //$NON-NLS-1$
+					PfLog.e(SFConstants.LOG_TAG, "No se ha podido mostrar el dialogo de progreso: " + e); //$NON-NLS-1$
 				}
 			}
 		});
@@ -1244,7 +1243,7 @@ public final class PetitionDetailsActivity extends FragmentActivity implements L
 						}
 					});
 				} catch (final Exception e) {
-					Log.e(SFConstants.LOG_TAG, "No se ha podido mostrar el dialogo de progreso: " + e); //$NON-NLS-1$
+					PfLog.e(SFConstants.LOG_TAG, "No se ha podido mostrar el dialogo de progreso: " + e); //$NON-NLS-1$
 				}
 			}
 		});
@@ -1261,7 +1260,7 @@ public final class PetitionDetailsActivity extends FragmentActivity implements L
 				LogoutRequestTask lrt = new LogoutRequestTask(CommManager.getInstance());
 				lrt.execute();
 			} catch (Exception e) {
-				Log.e(SFConstants.LOG_TAG,
+				PfLog.e(SFConstants.LOG_TAG,
 						"No se ha podido cerrar sesion: " + e); //$NON-NLS-1$
 			}
 			setResult(RESULT_SESSION_CLOSED);
@@ -1292,26 +1291,25 @@ public final class PetitionDetailsActivity extends FragmentActivity implements L
 	 * autorizaci&oacute;n del usuario.
 	 */
 	@Override
-	public void firePreSignSuccess(FirePreSignResult firePreSignResult) {
+	public void fireLoadDataSuccess(FireLoadDataResult firePreSignResult) {
 
 		// Almacenamos la informacion trifasica para reutilizarla al solicitar las postfirmas
 		this.firePreSignResult = firePreSignResult;
 
-		Log.w(SFConstants.LOG_TAG, "Recibido del PreSignTask:\n" + this.firePreSignResult.toString());
+		PfLog.w(SFConstants.LOG_TAG, "Recibido del PreSignTask:\n" + this.firePreSignResult.toString());
 
 		// Abrimos una actividad con un WebView en la que se muestre la URL recibida
-		Bundle bundle = new Bundle();
-		bundle.putString(FireWebViewActivity.EXTRA_PARAM_TRANSACTION_ID, firePreSignResult.getTransactionId());
-		bundle.putString(FireWebViewActivity.EXTRA_PARAM_URL, firePreSignResult.getURL());
-
-		Intent intent = new Intent(this, FireWebViewActivity.class);
-		intent.putExtras(bundle);
-		startActivityForResult(intent, FireWebViewActivity.REQUEST_CODE);
+		openWebViewActivity(
+				ClaveWebViewActivity.class,
+				firePreSignResult.getURL(),
+				null,
+				R.string.title_fire_webview,
+				true);
 	}
 
 	@Override
-	public void firePreSignFailed(Throwable cause) {
-		Log.e(SFConstants.LOG_TAG, "Ha fallado la operacion con la excepcion: " + cause, cause); //$NON-NLS-1$
+	public void fireLoadDataFailed(Throwable cause) {
+		PfLog.e(SFConstants.LOG_TAG, "Ha fallado la operacion con la excepcion: " + cause, cause); //$NON-NLS-1$
 
 		dismissProgressDialog();
 
@@ -1320,30 +1318,26 @@ public final class PetitionDetailsActivity extends FragmentActivity implements L
 
 
 	@Override
-	public void firePostSignSuccess(RequestResult[] requestResults) {
+	public void fireSignSuccess(boolean allOk) {
 
-		dismissProgressDialog();
+ 		dismissProgressDialog();
 
-		// Comprobamos que todas las firmas son correctas (aunque solo debe haber una)
-		boolean allOk = true;
-		for (int i = 0; allOk && i < requestResults.length; i++) {
-			if (!requestResults[i].isStatusOk()) {
-				allOk = false;
-			}
-		}
 		if (allOk) {
 			setResult(PetitionDetailsActivity.RESULT_SIGN_OK);
 			closeActivity();
 		}
 		else {
-			Log.e(SFConstants.LOG_TAG, "Han fallado algunas operaciones de firma con Cl@ve Firma"); //$NON-NLS-1$
+			PfLog.e(SFConstants.LOG_TAG, "Ha fallado la firma con FIRe"); //$NON-NLS-1$
 			showToastMessage(getString(R.string.error_msg_procesing_request));
 		}
 	}
 
 	@Override
-	public void firePostSignFailed(Throwable cause) {
-		Log.e(SFConstants.LOG_TAG, "Ha fallado la operacion de firma con Cl@ve Firma", cause); //$NON-NLS-1$
+	public void fireSignFailed(Throwable cause) {
+
+		dismissProgressDialog();
+
+		PfLog.e(SFConstants.LOG_TAG, "Ha fallado la operacion de firma con Cl@ve Firma", cause); //$NON-NLS-1$
 		showToastMessage(getString(R.string.error_msg_procesing_request));
 	}
 

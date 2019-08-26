@@ -9,7 +9,6 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Environment;
 import android.support.v4.app.FragmentActivity;
-import android.util.Log;
 import android.widget.Toast;
 
 import java.io.File;
@@ -19,6 +18,7 @@ import java.io.InputStream;
 import java.util.List;
 
 import es.gob.afirma.android.signfolder.proxy.CommManager;
+import es.gob.afirma.android.util.PfLog;
 
 /** Tarea as&iacute;ncrona para la descarga y apertura del documento de ayuda de la
  * aplicaci&oacuten. Si el documento ya se descargo previamente, se abrir&aacute; directamente. */
@@ -51,7 +51,7 @@ final class OpenHelpDocumentTask extends AsyncTask<Void, Void, File> {
 			helpFilename = Uri.parse(helpUrl).getLastPathSegment();
 		}
 		catch (Exception e) {
-			Log.e(SFConstants.LOG_TAG, "La URL de ayuda no es valida: " + helpUrl, e);
+			PfLog.e(SFConstants.LOG_TAG, "La URL de ayuda no es valida: " + helpUrl, e);
 			return null;
 		}
 
@@ -66,7 +66,7 @@ final class OpenHelpDocumentTask extends AsyncTask<Void, Void, File> {
 		try {
 			if (!exist) {
 
-				Log.i(SFConstants.LOG_TAG, "Descargamos el fichero de ayuda");
+				PfLog.i(SFConstants.LOG_TAG, "Descargamos el fichero de ayuda");
 
 				CommManager comm = CommManager.getInstance();
 				InputStream docIs = comm.getRemoteDocumentIs(helpUrl);
@@ -83,11 +83,11 @@ final class OpenHelpDocumentTask extends AsyncTask<Void, Void, File> {
 			}
 		}
 		catch (SecurityException e) {
-			Log.e(SFConstants.LOG_TAG, "No se pudo acceder al fichero o comprobar su existencia: " + helpFile.toString(), e);
+			PfLog.e(SFConstants.LOG_TAG, "No se pudo acceder al fichero o comprobar su existencia: " + helpFile.toString(), e);
 			helpFile = null;
 		}
 		catch (IOException e) {
-			Log.e(SFConstants.LOG_TAG, "No se pudo descargar el fichero: " + helpFile.toString(), e);
+			PfLog.e(SFConstants.LOG_TAG, "No se pudo descargar el fichero: " + helpFile.toString(), e);
 			helpFile = null;
 		}
 
@@ -117,7 +117,7 @@ final class OpenHelpDocumentTask extends AsyncTask<Void, Void, File> {
 		final PackageManager pm = activity.getPackageManager();
 		final List<ResolveInfo> list = pm.queryIntentActivities(intent, 0);
 		if (list.isEmpty()) {
-			Log.w(SFConstants.LOG_TAG, "No hay visor pdf instalado"); //$NON-NLS-1$
+			PfLog.w(SFConstants.LOG_TAG, "No hay visor pdf instalado"); //$NON-NLS-1$
 			new AlertDialog.Builder(activity)
 					.setTitle(R.string.error)
 					.setMessage(R.string.no_pdf_viewer_msg)
@@ -148,7 +148,7 @@ final class OpenHelpDocumentTask extends AsyncTask<Void, Void, File> {
 				return;
 			}
 
-			Log.i(SFConstants.LOG_TAG, "Ni Adobe ni Gdrive instalado"); //$NON-NLS-1$
+			PfLog.i(SFConstants.LOG_TAG, "Ni Adobe ni Gdrive instalado"); //$NON-NLS-1$
 			new AlertDialog.Builder(activity)
 					.setTitle(R.string.aviso)
 					.setMessage(R.string.no_adobe_reader_msg)

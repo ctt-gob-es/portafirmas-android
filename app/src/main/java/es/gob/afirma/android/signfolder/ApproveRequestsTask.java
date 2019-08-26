@@ -1,10 +1,11 @@
 package es.gob.afirma.android.signfolder;
 
 import android.os.AsyncTask;
-import android.util.Log;
+
 import es.gob.afirma.android.signfolder.proxy.CommManager;
 import es.gob.afirma.android.signfolder.proxy.RequestResult;
 import es.gob.afirma.android.signfolder.proxy.SignRequest;
+import es.gob.afirma.android.util.PfLog;
 
 /** Tarea as&iacute;ncrona para la aprobaci&oacute;n (visto bueno) de peticiones de firma.
  * Despu&eacute;s de la aprobaci&oacute;n se actualiza la lista con las peticiones pendientes. */
@@ -49,7 +50,7 @@ final class ApproveRequestsTask extends AsyncTask<Void, Void, RequestResult[]> {
         try {
 			results = this.commManager.approveRequests(this.requestIds);
 		} catch (final Exception e) {
-			Log.w(SFConstants.LOG_TAG, "Ocurrio un error en la aprobacion de las solicitudes de firma: " + e); //$NON-NLS-1$
+			PfLog.w(SFConstants.LOG_TAG, "Ocurrio un error en la aprobacion de las solicitudes de firma: " + e); //$NON-NLS-1$
 			results = new RequestResult[this.requestIds.length];
 			for (int i = 0; i < results.length; i++) {
 				results[i] = new RequestResult(this.requestIds[i], false);

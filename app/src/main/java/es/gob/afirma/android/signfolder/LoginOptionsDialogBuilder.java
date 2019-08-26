@@ -1,9 +1,5 @@
 package es.gob.afirma.android.signfolder;
 
-import java.net.URL;
-import java.util.Collections;
-import java.util.List;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -16,6 +12,10 @@ import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+
+import java.net.URL;
+import java.util.Collections;
+import java.util.List;
 
 final class LoginOptionsDialogBuilder {
 

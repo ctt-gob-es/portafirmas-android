@@ -1,27 +1,28 @@
 package es.gob.afirma.android.gui;
 
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.Enumeration;
-
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
 import android.app.Dialog;
 import android.app.DialogFragment;
 import android.content.DialogInterface;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
+
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.Enumeration;
+
 import es.gob.afirma.android.crypto.LoadKeyStoreManagerTask;
 import es.gob.afirma.android.crypto.LoadKeyStoreManagerTask.KeystoreManagerListener;
 import es.gob.afirma.android.signfolder.R;
 import es.gob.afirma.android.signfolder.SFConstants;
 import es.gob.afirma.android.util.AOUtil;
+import es.gob.afirma.android.util.PfLog;
 
 /** Di&acute;logo para introducir el PIN.
  * Se usa en almacenes distintos al del propio sistema operativo Android.
@@ -90,7 +91,7 @@ public class PinDialog extends DialogFragment {
 		this.provider = getArguments().getString("provider"); //$NON-NLS-1$
 		this.keyStoreName = getArguments().getString("keyStoreName"); //$NON-NLS-1$
 
-		Log.i(SFConstants.LOG_TAG,"PinDialog recibe los argumentos provider: " + this.provider + " y keyStoreName: " + this.keyStoreName);   //$NON-NLS-1$//$NON-NLS-2$
+		PfLog.i(SFConstants.LOG_TAG,"PinDialog recibe los argumentos provider: " + this.provider + " y keyStoreName: " + this.keyStoreName);   //$NON-NLS-1$//$NON-NLS-2$
 
 		final Builder alertDialogBuilder = new AlertDialog.Builder(getActivity());
 		alertDialogBuilder.setTitle(getString(R.string.security_code) + " " + this.keyStoreName); //$NON-NLS-1$
@@ -123,7 +124,7 @@ public class PinDialog extends DialogFragment {
 						ks.load(null, editTextPin.getText().toString().toCharArray());
 					}
 					catch(final Exception e) {
-						Log.e(SFConstants.LOG_TAG, "Error al cargar el almacen de claves: " + e); //$NON-NLS-1$
+						PfLog.e(SFConstants.LOG_TAG, "Error al cargar el almacen de claves: " + e); //$NON-NLS-1$
 						dialog.dismiss();
 						if (PinDialog.this.getKsmListener() != null) {
 							PinDialog.this.getKsmListener().onErrorLoadingKeystore(
@@ -139,7 +140,7 @@ public class PinDialog extends DialogFragment {
 						aliases = ks.aliases();
 					}
 					catch(final Exception e) {
-						Log.e(SFConstants.LOG_TAG, "Error extrayendo los alias de los certificados del almacen: " + e); //$NON-NLS-1$
+						PfLog.e(SFConstants.LOG_TAG, "Error extrayendo los alias de los certificados del almacen: " + e); //$NON-NLS-1$
 						dialog.dismiss();
 						if (PinDialog.this.getKsmListener() != null) {
 							PinDialog.this.getKsmListener().onErrorLoadingKeystore(
@@ -157,7 +158,7 @@ public class PinDialog extends DialogFragment {
 							cert = (X509Certificate) ks.getCertificate(alias);
 						}
 						catch (final KeyStoreException e) {
-							Log.w(SFConstants.LOG_TAG, "No se ha podido extraer el certificado '" + alias + "': " + e);  //$NON-NLS-1$//$NON-NLS-2$
+							PfLog.w(SFConstants.LOG_TAG, "No se ha podido extraer el certificado '" + alias + "': " + e);  //$NON-NLS-1$//$NON-NLS-2$
 							continue;
 						}
 
@@ -166,7 +167,7 @@ public class PinDialog extends DialogFragment {
 							ks.getEntry(alias, null);
 						}
 						catch(final Exception e) {
-							Log.w(SFConstants.LOG_TAG, "Se omite el certificado '" + AOUtil.getCN(cert) + "' por no tener clave privada: " + e); //$NON-NLS-1$ //$NON-NLS-2$
+							PfLog.w(SFConstants.LOG_TAG, "Se omite el certificado '" + AOUtil.getCN(cert) + "' por no tener clave privada: " + e); //$NON-NLS-1$ //$NON-NLS-2$
 							continue;
 						}
 						arrayListCertificate.add(
@@ -180,7 +181,7 @@ public class PinDialog extends DialogFragment {
 					}
 
 					if(PinDialog.this.getKsmTask() == null){
-						Log.e(SFConstants.LOG_TAG, "No se ha establecido la tarea para la obtencion del almacen de certificados con setLoadKeyStoreManagerTask()");  //$NON-NLS-1$
+						PfLog.e(SFConstants.LOG_TAG, "No se ha establecido la tarea para la obtencion del almacen de certificados con setLoadKeyStoreManagerTask()");  //$NON-NLS-1$
 						dialog.dismiss();
 						if (PinDialog.this.getKsmListener() != null) {
 							PinDialog.this.getKsmListener().onErrorLoadingKeystore(

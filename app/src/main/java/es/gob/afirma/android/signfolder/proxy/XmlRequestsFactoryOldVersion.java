@@ -2,10 +2,9 @@ package es.gob.afirma.android.signfolder.proxy;
 
 import java.io.IOException;
 
-import android.util.Log;
-
 import es.gob.afirma.android.signfolder.SFConstants;
 import es.gob.afirma.android.util.Base64;
+import es.gob.afirma.android.util.PfLog;
 
 /** Factor&iacute;a para la creaci&oacute;n de solitidudes XML hacia el servidor de firmas multi-fase.
  * @author Tom&aacute;s Garc&iacute;a-Mer&aacute;s */
@@ -132,7 +131,7 @@ final class XmlRequestsFactoryOldVersion {
 		documents = request.getDocs();
 		for (final SignRequestDocument document : documents) {
 
-			Log.i(SFConstants.LOG_TAG, "Parametros que se agregan:\n" + document.getParams()); //$NON-NLS-1$ //$NON-NLS-2$
+			PfLog.i(SFConstants.LOG_TAG, "Parametros que se agregan:\n" + document.getParams()); //$NON-NLS-1$ //$NON-NLS-2$
 
 			sb.append("<doc docid=\"") //$NON-NLS-1$
 			.append(document.getId())
@@ -191,7 +190,7 @@ final class XmlRequestsFactoryOldVersion {
 		    	documents = request.getDocumentsRequests();
 		    	for (final TriphaseSignDocumentRequest document : documents) {
 
-		    		Log.i(SFConstants.LOG_TAG, "Parametros que se agregan:\n" + document.getParams()); //$NON-NLS-1$ //$NON-NLS-2$
+		    		PfLog.i(SFConstants.LOG_TAG, "Parametros que se agregan:\n" + document.getParams()); //$NON-NLS-1$ //$NON-NLS-2$
 
 		    		sb.append("<doc docid=\"") //$NON-NLS-1$
 		    		.append(document.getId())
@@ -218,11 +217,11 @@ final class XmlRequestsFactoryOldVersion {
 		sb.append(XML_TRISIGN_CLOSE);
 
 		// Imprimimos la peticion en el log
-		Log.i(SFConstants.LOG_TAG, "Peticion postfirma:"); //$NON-NLS-1$ //$NON-NLS-2$
+		PfLog.i(SFConstants.LOG_TAG, "Peticion postfirma:"); //$NON-NLS-1$ //$NON-NLS-2$
 		final int BUFFER_LENGTH = 1000;
 		final String urlString = sb.toString();
 		for (int i = 0; i < urlString.length() / BUFFER_LENGTH + 1; i++) {
-			Log.i(SFConstants.LOG_TAG, urlString.substring(i * BUFFER_LENGTH, Math.min((i + 1) * BUFFER_LENGTH, urlString.length()))); //$NON-NLS-1$
+			PfLog.i(SFConstants.LOG_TAG, urlString.substring(i * BUFFER_LENGTH, Math.min((i + 1) * BUFFER_LENGTH, urlString.length()))); //$NON-NLS-1$
 		}
 
 		return sb.toString();

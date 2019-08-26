@@ -1,5 +1,8 @@
 package es.gob.afirma.android.signfolder.proxy;
 
+import org.w3c.dom.Document;
+import org.xml.sax.SAXException;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -10,15 +13,12 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-import org.w3c.dom.Document;
-import org.xml.sax.SAXException;
-
-import android.util.Log;
 import es.gob.afirma.android.network.AndroidUrlHttpManager;
 import es.gob.afirma.android.network.ConnectionResponse;
 import es.gob.afirma.android.signfolder.AppPreferences;
 import es.gob.afirma.android.signfolder.SFConstants;
 import es.gob.afirma.android.util.Base64;
+import es.gob.afirma.android.util.PfLog;
 
 /** Gestor de comunicaciones con el servidor de portafirmas m&oacute;vil.
  * @author Tom&aacute;s Garc&iacute;a-Mer&aacute;s. */
@@ -58,7 +58,7 @@ public class CommManagerOldVersion {
 		try {
 			this.db = DocumentBuilderFactory.newInstance().newDocumentBuilder();
 		} catch (final ParserConfigurationException e) {
-			Log.e(SFConstants.LOG_TAG,
+			PfLog.e(SFConstants.LOG_TAG,
 					"No se ha podido cargar un manejador de XML: " + e.toString()); //$NON-NLS-1$
 			e.printStackTrace();
 			this.db = null;
@@ -239,7 +239,7 @@ public class CommManagerOldVersion {
 				AndroidUrlHttpManager.disableSslChecks();
 			}
 			catch(final Exception e) {
-				Log.w(SFConstants.LOG_TAG,
+				PfLog.w(SFConstants.LOG_TAG,
 						"No se ha podido ajustar la confianza SSL, es posible que no se pueda completar la conexion: " + e //$NON-NLS-1$
 				);
 			}
@@ -271,7 +271,7 @@ public class CommManagerOldVersion {
 				AndroidUrlHttpManager.disableSslChecks();
 			}
 			catch(final Exception e) {
-				Log.w(SFConstants.LOG_TAG,
+				PfLog.w(SFConstants.LOG_TAG,
 						"No se ha podido ajustar la confianza SSL, es posible que no se pueda completar la conexion: " + e //$NON-NLS-1$
 				);
 			}
@@ -284,7 +284,7 @@ public class CommManagerOldVersion {
 			AndroidUrlHttpManager.enableSslChecks();
 		}
 
-		Log.d(SFConstants.LOG_TAG, "Se ha obtenido el flujo de entrada de los datos"); //$NON-NLS-1$
+		PfLog.d(SFConstants.LOG_TAG, "Se ha obtenido el flujo de entrada de los datos"); //$NON-NLS-1$
 
 		return is;
 	}

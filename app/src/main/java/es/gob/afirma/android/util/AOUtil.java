@@ -10,8 +10,6 @@
 
 package es.gob.afirma.android.util;
 
-import android.util.Log;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -90,11 +88,11 @@ public final class AOUtil {
 
         final int i = principal.indexOf('=');
         if (i != -1) {
-            Log.w(SFConstants.LOG_TAG, "No se ha podido obtener el Common Name ni la Organizational Unit, se devolvera el fragmento mas significativo"); //$NON-NLS-1$
+            PfLog.w(SFConstants.LOG_TAG, "No se ha podido obtener el Common Name ni la Organizational Unit, se devolvera el fragmento mas significativo"); //$NON-NLS-1$
             return getRDNvalueFromLdapName(principal.substring(0, i), principal);
         }
 
-        Log.w(SFConstants.LOG_TAG, "Principal no valido, se devolvera la entrada"); //$NON-NLS-1$
+        PfLog.w(SFConstants.LOG_TAG, "Principal no valido, se devolvera la entrada"); //$NON-NLS-1$
         return principal;
     }
 

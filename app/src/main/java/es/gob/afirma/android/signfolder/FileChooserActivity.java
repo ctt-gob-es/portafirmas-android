@@ -1,22 +1,23 @@
 package es.gob.afirma.android.signfolder;
 
+import android.app.Activity;
+import android.app.ListActivity;
+import android.content.Intent;
+import android.os.Bundle;
+import android.os.Environment;
+import android.view.View;
+import android.widget.ListView;
+import android.widget.TextView;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
-import android.app.Activity;
-import android.app.ListActivity;
-import android.content.Intent;
-import android.os.Bundle;
-import android.os.Environment;
-import android.util.Log;
-import android.view.View;
-import android.widget.ListView;
-import android.widget.TextView;
 import es.gob.afirma.android.gui.FileArrayAdapter;
 import es.gob.afirma.android.gui.FileOption;
+import es.gob.afirma.android.util.PfLog;
 
 /** Actividad Android para la elecci&oacue;n de un fichero en el almacenamiento del dispositivo. */
 public final class FileChooserActivity extends ListActivity {
@@ -72,7 +73,7 @@ public final class FileChooserActivity extends ListActivity {
 			this.initialDirectoryName = this.currentDir.getName();
 		}
 
-		Log.d(SFConstants.LOG_TAG, "Se abre el directorio: " + this.currentDir.getAbsolutePath());  //$NON-NLS-1$
+		PfLog.d(SFConstants.LOG_TAG, "Se abre el directorio: " + this.currentDir.getAbsolutePath());  //$NON-NLS-1$
 
 		fill(this.currentDir);
 	}
@@ -81,8 +82,8 @@ public final class FileChooserActivity extends ListActivity {
 
 		((TextView) findViewById(R.id.current_directory)).setText(getString(R.string.file_chooser_directorio_actual) + " " + f.getName());  //$NON-NLS-1$
 
-		final List<FileOption> dir = new ArrayList<FileOption>();
-		final List<FileOption> fls = new ArrayList<FileOption>();
+		final List<FileOption> dir = new ArrayList<>();
+		final List<FileOption> fls = new ArrayList<>();
 
 		for (final File ff : f.listFiles()) {
 			// No mostramos ficheros ni directorios ocultos

@@ -1,16 +1,16 @@
 package es.gob.afirma.android.signfolder;
 
+import android.app.Activity;
+import android.os.AsyncTask;
+import android.os.Environment;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import android.app.Activity;
-import android.content.Context;
-import android.os.AsyncTask;
-import android.os.Environment;
-import android.util.Log;
+import es.gob.afirma.android.util.PfLog;
 
 /** Tarea para descarga de fichero en segundo plano. */
 public class SaveFileTask extends AsyncTask<Void, Void, File> {
@@ -37,7 +37,7 @@ public class SaveFileTask extends AsyncTask<Void, Void, File> {
 	protected File doInBackground(final Void... arg0) {
 
 		if (!isExternalStorageWritable()) {
-            Log.e(SFConstants.LOG_TAG, "No se encuentra disponible el almacenamiento externo para guardar del fichero"); //$NON-NLS-1$
+            PfLog.e(SFConstants.LOG_TAG, "No se encuentra disponible el almacenamiento externo para guardar del fichero"); //$NON-NLS-1$
 		    return null;
         }
 
@@ -50,7 +50,7 @@ public class SaveFileTask extends AsyncTask<Void, Void, File> {
             );
         } while (outFile.exists());
 
-        Log.i(SFConstants.LOG_TAG, "Se intenta guardar en disco el fichero: " + outFile.getAbsolutePath()); //$NON-NLS-1$
+        PfLog.i(SFConstants.LOG_TAG, "Se intenta guardar en disco el fichero: " + outFile.getAbsolutePath()); //$NON-NLS-1$
 
         try {
             final FileOutputStream fos = new FileOutputStream(outFile);
@@ -59,11 +59,11 @@ public class SaveFileTask extends AsyncTask<Void, Void, File> {
             this.dataIs.close();
         }
         catch (final Exception e) {
-            Log.e(SFConstants.LOG_TAG, "Error al guardar el fichero en un directorio externo: " + e); //$NON-NLS-1$
+            PfLog.e(SFConstants.LOG_TAG, "Error al guardar el fichero en un directorio externo: " + e); //$NON-NLS-1$
             return null;
         }
 
-		Log.i(SFConstants.LOG_TAG, "Fichero guardado con exito: " + outFile.exists());
+		PfLog.i(SFConstants.LOG_TAG, "Fichero guardado con exito: " + outFile.exists());
 
 		return outFile;
 	}

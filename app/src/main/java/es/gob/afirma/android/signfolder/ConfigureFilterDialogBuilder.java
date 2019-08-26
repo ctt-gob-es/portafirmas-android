@@ -1,9 +1,5 @@
 package es.gob.afirma.android.signfolder;
 
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.List;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
@@ -14,7 +10,6 @@ import android.content.DialogInterface;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -29,6 +24,14 @@ import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.DatePicker;
 import android.widget.Spinner;
 import android.widget.TextView;
+
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import es.gob.afirma.android.util.PfLog;
 
 final class ConfigureFilterDialogBuilder {
 
@@ -55,11 +58,15 @@ final class ConfigureFilterDialogBuilder {
 	private static final String KEY_FILTER_DATE_START = "initDateFilter="; //$NON-NLS-1$
 	private static final String KEY_FILTER_DATE_END = "endDateFilter="; //$NON-NLS-1$
 
+    /**
+     * Static attribute that represents the set of applications showed in the filter spiner of applications.
+     */
+    protected static Map<String, Integer> mApps = new HashMap<>();
 	private final KeyValuePair[] orderAdapterItems;
 
 	private final AlertDialog.Builder builder;
 
-	private FilterConfig filterConfig = null;
+	private FilterConfig filterConfig;
 
 	private final View v;
 
@@ -85,7 +92,7 @@ final class ConfigureFilterDialogBuilder {
 
 		// Configuramos los campos con sus valores y comportamientos
 		final boolean checked = bundle.getBoolean(FILTERS_ENABLED, false);
-		final CheckBox cb = (CheckBox) this.v.findViewById(R.id.cb_enable_filter);
+		final CheckBox cb = this.v.findViewById(R.id.cb_enable_filter);
 		cb.setChecked(checked);
 		final OnCheckedChangeListener listener = new FilterOptionCheckedListener(this.v);
 		listener.onCheckedChanged(cb, checked);
@@ -112,6 +119,20 @@ final class ConfigureFilterDialogBuilder {
 		((TextView) this.v.findViewById(R.id.et_filter_date_end)).setText(""); //$NON-NLS-1$
 	}
 
+	/**
+     * Restablece los valores por los del objeto pasado como párametro del diálogo de filtros.
+     */
+    void resetLayout(FilterConfig filterConfig) {
+        if (filterConfig != null) {
+            ((CheckBox) this.v.findViewById(R.id.cb_enable_filter)).setChecked(filterConfig.isEnabled());
+            ((Spinner) this.v.findViewById(R.id.spinner_order)).setSelection(filterConfig.getOrderAttribute() != null ? CommonsUtils.getOrderAttrInteger(filterConfig.getOrderAttribute()) : 0);
+            ((TextView) this.v.findViewById(R.id.et_filter_subject)).setText(filterConfig.getSubject() != null ? filterConfig.getSubject() : ""); //$NON-NLS-1$
+            ((Spinner) this.v.findViewById(R.id.spinner_app)).setSelection(filterConfig.getApp() != null ? CommonsUtils.getApplicationAttrInteger(filterConfig.getApp()) : 0);
+            ((TextView) this.v.findViewById(R.id.et_filter_date_start)).setText(filterConfig.getDateStart() != null ? filterConfig.getDateStart() : ""); //$NON-NLS-1$
+            ((TextView) this.v.findViewById(R.id.et_filter_date_end)).setText(filterConfig.getDateEnd() != null ? filterConfig.getDateEnd() : ""); //$NON-NLS-1$
+        }
+    }
+
 	private void configureField(final TextView textView, final String defaultValue, final String methodName) {
 		if (defaultValue != null) {
 			textView.setText(defaultValue);
@@ -126,13 +147,13 @@ final class ConfigureFilterDialogBuilder {
 					value = null;
 				}
 				try {
-					 getFilterConfig().getClass().getDeclaredMethod(methodName, String.class)
-					.invoke(getFilterConfig(), value);
+					 getFilterConfig().setSubject(value);
 				} catch (final Exception e) {
-					Log.w(SFConstants.LOG_TAG, "No se ha podido configurar el valor del filtro con el metodo: " + methodName); //$NON-NLS-1$
+					PfLog.w(SFConstants.LOG_TAG, "No se ha podido configurar el valor del filtro con el metodo: " + methodName); //$NON-NLS-1$
 					e.printStackTrace();
 				}
 	        }
+
 	        @Override
 			public void beforeTextChanged(final CharSequence s, final int start, final int count, final int after){ /* No hacemos nada */ }
 
@@ -162,7 +183,7 @@ final class ConfigureFilterDialogBuilder {
 							getFilterConfig().getClass().getDeclaredMethod(methodName, String.class)
 							.invoke(getFilterConfig(), dateText.toString());
 						} catch (final Exception e) {
-							Log.w(SFConstants.LOG_TAG, "No se ha podido configurar el valor del filtro con el metodo: " + methodName); //$NON-NLS-1$
+							PfLog.w(SFConstants.LOG_TAG, "No se ha podido configurar el valor del filtro con el metodo: " + methodName); //$NON-NLS-1$
 							e.printStackTrace();
 						}
 
@@ -189,7 +210,7 @@ final class ConfigureFilterDialogBuilder {
 					getFilterConfig().getClass().getDeclaredMethod(methodName, String.class)
 					.invoke(getFilterConfig(), (String) null);
 				} catch (final Exception e) {
-					Log.w(SFConstants.LOG_TAG, "No se ha podido configurar el comportamiento del boton de borrado con el metodo: " + methodName); //$NON-NLS-1$
+					PfLog.w(SFConstants.LOG_TAG, "No se ha podido configurar el comportamiento del boton de borrado con el metodo: " + methodName); //$NON-NLS-1$
 					e.printStackTrace();
 				}
 			}
@@ -208,7 +229,7 @@ final class ConfigureFilterDialogBuilder {
 					.invoke(getFilterConfig(), ((KeyValuePair) spnr.getItemAtPosition(position)).getKey());
 				}
 				catch (final Exception e) {
-					Log.w(SFConstants.LOG_TAG, "No se ha podido configurar el valor del filtro correspondiente al spinner: " + spnr.getId()); //$NON-NLS-1$
+					PfLog.w(SFConstants.LOG_TAG, "No se ha podido configurar el valor del filtro correspondiente al spinner: " + spnr.getId()); //$NON-NLS-1$
 					e.printStackTrace();
 				}
 			}
@@ -238,10 +259,12 @@ final class ConfigureFilterDialogBuilder {
 		return this.builder.create();
 	}
 
+										   
 	void setPositiveButton(final int id, final DialogInterface.OnClickListener listener) {
 		this.builder.setPositiveButton(id, listener);
 	}
 
+										   
 	void setNegativeButton(final int id, final DialogInterface.OnClickListener listener) {
 		this.builder.setNegativeButton(id, listener);
 	}
@@ -341,6 +364,7 @@ final class ConfigureFilterDialogBuilder {
 			return this;
 		}
 
+		   
 		/** Agrega a un <i>Bundle</i> la configuraci&oacute;n del filtro. Si se pasa {@code null}, se crea un nuevo
 		 * <i>Bundle</i> con esta configuraci&oacute;n.
 		 * @param bundle <i>Bundle</i> en donde insertar los datos o null.
@@ -373,8 +397,10 @@ final class ConfigureFilterDialogBuilder {
 		}
 	}
 
+	   
 	/** Clase para activar y desactivar las opciones de configuraci&oacute;n de filtros en el
 	 * di&aacute;logo de filtrado. */
+	   
 	final class FilterOptionCheckedListener implements OnCheckedChangeListener {
 
 		private final int[] DIALOG_ENABLED_RESOURCE_IDS = new int[] {
@@ -408,7 +434,7 @@ final class ConfigureFilterDialogBuilder {
     			getFilterConfig().getClass().getDeclaredMethod("setEnabled", Boolean.TYPE) //$NON-NLS-1$
 				.invoke(getFilterConfig(), Boolean.valueOf(checked));
 			} catch (final Exception e) {
-				Log.w(SFConstants.LOG_TAG, "No se ha podido configurar el valor de la propiedad de activacion de filtros"); //$NON-NLS-1$
+				PfLog.w(SFConstants.LOG_TAG, "No se ha podido configurar el valor de la propiedad de activacion de filtros"); //$NON-NLS-1$
 				e.printStackTrace();
 			}
 		}
@@ -449,7 +475,9 @@ final class ConfigureFilterDialogBuilder {
 		return filters;
 	}
 
+	   
 	/** Adaptador para el <i>Spinner</i> de aplicaciones. */
+	   
 	final class KeyValueSpinnerAdapter extends ArrayAdapter<KeyValuePair> {
 
 		KeyValueSpinnerAdapter(final KeyValuePair[] items, final Context context) {
@@ -469,6 +497,22 @@ final class ConfigureFilterDialogBuilder {
 			}
 		}
 	}
+
+    /**
+     * Method that stores the applications list and asociatted to the number identifier.
+     *
+     * @param apps list of applications to store.
+     */
+    protected static void updateApps(ArrayList<String> apps) {
+        // reseteamos la variable, en caso de que tenga algún valor.
+        if (!mApps.isEmpty()) {
+            mApps = new HashMap<>();
+        }
+        // Almacenamos las aplicaciones en el map.
+        for (int i = 0; i < apps.size(); i++) {
+            mApps.put(apps.get(i), i);
+        }
+    }
 
 	private final class KeyValuePair extends Pair<String, String> {
 

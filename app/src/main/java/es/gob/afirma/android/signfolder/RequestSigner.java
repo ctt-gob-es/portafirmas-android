@@ -1,20 +1,21 @@
 package es.gob.afirma.android.signfolder;
 
+import android.content.Context;
+import android.os.Build;
+import android.security.KeyChainException;
+
 import java.security.KeyStore.PrivateKeyEntry;
 import java.security.KeyStoreException;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 
-import android.content.Context;
-import android.os.Build;
-import android.security.KeyChainException;
-import android.util.Log;
 import es.gob.afirma.android.crypto.MobileKeyStoreManager.KeySelectedEvent;
 import es.gob.afirma.android.crypto.MobileKeyStoreManager.PrivateKeySelectionListener;
 import es.gob.afirma.android.signfolder.proxy.CommManager;
 import es.gob.afirma.android.signfolder.proxy.RequestResult;
 import es.gob.afirma.android.signfolder.proxy.SignRequest;
 import es.gob.afirma.android.util.AOException;
+import es.gob.afirma.android.util.PfLog;
 
 /** Clase para la firma de peticiones. El resultado del proceso, se gestiona, a nivel individual para
  * cada petici&oacute;n desde un listener. */
@@ -61,7 +62,7 @@ final class RequestSigner implements PrivateKeySelectionListener {
 			}
 		}
 		catch (final KeyChainException e) {
-			Log.e(SFConstants.LOG_TAG, e.toString());
+			PfLog.e(SFConstants.LOG_TAG, e.toString());
 			if ("4.1.1".equals(Build.VERSION.RELEASE) || "4.1.0".equals(Build.VERSION.RELEASE) || "4.1".equals(Build.VERSION.RELEASE)) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 				t = new AOException(ErrorManager.getErrorMessage(ErrorManager.ERROR_PKE_ANDROID_4_1), e);
 			}
@@ -70,13 +71,13 @@ final class RequestSigner implements PrivateKeySelectionListener {
 			}
 		}
 		catch (final KeyStoreException e) {
-			Log.e(SFConstants.LOG_TAG, "El usuario no selecciono un certificado: " + e); //$NON-NLS-1$
+			PfLog.e(SFConstants.LOG_TAG, "El usuario no selecciono un certificado: " + e); //$NON-NLS-1$
 			t = new AOException(ErrorManager.getErrorMessage(ErrorManager.ERROR_CANCELLED_OPERATION), e);
 		}
 		// Cuando se instala el certificado desde el dialogo de seleccion, Android da a elegir certificado
 		// en 2 ocasiones y en la segunda se produce un "java.lang.AssertionError". Se ignorara este error.
 		catch (final Throwable e) {
-			Log.e(SFConstants.LOG_TAG, "Error desconocido en la seleccion del certificado: " + e); //$NON-NLS-1$
+			PfLog.e(SFConstants.LOG_TAG, "Error desconocido en la seleccion del certificado: " + e); //$NON-NLS-1$
 			t = new AOException(ErrorManager.getErrorMessage(ErrorManager.ERROR_PKE), e);
 		}
 

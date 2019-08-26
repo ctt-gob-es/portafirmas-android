@@ -10,12 +10,8 @@
 
 package es.gob.afirma.android.network;
 
-import org.w3c.dom.Document;
-import org.xml.sax.InputSource;
-
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.io.StringReader;
 import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.CookiePolicy;
@@ -34,10 +30,6 @@ import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
-
-import es.gob.afirma.core.misc.http.UrlHttpManager;
-import es.gob.afirma.core.misc.http.UrlHttpManagerFactory;
-import es.gob.afirma.core.misc.http.UrlHttpMethod;
 
 /** Implementacion de una clase para la lectura del contenido de una URL. */
 public final class AndroidUrlHttpManager {
@@ -92,7 +84,7 @@ public final class AndroidUrlHttpManager {
 
 		final URL uri = new URL(request);
 		final HttpURLConnection conn = (HttpURLConnection) uri.openConnection(Proxy.NO_PROXY);
-		conn.setConnectTimeout(timeout);
+		//conn.setConnectTimeout(timeout);
 		conn.setRequestMethod("POST"); //$NON-NLS-1$
 
 		conn.setDoOutput(true);

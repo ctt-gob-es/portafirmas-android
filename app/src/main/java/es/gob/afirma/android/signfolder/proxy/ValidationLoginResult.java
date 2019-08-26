@@ -50,7 +50,7 @@ public class ValidationLoginResult {
 	 * Establece el DNI del usuario que accede a la aplicaci&oacute;n.
 	 * @param dni DNI del usuario.
 	 */
-	void setDni(String dni) {
+	public void setDni(String dni) {
 		this.dni = dni;
 	}
 

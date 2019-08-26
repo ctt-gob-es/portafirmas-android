@@ -1,9 +1,9 @@
 package es.gob.afirma.android.signfolder.proxy;
 
-import java.util.ArrayList;
-
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
+
+import java.util.ArrayList;
 
 
 /** Analizador de XML para la obtenci&oacute;n de la lista de aplicaciones activas. */

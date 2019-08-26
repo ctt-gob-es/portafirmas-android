@@ -2,10 +2,11 @@ package es.gob.afirma.android.signfolder;
 
 import android.content.Context;
 import android.os.AsyncTask;
-import android.util.Log;
+
 import es.gob.afirma.android.signfolder.proxy.CommManager;
 import es.gob.afirma.android.signfolder.proxy.RequestAppConfiguration;
 import es.gob.afirma.android.signfolder.proxy.ValidationLoginResult;
+import es.gob.afirma.android.util.PfLog;
 
 /** Carga los datos remotos necesarios para la configuraci&oacute;n de la aplicaci&oacute;n. */
 final class LoadConfigurationDataTask extends AsyncTask<Void, Void, RequestAppConfiguration> {
@@ -19,30 +20,15 @@ final class LoadConfigurationDataTask extends AsyncTask<Void, Void, RequestAppCo
 	/**
 	 * Crea la tarea para la carga de la configuraci&oacute;n de la aplicaci&oacute;n
 	 * necesaria para su correcto funcionamiento.
-	 * @param certB64 Certificado para la autenticaci&oacute;n de la petici&oacute;n.
-	 * @param certAlias Alias del certificado para la autenticaci&oacute;n de la petici&oacute;n.
+	 * @param loginResult Resultado de la autenticaci&oacute;n del usuario.
 	 * @param commManager Manejador de los servicios de comunicaci&oacute;n con el portafirmas.
 	 * @param context Contexto de la aplicaci&oacute;n.
 	 * @param listener Manejador del resultado de la operaci&oacute;n.
 	 */
 	LoadConfigurationDataTask(final ValidationLoginResult loginResult,
-							  final CommManager commManager, final Context context, final LoadConfigurationListener listener) {
-		this.loginResult = loginResult;
-		this.commManager = commManager;
-		this.context = context;
-		this.listener = listener;
-	}
-
-	/**
-	 * Crea la tarea para la carga de la configuraci&oacute;n de la aplicaci&oacute;n
-	 * necesaria para su correcto funcionamiento.
-	 * @param commManager Manejador de los servicios de comunicaci&oacute;n con el portafirmas.
-	 * @param context Contexto de la aplicaci&oacute;n.
-	 * @param listener Manejador del resultado de la operaci&oacute;n.
-	 */
-	LoadConfigurationDataTask(final CommManager commManager, final Context context,
+							  final CommManager commManager, final Context context,
 							  final LoadConfigurationListener listener) {
-		this.loginResult = null;
+		this.loginResult = loginResult;
 		this.commManager = commManager;
 		this.context = context;
 		this.listener = listener;
@@ -51,11 +37,16 @@ final class LoadConfigurationDataTask extends AsyncTask<Void, Void, RequestAppCo
 	@Override
 	protected RequestAppConfiguration doInBackground(final Void... args) {
 
+		String userId = this.loginResult == null ?
+				null :
+				this.loginResult.getDni() != null ?
+					this.loginResult.getDni() :
+					this.loginResult.getCertificateB64();
 		RequestAppConfiguration config;
     	try {
-    		config = this.commManager.getApplicationList(this.loginResult.getDni());
+    		config = this.commManager.getApplicationList(userId);
     	} catch (final Exception e) {
-    		Log.w(SFConstants.LOG_TAG, "No se pudo obtener la lista de aplicaciones", e); //$NON-NLS-1$
+    		PfLog.w(SFConstants.LOG_TAG, "No se pudo obtener la lista de aplicaciones", e); //$NON-NLS-1$
     		config = null;
     		this.t = e;
     	}

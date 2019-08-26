@@ -1,18 +1,18 @@
 package es.gob.afirma.android.signfolder.proxy;
 
-import java.io.IOException;
-import java.util.Vector;
-
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import android.util.Log;
+import java.io.IOException;
+import java.util.Vector;
+
 import es.gob.afirma.android.signfolder.SFConstants;
 import es.gob.afirma.android.signfolder.proxy.TriphaseSignDocumentRequest.TriphaseConfigData;
 import es.gob.afirma.android.util.Base64;
+import es.gob.afirma.android.util.PfLog;
 
 /** Analizador de XML para la generaci&oacute;n de un listado de objetos
  * de tipo {@link es.gob.afirma.android.signfolder.proxy.TriphaseRequest} a partir
@@ -116,7 +116,7 @@ public final class PresignsResponseParser {
 			try {
 				exception = attributeNode == null ? null : new String(Base64.decode(attributeNode.getNodeValue()));
 			} catch (final IOException e) {
-				Log.w(SFConstants.LOG_TAG, "No se ha podido descodificar el base 64 de la traza de la excepcion, se usara tal cual");  //$NON-NLS-1$
+				PfLog.w(SFConstants.LOG_TAG, "No se ha podido descodificar el base 64 de la traza de la excepcion, se usara tal cual");  //$NON-NLS-1$
 				exception = attributeNode.getNodeValue();
 			}
 
@@ -255,8 +255,8 @@ public final class PresignsResponseParser {
 					throw new IllegalArgumentException("Se ha indicado un parametro de firma trifasica sin clave"); //$NON-NLS-1$
 				}
 
-				Log.i(SFConstants.LOG_TAG, "Clave: " + key); //$NON-NLS-1$
-				Log.i(SFConstants.LOG_TAG, "Valor: " + XmlUtils.getTextContent(param)); //$NON-NLS-1$
+				PfLog.i(SFConstants.LOG_TAG, "Clave: " + key); //$NON-NLS-1$
+				PfLog.i(SFConstants.LOG_TAG, "Valor: " + XmlUtils.getTextContent(param)); //$NON-NLS-1$
 
 				config.put(key, XmlUtils.getTextContent(param).trim());
 

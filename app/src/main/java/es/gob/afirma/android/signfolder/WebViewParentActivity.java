@@ -1,33 +1,47 @@
 package es.gob.afirma.android.signfolder;
 
-import android.app.ProgressDialog;
-import android.content.DialogInterface;
-import android.content.DialogInterface.OnKeyListener;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.support.v4.app.FragmentActivity;
-import android.util.Log;
-import android.view.KeyEvent;
 
-/** Actividad para entrada con usuario y contrase&ntilde;a al servicio de Portafirmas. */
+import es.gob.afirma.android.util.PfLog;
+
+/** Actividad de la que deberán heredar aquellas actividades que deseen utilizar un formulario web
+ * a trav&eacute;s de un WebViewpara para la autenticaci&oacute;n/autorizaci&oacute;n del usuario. */
 public class WebViewParentActivity extends FragmentActivity {
 
     static final int WEBVIEW_REQUEST_CODE = 20;
 
+    static final String EXTRA_RESOURCE_URL = "url";
+    static final String EXTRA_RESOURCE_COOKIE_ID = "cookieId";
+    static final String EXTRA_RESOURCE_TITLE = "title";
+    static final String EXTRA_RESOURCE_NEED_JAVASCRIPT = "javascript";
+
     /**
      * Abre una actividad con un WebView en el que se carga una URL.
+     * @param webViewClass Clase de la actividad con el WebView.
      * @param url URL que se desea cargar en el WebView.
+     * @param cookieId Identificador de la cookie de sesion de la aplicaci&oacute;n.
+     * @param titleStringId Identificador de la cadena con el t&iacute;tulo del WebView.
+     * @param needJavaScript Indica si se debe habilitar el uso de JavaScript en el Webview.
      */
-	public void openWebViewActivity(String url, String cookieId) {
+	public void openWebViewActivity(Class webViewClass, String url, String cookieId,
+                                    int titleStringId, boolean needJavaScript) {
 
         final Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-        intent.setClass(this, ClaveWebViewActivity.class);
+        intent.setClass(this, webViewClass);
 
-        Log.i(SFConstants.LOG_TAG, " ========= Cargamos el WebView con la URL: " + url);
-        Log.i(SFConstants.LOG_TAG, " ========= Cargamos el WebView con el id de sesion: " + cookieId);
+        PfLog.i(SFConstants.LOG_TAG, " ========= Cargamos el WebView con la URL: " + url);
+        PfLog.i(SFConstants.LOG_TAG, " ========= Cargamos el WebView con el id de sesion: " + cookieId);
 
-        intent.putExtra(ClaveWebViewActivity.EXTRA_RESOURCE_URL, url);
-        intent.putExtra(ClaveWebViewActivity.EXTRA_RESOURCE_COOKIE_ID, cookieId);
+        intent.putExtra(EXTRA_RESOURCE_URL, url);
+        intent.putExtra(EXTRA_RESOURCE_NEED_JAVASCRIPT, needJavaScript);
+        if (cookieId != null) {
+            intent.putExtra(EXTRA_RESOURCE_COOKIE_ID, cookieId);
+        }
+        if (titleStringId != 0) {
+            intent.putExtra(EXTRA_RESOURCE_TITLE, titleStringId);
+        }
+
         startActivityForResult(intent, WEBVIEW_REQUEST_CODE);
 	}
 }

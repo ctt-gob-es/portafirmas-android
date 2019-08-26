@@ -1,5 +1,7 @@
 package es.gob.afirma.android.signfolder;
 
+import org.xml.sax.SAXException;
+
 import java.io.IOException;
 import java.security.PrivateKey;
 import java.security.cert.Certificate;
@@ -7,9 +9,7 @@ import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 
-import org.xml.sax.SAXException;
-
-import android.util.Log;
+import es.gob.afirma.android.crypto.AOPkcs1Signer;
 import es.gob.afirma.android.signfolder.proxy.CommManager;
 import es.gob.afirma.android.signfolder.proxy.RequestResult;
 import es.gob.afirma.android.signfolder.proxy.SignRequest;
@@ -17,7 +17,7 @@ import es.gob.afirma.android.signfolder.proxy.TriphaseRequest;
 import es.gob.afirma.android.signfolder.proxy.TriphaseSignDocumentRequest;
 import es.gob.afirma.android.signfolder.proxy.TriphaseSignDocumentRequest.TriphaseConfigData;
 import es.gob.afirma.android.util.AOException;
-import es.gob.afirma.android.crypto.AOPkcs1Signer;
+import es.gob.afirma.android.util.PfLog;
 
 /** Firmador trif&aacute;sico.
  * @author Tom&aacute;s Garc&iacute;a-Mer&aacute;s */
@@ -40,9 +40,9 @@ final class TriSigner {
 		// **************************** PREFIRMA ***************************************************************
 		//******************************************************************************************************
 
-		Log.i(SFConstants.LOG_TAG, "TriSigner - sign: == PREFIRMA =="); //$NON-NLS-1$
+		PfLog.i(SFConstants.LOG_TAG, "TriSigner - sign: == PREFIRMA =="); //$NON-NLS-1$
 
-		//Log.i(SFConstants.LOG_TAG, " ======== Parametros prefirma: " + request.getDocs()[0].getParams());
+		//PfLog.i(SFConstants.LOG_TAG, " ======== Parametros prefirma: " + request.getDocs()[0].getParams());
 
 		// Mandamos a prefirmar y obtenemos los resultados
 		final TriphaseRequest[] signRequest = signPhase1(request, commMgr);
@@ -51,15 +51,15 @@ final class TriSigner {
 		// ******************************* FIRMA ***************************************************************
 		//******************************************************************************************************
 
-		//Log.i(SFConstants.LOG_TAG, " ======== Parametros resultado prefirma: " + signRequest[0].getDocumentsRequests()[0].getParams());
+		//PfLog.i(SFConstants.LOG_TAG, " ======== Parametros resultado prefirma: " + signRequest[0].getDocumentsRequests()[0].getParams());
 
-		Log.i(SFConstants.LOG_TAG, "TriSigner - sign: == FIRMA =="); //$NON-NLS-1$
+		PfLog.i(SFConstants.LOG_TAG, "TriSigner - sign: == FIRMA =="); //$NON-NLS-1$
 
 		// Recorremos las peticiones de firma
 		for (int i = 0; i < signRequest.length; i++) {
 			// Si fallo una sola firma de la peticion, esta es erronea al completo
 			if (!signRequest[i].isStatusOk()) {
-				Log.w(SFConstants.LOG_TAG, "Se encontro prefirma erronea, se aborta el proceso de firma. La traza de la excepcion es: " + signRequest[i].getException()); //$NON-NLS-1$
+				PfLog.w(SFConstants.LOG_TAG, "Se encontro prefirma erronea, se aborta el proceso de firma. La traza de la excepcion es: " + signRequest[i].getException()); //$NON-NLS-1$
 				return new RequestResult(request.getId(), false);
 			}
 
@@ -70,7 +70,7 @@ final class TriSigner {
 					signPhase2(docRequests, pk, certificateChain);
 				}
 				catch(final Exception e) {
-					Log.w(SFConstants.LOG_TAG, "Error en la fase de FIRMA: " + e); //$NON-NLS-1$
+					PfLog.w(SFConstants.LOG_TAG, "Error en la fase de FIRMA: " + e); //$NON-NLS-1$
 					e.printStackTrace();
 
 					// Si un documento falla en firma toda la peticion se da por fallida
@@ -83,9 +83,9 @@ final class TriSigner {
 		// **************************** POSTFIRMA **************************************************************
 		//******************************************************************************************************
 
-		Log.i(SFConstants.LOG_TAG, "TriSigner - sign: == POSTFIRMA =="); //$NON-NLS-1$
+		PfLog.i(SFConstants.LOG_TAG, "TriSigner - sign: == POSTFIRMA =="); //$NON-NLS-1$
 
-		//Log.i(SFConstants.LOG_TAG, " ======== Parametros postfirma: " + request.getDocs()[0].getParams());
+		//PfLog.i(SFConstants.LOG_TAG, " ======== Parametros postfirma: " + request.getDocs()[0].getParams());
 
 		// Mandamos a postfirmar y recogemos el resultado
 		return signPhase3(signRequest, commMgr);
@@ -137,7 +137,7 @@ final class TriSigner {
 		}
 		catch (final IOException e) {
 			// Cuando la respuesta no indica el numero de firmas y no se ha devuelto ninguna
-			Log.e(SFConstants.LOG_TAG, "No se ha devuelto ningun resultado de firma"); //$NON-NLS-1$
+			PfLog.e(SFConstants.LOG_TAG, "No se ha devuelto ningun resultado de firma"); //$NON-NLS-1$
 			preSign = null;
 		}
 

@@ -1,13 +1,12 @@
 package es.gob.afirma.android.signfolder.proxy;
 
-import android.util.Log;
-
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import es.gob.afirma.android.signfolder.SFConstants;
+import es.gob.afirma.android.util.PfLog;
 
 /** Analizador de XML para la generaci&oacute;n del token firmado para validar la identidad.
  * @author Sergio Mart&iacute;nez. */
@@ -94,7 +93,7 @@ class LoginValidationResponseParser {
 				dni = attributeNode.getNodeValue();
 			}
 
-			Log.i(SFConstants.LOG_TAG, "Ok=" + statusOk + "; Dni=" + dni + "; Error=" + errorMessage); //$NON-NLS-1$ //$NON-NLS-2$
+			PfLog.i(SFConstants.LOG_TAG, "Ok=" + statusOk + "; Dni=" + dni + "; Error=" + errorMessage); //$NON-NLS-1$ //$NON-NLS-2$
 
 			final ValidationLoginResult result = new ValidationLoginResult(statusOk);
 			if (dni != null) {

@@ -1,17 +1,5 @@
 package es.gob.afirma.android.signfolder;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.List;
-
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
@@ -22,10 +10,8 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Base64;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -48,14 +34,27 @@ import android.widget.Toast;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 
-import es.gob.afirma.android.gcm.RegistrationIntentService;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.List;
+
+import es.gob.afirma.android.fcm.RegistrationIntentService;
 import es.gob.afirma.android.signfolder.ConfigureFilterDialogBuilder.FilterConfig;
 import es.gob.afirma.android.signfolder.LoadSignRequestsTask.LoadSignRequestListener;
 import es.gob.afirma.android.signfolder.proxy.CommManager;
-import es.gob.afirma.android.signfolder.proxy.FirePreSignResult;
+import es.gob.afirma.android.signfolder.proxy.FireLoadDataResult;
 import es.gob.afirma.android.signfolder.proxy.RequestResult;
 import es.gob.afirma.android.signfolder.proxy.SignRequest;
 import es.gob.afirma.android.signfolder.proxy.SignRequest.RequestType;
+import es.gob.afirma.android.util.PfLog;
 
 /**
  * Actividad que representa una lista de documentos pendientes de ser firmados o
@@ -67,10 +66,10 @@ import es.gob.afirma.android.signfolder.proxy.SignRequest.RequestType;
  * el Layout por medio del uso de los elementos "list" y "empty" reconocidos por
  * el ListActivity.
  */
-public final class PetitionListActivity extends FragmentActivity implements
+public final class PetitionListActivity extends WebViewParentActivity implements
 		OperationRequestListener, LoadSignRequestListener, OnItemClickListener,
-		DialogFragmentListener, FirePreSignTask.ClaveFirmaPreSignListener,
-		FirePostSignTask.ClaveFirmaPostSignListener {
+		DialogFragmentListener, FireLoadDataTask.FireLoadDataListener,
+		FireSignTask.FireSignListener {
 
 	/**
 	 * Clave usada internamente para guardar el estado de la propiedad
@@ -90,8 +89,9 @@ public final class PetitionListActivity extends FragmentActivity implements
 	 */
 	private static final String SIGN_REQUEST_STATE_KEY = "SignRequestState"; //$NON-NLS-1$
 
-	final static String EXTRA_RESOURCE_CERT_B64 = "es.gob.afirma.signfolder.cert"; //$NON-NLS-1$
+	final static String EXTRA_RESOURCE_DNI = "es.gob.afirma.signfolder.dni"; //$NON-NLS-1$
 	final static String EXTRA_RESOURCE_CERT_ALIAS = "es.gob.afirma.signfolder.alias"; //$NON-NLS-1$
+	final static String EXTRA_RESOURCE_CERT_B64 = "es.gob.afirma.signfolder.cert"; //$NON-NLS-1$
 	final static String EXTRA_RESOURCE_APP_IDS = "es.gob.afirma.signfolder.apps.ids"; //$NON-NLS-1$
 	final static String EXTRA_RESOURCE_APP_NAMES = "es.gob.afirma.signfolder.apps.names"; //$NON-NLS-1$
 
@@ -130,6 +130,8 @@ public final class PetitionListActivity extends FragmentActivity implements
 	/** Tag para la presentaci&oacute;n de di&aacute;logos */
 	private final static String DIALOG_TAG = "dialog"; //$NON-NLS-1$
 
+	private static final int FIRST_PAGE = 1;
+
 	/** Indica si debe recargarse el listado de peticiones. */
 	private boolean needReload = true;
 
@@ -145,22 +147,26 @@ public final class PetitionListActivity extends FragmentActivity implements
 		return this.currentState;
 	}
 
-	private int currentPage = 1;
+	private int currentPage = FIRST_PAGE;
 
 	/** Tarea de carga en ejecuci&oacute;n. */
 	private LoadSignRequestsTask loadingTask = null;
 
 	/** Informacion trifasica que se obtiene en la prefirma y reutiliza en la postfirma. */
-	private FirePreSignResult firePreSignResult = null;
+	private FireLoadDataResult fireLoadDataResult = null;
 
-	private String certAlias = null;
-
+	private String dni = null;
 	private String certB64 = null;
+	private String certAlias = null;
 
 	private List<String> appIds = null;
 	private List<String> appNames = null;
 
+	/** Configuraci&oacute;n del filtro a aplicar sobre el listado de peticiones. */
 	private FilterConfig filterConfig = null;
+
+	/** Configuraci&oacute;n de filtro utilizada para el guardado temporal de los datos. */
+	private FilterConfig oldFilterConfig = null;
 
 	void setFilterConfig(final FilterConfig filterConfig) {
 		this.filterConfig = filterConfig;
@@ -223,7 +229,7 @@ public final class PetitionListActivity extends FragmentActivity implements
 					AppPreferences.PREFERENCES_KEY_PREFIX_NOTIFICATION_ACTIVE + userProxyId,
 					false);
 
-			Log.i(SFConstants.LOG_TAG, "Las notificaciones se encuentran activadas: " + registered);
+			PfLog.i(SFConstants.LOG_TAG, "Las notificaciones se encuentran activadas: " + registered);
 
 			if (registered) {
 
@@ -232,19 +238,25 @@ public final class PetitionListActivity extends FragmentActivity implements
 				if (prefs.getCurrentToken() != null
 						&& !prefs.getCurrentToken().equals(
 								prefs.getPreference(
-								AppPreferences.PREFERENCES_KEY_PREFIX_NOTIFICATION_TOKEN + userProxyId)
+								AppPreferences.PREFERENCES_KEY_PREFIX_NOTIFICATION_TOKEN + userProxyId,
+								null)
 						)
 				) {
 
-					Log.i(SFConstants.LOG_TAG, "Damos de alta el nuevo token de notificaciones");
+					PfLog.i(SFConstants.LOG_TAG, "Damos de alta el nuevo token de notificaciones");
 
 					Intent intent = new Intent(this, RegistrationIntentService.class);
-					intent.putExtra(RegistrationIntentService.EXTRA_RESOURCE_CERT_B64, this.certB64);
+					if (this.certB64 != null) {
+						intent.putExtra(RegistrationIntentService.EXTRA_RESOURCE_CERT_B64, this.certB64);
+					}
+					if (this.dni != null) {
+						intent.putExtra(RegistrationIntentService.EXTRA_RESOURCE_DNI, this.dni);
+					}
 					intent.putExtra(RegistrationIntentService.EXTRA_RESOURCE_USER_PROXY_ID, userProxyId);
 					startService(intent);
 				}
 				else {
-					Log.i(SFConstants.LOG_TAG, "El usuario ya tiene dado de alta el token de notificaciones correcto");
+					PfLog.i(SFConstants.LOG_TAG, "El usuario ya tiene dado de alta el token de notificaciones correcto");
 				}
 			}
 		}
@@ -260,13 +272,13 @@ public final class PetitionListActivity extends FragmentActivity implements
 			md = MessageDigest.getInstance("MD5");
 		}
 		catch (NoSuchAlgorithmException e) {
-			Log.w(SFConstants.LOG_TAG,
+			PfLog.w(SFConstants.LOG_TAG,
 					"No se puede comprobar el token dado de alta actualmente. " +
 							"No se actualizara el token: " + e);
 			return null;
 		}
 		md.update(AppPreferences.getInstance().getSelectedProxyUrl().getBytes());
-		md.update(this.certB64.getBytes());
+		md.update(this.dni.getBytes());
 
 		return Base64.encodeToString(md.digest(), Base64.NO_PADDING).trim();
 	}
@@ -285,8 +297,9 @@ public final class PetitionListActivity extends FragmentActivity implements
 
 	private void loadIntentExtra(final Intent intent) {
 
-		this.certAlias = intent.getStringExtra(EXTRA_RESOURCE_CERT_ALIAS);
+		this.dni = intent.getStringExtra(EXTRA_RESOURCE_DNI);
 		this.certB64 = intent.getStringExtra(EXTRA_RESOURCE_CERT_B64);
+		this.certAlias = intent.getStringExtra(EXTRA_RESOURCE_CERT_ALIAS);
 		this.appIds = intent.getStringArrayListExtra(EXTRA_RESOURCE_APP_IDS);
 		this.appNames = intent.getStringArrayListExtra(EXTRA_RESOURCE_APP_NAMES);
 		// Si solo esta documentado el certificado se viene de pinchar en una notificacion
@@ -301,15 +314,14 @@ public final class PetitionListActivity extends FragmentActivity implements
 		super.onStart();
 
 		if (this.needReload) {
-			updateCurrentList(1);
+			updateCurrentList(FIRST_PAGE);
 		}
 	}
 
 	/**
 	 * Metodo que define la accion a realizar al pulsar en el boton Reject
 	 *
-	 * @param v
-	 *            Vista desde la que se invoco el metodo
+	 * @param v Vista desde la que se invoco el metodo
 	 */
 	public void onClickReject(final View v) {
 
@@ -351,7 +363,7 @@ public final class PetitionListActivity extends FragmentActivity implements
 				}
 			});
 		} catch (final Exception e) {
-			Log.w(SFConstants.LOG_TAG,
+			PfLog.w(SFConstants.LOG_TAG,
 					"No se ha podido mostrar el dialogo informando de que no hay peticiones seleccionadas: " + e); //$NON-NLS-1$
 		}
 	}
@@ -370,7 +382,7 @@ public final class PetitionListActivity extends FragmentActivity implements
 				}
 			});
 		} catch (final Throwable e) {
-			Log.w(SFConstants.LOG_TAG,
+			PfLog.w(SFConstants.LOG_TAG,
 					"No se ha podido mostrar el dialogo de error con el mensaje: " + message + ": " + e); //$NON-NLS-1$ //$NON-NLS-2$
 			e.printStackTrace();
 		}
@@ -379,8 +391,7 @@ public final class PetitionListActivity extends FragmentActivity implements
 	/**
 	 * Metodo que define la accion a realizar al pulsar en el boton Sign
 	 *
-	 * @param v
-	 *            Vista desde la que se invoco el metodo
+	 * @param v Vista desde la que se invoco el metodo
 	 */
 	public void onClickSign(final View v) {
 
@@ -414,8 +425,7 @@ public final class PetitionListActivity extends FragmentActivity implements
 	 * confirmaci&oacute;n de rechazo, firma o visto bueno de las peticiones
 	 * seleccionadas
 	 *
-	 * @param requests
-	 *            Peticiones seleccionadas.
+	 * @param requests Peticiones seleccionadas.
 	 * @return Vista del di&aacute;logo de confirmaci&oacute;n.
 	 */
 	private View getViewContentDialogConfirmOperation(final SignRequest[] requests) {
@@ -427,8 +437,8 @@ public final class PetitionListActivity extends FragmentActivity implements
 				countApproved++;
 			}
 		}
-		final TextView tvSign = (TextView) view.findViewById(R.id.tvSign);
-		final TextView tvApprove = (TextView) view.findViewById(R.id.tvApprove);
+		final TextView tvSign = view.findViewById(R.id.tvSign);
+		final TextView tvApprove = view.findViewById(R.id.tvApprove);
 
 		// Peticiones de firma
 		if (requests.length - countApproved > 0) {
@@ -498,12 +508,11 @@ public final class PetitionListActivity extends FragmentActivity implements
 			}
 		}
 
-		return requests.toArray(new SignRequest[requests.size()]);
+		return requests.toArray(new SignRequest[0]);
 	}
 
 	protected RejectRequestsTask rejectRequests(final String reason, final SignRequest... signRequests) {
-		final RejectRequestsTask rrt = new RejectRequestsTask(signRequests,
-				this.certB64, CommManager.getInstance(), this, reason);
+		final RejectRequestsTask rrt = new RejectRequestsTask(signRequests, CommManager.getInstance(), this, reason);
 		rrt.execute();
 		return rrt;
 	}
@@ -562,7 +571,7 @@ public final class PetitionListActivity extends FragmentActivity implements
 		}
 		// Actualizar listado actual
 		else if (item.getItemId() == R.id.update) {
-			updateCurrentList(1);
+			updateCurrentList(FIRST_PAGE);
 		}
 		// Cambiar al listado de peticiones firmadas
 		else if (item.getItemId() == R.id.see_signeds) {
@@ -578,6 +587,9 @@ public final class PetitionListActivity extends FragmentActivity implements
 		}
 		// Definir filtro
 		else if (item.getItemId() == R.id.filter) {
+			// Almacenamos el filtro actual de forma temporal para poder restaurarlo
+			// en caso de que se pulse "cancelar".
+			deepCopyFilterConfig();
 			showDialog(DIALOG_FILTER, this.filterConfig == null ? new Bundle()
 					: this.filterConfig.copyToBundle(null));
 		}
@@ -586,7 +598,7 @@ public final class PetitionListActivity extends FragmentActivity implements
 			setFilterConfig(this.filterConfig.reset());
 			this.filterDialogBuilder.resetLayout();
 			invalidateOptionsMenu();
-			updateCurrentList(1);
+			updateCurrentList(FIRST_PAGE);
 		}
 		// Habilitar/deshabilitar notificaciones
 		else if (item.getItemId() == R.id.notifications) {
@@ -632,8 +644,7 @@ public final class PetitionListActivity extends FragmentActivity implements
 	 * Cambia el listado de peticiones actual por el listado con las peticiones
 	 * con el estado indicado.
 	 *
-	 * @param stateSigned
-	 *            Estado de las peticiones que deben mostrarse.
+	 * @param stateSigned Estado de las peticiones que deben mostrarse.
 	 */
 	private void changeCurrentRequestList(final String stateSigned) {
 		if (this.loadingRequests && this.loadingTask != null) {
@@ -652,9 +663,8 @@ public final class PetitionListActivity extends FragmentActivity implements
 	/**
 	 * Selecciona o deselecciona todos los elementos del listado de peticiones en pantalla.
 	 *
-	 * @param selected
-	 *            {@code true} para seleccionar todas las peticiones,
-	 *            {@code false} para deseleccionarlas todas.
+	 * @param selected {@code true} para seleccionar todas las peticiones,
+	 * 	               {@code false} para deseleccionarlas todas.
 	 */
 	private void selectAllRequests(final boolean selected) {
 
@@ -694,7 +704,7 @@ public final class PetitionListActivity extends FragmentActivity implements
 
 				// Una vez finalizada una operacion, recargamos el listado por
 				// la primera pagina
-				updateCurrentList(1);
+				updateCurrentList(FIRST_PAGE);
 			}
 		}
 	}
@@ -718,14 +728,14 @@ public final class PetitionListActivity extends FragmentActivity implements
 					&& this.numRequestToRejectPending <= 0) {
 
 				if (t != null) {
-					Log.e(SFConstants.LOG_TAG, "Error al procesar las peticiones de firma", t); //$NON-NLS-1$
+					PfLog.e(SFConstants.LOG_TAG, "Error al procesar las peticiones de firma", t); //$NON-NLS-1$
 				}
 
 				setVisibilityLoadingMessage(false, null, null);
 
 				final String errorMsg = getString(operation == REJECT_OPERATION ? R.string.error_msg_rejecting_requests
 						: R.string.error_msg_procesing_requests);
-				Log.w(SFConstants.LOG_TAG, "Error: " + errorMsg); //$NON-NLS-1$
+				PfLog.w(SFConstants.LOG_TAG, "Error: " + errorMsg); //$NON-NLS-1$
 				showErrorDialog(DIALOG_ERROR_PROCESSING, errorMsg);
 			}
 		}
@@ -767,7 +777,7 @@ public final class PetitionListActivity extends FragmentActivity implements
 
 		// Mostramos u ocultamos el texto de "No hay resultados" segun
 		// corresponda
-		final TextView emptyTextView = (TextView) findViewById(R.id.empty);
+		final TextView emptyTextView = findViewById(R.id.empty);
 		emptyTextView.setVisibility(signRequests == null || signRequests
 				.size() == 0 ? View.VISIBLE : View.INVISIBLE);
 		emptyTextView.setText(getString(R.string.no_request_avaible));
@@ -795,7 +805,7 @@ public final class PetitionListActivity extends FragmentActivity implements
 	private PetitionListArrayAdapter preparePetitionList(
 			final List<SignRequest> signRequests, final String state, final boolean needPagination) {
 
-		final List<PetitionListAdapterItem> plAdapterItem = new ArrayList<PetitionListActivity.PetitionListAdapterItem>();
+		final List<PetitionListAdapterItem> plAdapterItem = new ArrayList<>();
 
 		// En el caso del listado de peticiones pendientes, situaremos al principio de la lista
 		// las peticiones proximas a caducar. Para ello, las extraeremos de la lista, las
@@ -823,7 +833,7 @@ public final class PetitionListActivity extends FragmentActivity implements
 						date = dateFormat.parse(signRequest.getExpirationDate());
 					}
 					catch (Exception e) {
-						Log.w(SFConstants.LOG_TAG, "Fecha de caducidad mal formada. Se ignorara: " + e);
+						PfLog.w(SFConstants.LOG_TAG, "Fecha de caducidad mal formada. Se ignorara: " + e);
 						continue;
 					}
 
@@ -881,9 +891,9 @@ public final class PetitionListActivity extends FragmentActivity implements
 	 * peticiones
 	 */
 	private interface PetitionListAdapterItem {
-		public int getViewType();
+		int getViewType();
 
-		public View getView(LayoutInflater inflater, View convertView,
+		View getView(LayoutInflater inflater, View convertView,
 				int position);
 	}
 
@@ -926,15 +936,15 @@ public final class PetitionListActivity extends FragmentActivity implements
 
 			if (this.request != null) {
 
-				final ImageView icon = (ImageView) v
+				final ImageView icon = v
 						.findViewById(R.id.priorityIcon);
-				final TextView primaryText = (TextView) v
+				final TextView primaryText = v
 						.findViewById(R.id.primaryText);
-				final TextView secondaryText = (TextView) v
+				final TextView secondaryText = v
 						.findViewById(R.id.secondaryText);
-				final ImageView typeIcon = (ImageView) v
+				final ImageView typeIcon = v
 						.findViewById(R.id.typeIcon);
-				final TextView dateText = (TextView) v
+				final TextView dateText = v
 						.findViewById(R.id.dateText);
 
 				primaryText.setText(this.request.getSender());
@@ -992,7 +1002,7 @@ public final class PetitionListActivity extends FragmentActivity implements
 					typeIcon.setImageResource(R.drawable.icon_sign);
 				}
 
-				final CheckBox check = (CheckBox) v.findViewById(R.id.check);
+				final CheckBox check = v.findViewById(R.id.check);
 				if (check != null) {
 					// Si se pulsa el checkbutton, se selecciona/deselecciona el
 					// elemento
@@ -1035,7 +1045,7 @@ public final class PetitionListActivity extends FragmentActivity implements
 
 		@Override
 		public int getItemViewType(final int position) {
-			return getItem(position).getViewType();
+			return getItem(position) != null ? getItem(position).getViewType(): 0;
 		}
 
 		@Override
@@ -1072,18 +1082,18 @@ public final class PetitionListActivity extends FragmentActivity implements
 			}
 
 			View pagButton = paginationView.findViewById(R.id.arrowFirst);
-			pagButton.setVisibility(this.page == 1 ? View.INVISIBLE : View.VISIBLE);
+			pagButton.setVisibility(this.page == FIRST_PAGE ? View.INVISIBLE : View.VISIBLE);
 			pagButton.setOnClickListener(
 					new OnClickListener() {
 						@Override
 						public void onClick(final View v) {
 							v.setSelected(true);
-							updateCurrentList(1);
+							updateCurrentList(FIRST_PAGE);
 						}
 					});
 
 			pagButton = paginationView.findViewById(R.id.arrowLeft);
-			pagButton.setVisibility(this.page == 1 ? View.INVISIBLE : View.VISIBLE);
+			pagButton.setVisibility(this.page == FIRST_PAGE ? View.INVISIBLE : View.VISIBLE);
 			pagButton.setOnClickListener(
 					new OnClickListener() {
 						@Override
@@ -1140,16 +1150,15 @@ public final class PetitionListActivity extends FragmentActivity implements
 	/**
 	 * Abre un activity en donde muestra el detalle de la petici&oacute;n.
 	 *
-	 * @param requestId
-	 *            Identificador de la petici&oacute;n de la que se quiere ver el
-	 *            detalle.
+	 * @param requestId Identificador de la petici&oacute;n de la que se quiere ver el
+	 *            		detalle.
 	 */
 	private void showRequestDetails(final String requestId) {
 
 		final Intent changeActivityIntent = new Intent(this, PetitionDetailsActivity.class);
 		changeActivityIntent.putExtra( PetitionDetailsActivity.EXTRA_RESOURCE_REQUEST_STATE, getCurrentState());
 		changeActivityIntent.putExtra( PetitionDetailsActivity.EXTRA_RESOURCE_REQUEST_ID, requestId);
-		changeActivityIntent.putExtra( PetitionDetailsActivity.EXTRA_RESOURCE_CERT_B64, this.certB64);
+		changeActivityIntent.putExtra( PetitionDetailsActivity.EXTRA_RESOURCE_DNI, this.dni);
 		changeActivityIntent.putExtra( PetitionDetailsActivity.EXTRA_RESOURCE_CERT_ALIAS, this.certAlias);
 
 		startActivityForResult(changeActivityIntent, PetitionDetailsActivity.REQUEST_CODE);
@@ -1162,16 +1171,16 @@ public final class PetitionListActivity extends FragmentActivity implements
 		if (requestCode == PetitionDetailsActivity.REQUEST_CODE) {
 			// Si se proceso le peticion correctamente actualizamos el listado
 			if (resultCode == PetitionDetailsActivity.RESULT_SIGN_OK || resultCode == PetitionDetailsActivity.RESULT_REJECT_OK) {
-				updateCurrentList(1);
+				updateCurrentList(FIRST_PAGE);
 			}
 			// Si se trato de firmar la peticion y fallo, se muestra el error
 			else if (resultCode == PetitionDetailsActivity.RESULT_SIGN_FAILED) {
-				Log.e(SFConstants.LOG_TAG, "Error al firmar la peticion desde la actividad de detalle"); //$NON-NLS-1$
+				PfLog.e(SFConstants.LOG_TAG, "Error al firmar la peticion desde la actividad de detalle"); //$NON-NLS-1$
 				showErrorDialog(DIALOG_RESULT_SIMPLE_REQUEST, getString(R.string.error_msg_procesing_request));
 			}
 			// Si se trato de rechazar la peticion y fallo, se muestra el error
 			else if (resultCode == PetitionDetailsActivity.RESULT_REJECT_FAILED) {
-				Log.e(SFConstants.LOG_TAG, "Error al rechazar la peticion desde la actividad de detalle"); //$NON-NLS-1$
+				PfLog.e(SFConstants.LOG_TAG, "Error al rechazar la peticion desde la actividad de detalle"); //$NON-NLS-1$
 				showErrorDialog(DIALOG_RESULT_SIMPLE_REQUEST, getString(R.string.error_msg_rejecting_request));
 			}
 			// Si ha caducado la sesion vuelve a la actividad principal
@@ -1185,17 +1194,28 @@ public final class PetitionListActivity extends FragmentActivity implements
 		}
 
 		// Obtenemos la respuesta tras autorizar la operacion en Cl@ve Firma
-		else if (requestCode == FireWebViewActivity.REQUEST_CODE) {
+		else if (requestCode == WebViewParentActivity.WEBVIEW_REQUEST_CODE) {
 			// Si la peticion ha sido correcta iniciamos la finalizacion de firma
 			if (resultCode == RESULT_OK) {
 
-				Log.w(SFConstants.LOG_TAG, "Iniciamos la AsyncTask de la PostFirma");
-				// Se inicia el WebView
-				FirePostSignTask cct = new FirePostSignTask(this.firePreSignResult, this, this);
-				//showProgressDialog(getString(R.string.dialog_msg_clave),null);
-				cct.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+				PfLog.i(SFConstants.LOG_TAG, "Se han cargado correctamente los datos en FIRe");
+
+				FireSignTask signTask = new FireSignTask(this);
+				signTask.execute();
+			}
+			else if (resultCode == RESULT_CANCELED) {
+				PfLog.i(SFConstants.LOG_TAG, "Operacion de firma cancelada por el usuario");
+				dismissProgressDialog();
 			}
 			else {
+				PfLog.e(SFConstants.LOG_TAG, "Error al cargar los datos en FIRe"); //$NON-NLS-1$
+				String errorType = data != null ? data.getStringExtra("type") : null; //$NON-NLS-1$
+
+				PfLog.e(SFConstants.LOG_TAG, "Tipo de error: " + errorType);
+
+				dismissProgressDialog();
+
+				// TODO: Diferenciar segun tipo de error
 				showToastMessage(getString(R.string.toast_msg_fire_comunication_ko));
 			}
 		}
@@ -1224,12 +1244,12 @@ public final class PetitionListActivity extends FragmentActivity implements
 
 		// Se termina la carga
 		setVisibilityLoadingMessage(false, null, null);
-		// TODO: Eliminar para que se recargue la pagina en caso de error
+
 		// Ya no tenemos que recargar el listado
 		this.needReload = false;
 
 		// Mostramos texto de falta de peticiones
-		final TextView emptyTextView = (TextView) findViewById(R.id.empty);
+		final TextView emptyTextView = findViewById(R.id.empty);
 		emptyTextView.setText(getString(R.string.error_msg_loading_requests));
 		emptyTextView.setVisibility(View.VISIBLE);
 	}
@@ -1265,8 +1285,7 @@ public final class PetitionListActivity extends FragmentActivity implements
 	/**
 	 * Establece la visibilidad de un mensaje/s&iacute;mbolo de carga.
 	 *
-	 * @param visible
-	 *            Establece si el mensage sera visible o no.
+	 * @param visible Establece si el mensage sera visible o no.
 	 */
 	void setVisibilityLoadingMessage(final boolean visible, final RejectRequestsTask rrt,
 			final LoadSignRequestsTask lsrt) {
@@ -1292,8 +1311,7 @@ public final class PetitionListActivity extends FragmentActivity implements
 	/**
 	 * Establece la visibilidad de un mensaje/s&iacute;mbolo de carga.
 	 *
-	 * @param visible
-	 *            Establece si el mensage sera visible o no.
+	 * @param visible Establece si el mensage sera visible o no.
 	 */
 	void setVisibilityProgressMessage(final boolean visible) {
 		if (visible) {
@@ -1332,13 +1350,53 @@ public final class PetitionListActivity extends FragmentActivity implements
 					public void onClick(final DialogInterface dialog, final int identifier) {
 						setFilterConfig(getFilterDialogBuilder().getFilterConfig());
 						invalidateOptionsMenu();
-						updateCurrentList(1);
+						updateCurrentList(FIRST_PAGE);
 					}
 				});
-		this.filterDialogBuilder.setNegativeButton(R.string.cancel, null);
+		this.filterDialogBuilder.setNegativeButton(R.string.cancel,
+				new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(final DialogInterface dialog, final int identifier) {
+						restoreFilterConfigValues();
+						invalidateOptionsMenu();
+					}
+				});
 
 		return this.filterDialogBuilder.create();
 	}
+
+	/**
+     * Method that replaces the values of the current filter configuration by its old values.
+     */
+    private void restoreFilterConfigValues() {
+        if (this.oldFilterConfig != null) {
+            this.filterConfig.setOrderAttribute(this.oldFilterConfig.getOrderAttribute());
+            this.filterConfig.setEnabled(this.oldFilterConfig.isEnabled());
+            this.filterConfig.setSubject(this.oldFilterConfig.getSubject());
+            this.filterConfig.setApp(this.oldFilterConfig.getApp());
+            this.filterConfig.setDateStart(this.oldFilterConfig.getDateStart());
+            this.filterConfig.setDateEnd(this.oldFilterConfig.getDateEnd());
+			this.filterDialogBuilder.resetLayout(this.filterConfig);
+        }
+		else {
+			this.filterDialogBuilder.resetLayout();
+		}
+    }
+
+    /**
+     * Method that copy the current filter configuration into a new ConfigurationFilter object.
+     */
+    private void deepCopyFilterConfig() {
+        if (this.filterConfig != null) {
+            this.oldFilterConfig = new FilterConfig();
+            this.oldFilterConfig.setOrderAttribute(this.filterConfig.getOrderAttribute());
+            this.oldFilterConfig.setEnabled(this.filterConfig.isEnabled());
+            this.oldFilterConfig.setSubject(this.filterConfig.getSubject());
+            this.oldFilterConfig.setApp(this.filterConfig.getApp());
+            this.oldFilterConfig.setDateStart(this.filterConfig.getDateStart());
+            this.oldFilterConfig.setDateEnd(this.filterConfig.getDateEnd());
+        }
+    }
 
 	@Override
 	public void onDialogPositiveClick(final int dialogId, final String reason) {
@@ -1351,7 +1409,7 @@ public final class PetitionListActivity extends FragmentActivity implements
 				LogoutRequestTask lrt = new LogoutRequestTask(CommManager.getInstance());
 				lrt.execute();
 			} catch (Exception e) {
-				Log.e(SFConstants.LOG_TAG,
+				PfLog.e(SFConstants.LOG_TAG,
 						"No se ha podido cerrar sesion: " + e); //$NON-NLS-1$
 			}
 			closeActivity();
@@ -1385,8 +1443,8 @@ public final class PetitionListActivity extends FragmentActivity implements
 			}
 
 			// Separamos entre peticiones de firma y de visto bueno
-			final List<SignRequest> requestToSign = new ArrayList<SignRequest>();
-			final List<SignRequest> requestToApprove = new ArrayList<SignRequest>();
+			final List<SignRequest> requestToSign = new ArrayList<>();
+			final List<SignRequest> requestToApprove = new ArrayList<>();
 			for (final SignRequest req : requests) {
 				if (req.getType() == RequestType.SIGNATURE) {
 					requestToSign.add(req);
@@ -1397,7 +1455,7 @@ public final class PetitionListActivity extends FragmentActivity implements
 			// Mandamos a aprobar las peticiones de visto bueno
 			this.numRequestToApprovePending = requestToApprove.size();
 			if (this.numRequestToApprovePending > 0) {
-				Log.i(SFConstants.LOG_TAG, "Peticiones para aprobar: " + this.numRequestToApprovePending); //$NON-NLS-1$
+				PfLog.i(SFConstants.LOG_TAG, "Peticiones para aprobar: " + this.numRequestToApprovePending); //$NON-NLS-1$
 				approveRequests(
 						requestToApprove.toArray(new SignRequest[0]));
 			}
@@ -1405,10 +1463,11 @@ public final class PetitionListActivity extends FragmentActivity implements
 			// Mandamos a firmar las peticiones de firma
 			this.numRequestToSignPending = requestToSign.size();
 			if (this.numRequestToSignPending > 0) {
-				Log.i(SFConstants.LOG_TAG, "Peticiones para firmar: " + this.numRequestToSignPending); //$NON-NLS-1$
-				// Dependiendo de si firmamos con certificado local o con Cl@ve Firma
+				PfLog.i(SFConstants.LOG_TAG, "Peticiones para firmar: " + this.numRequestToSignPending); //$NON-NLS-1$
+
+				// Firmamos con certificado local o con Cl@ve Firma segun se haya configurado
 				if(AppPreferences.getInstance().isCloudCertEnabled()) {
-					doSignWithClaveFirma(requestToSign.toArray(new SignRequest[0]));
+					doSignWithFire(requestToSign.toArray(new SignRequest[0]));
 				}
 				else {
 					signRequets(
@@ -1420,7 +1479,7 @@ public final class PetitionListActivity extends FragmentActivity implements
 		// Dialogo de error procesando peticiones
 		else if (dialogId == DIALOG_ERROR_PROCESSING) {
 			// Actualizamos el listado
-			updateCurrentList(1);
+			updateCurrentList(FIRST_PAGE);
 		}
 	}
 
@@ -1429,8 +1488,7 @@ public final class PetitionListActivity extends FragmentActivity implements
 	 * operaci&oacute;n de &eacute;xito o fallo del listener una vez por cada
 	 * petici&oacute;n.
 	 *
-	 * @param requests
-	 *            Listado de peticiones de visto bueno.
+	 * @param requests Listado de peticiones de visto bueno.
 	 */
 	private void approveRequests(final SignRequest[] requests) {
 		new ApproveRequestsTask(requests,
@@ -1448,9 +1506,12 @@ public final class PetitionListActivity extends FragmentActivity implements
 		new RequestSigner(alias, this, this).sign(requests);
 	}
 
-	private void doSignWithClaveFirma(final SignRequest[] requests) {
-		// Se inicia el WebView
-		FirePreSignTask cct = new FirePreSignTask(requests, this, this);
+	/**
+	 * Inicia la tarea de firma con FIRe.
+	 * @param requests Peticiones a firmar.
+	 */
+	private void doSignWithFire(final SignRequest[] requests) {
+		FireLoadDataTask cct = new FireLoadDataTask(requests, this);
 		//showProgressDialog(getString(R.string.dialog_msg_clave),null);
 		cct.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
@@ -1503,7 +1564,7 @@ public final class PetitionListActivity extends FragmentActivity implements
 						}
 					});
 				} catch (final Exception e) {
-					Log.e(SFConstants.LOG_TAG,
+					PfLog.e(SFConstants.LOG_TAG,
 							"No se ha podido mostrar el dialogo de progreso: " + e); //$NON-NLS-1$
 				}
 			}
@@ -1515,30 +1576,29 @@ public final class PetitionListActivity extends FragmentActivity implements
 	 * Cuando se finaliza correctamente el llamada a FIRe que procesa las peticiones,
 	 * recibimos el identificador de la transaccion de FIRe y la URL de redireccion
 	 * a la pagina web desde la que hacer la autorizaci&oacute;n.
-	 * @param firePreSignResult Informacion de prefirma y de la transaccion de FIRe para permitir la
-	 * autorizaci&oacute;n del usuario.
+	 * @param loadDataResult Informaci&oacute;n de prefirma y de la transacci&oacute;n de FIRe para
+	 *                          permitir la autorizaci&oacute;n del usuario.
 	 */
 	@Override
-	public void firePreSignSuccess(FirePreSignResult firePreSignResult) {
+	public void fireLoadDataSuccess(FireLoadDataResult loadDataResult) {
 
 		// Almacenamos la informacion trifasica para reutilizarla al solicitar las postfirmas
-		this.firePreSignResult = firePreSignResult;
+		this.fireLoadDataResult = loadDataResult;
 
-		Log.w(SFConstants.LOG_TAG, "Recibido del PreSignTask:\n" + this.firePreSignResult.toString());
+		PfLog.w(SFConstants.LOG_TAG, "Resultado de la carga de datos en FIRe:\n" + this.fireLoadDataResult);
 
 		// Abrimos una actividad con un WebView en la que se muestre la URL recibida
-		Bundle bundle = new Bundle();
-		bundle.putString(FireWebViewActivity.EXTRA_PARAM_TRANSACTION_ID, firePreSignResult.getTransactionId());
-		bundle.putString(FireWebViewActivity.EXTRA_PARAM_URL, firePreSignResult.getURL());
-
-		Intent intent = new Intent(this, FireWebViewActivity.class);
-		intent.putExtras(bundle);
-		startActivityForResult(intent, FireWebViewActivity.REQUEST_CODE);
+		openWebViewActivity(
+				ClaveWebViewActivity.class,
+				fireLoadDataResult.getURL(),
+				null,
+				R.string.title_fire_webview,
+				true);
 	}
 
 	@Override
-	public void firePreSignFailed(Throwable cause) {
-		Log.e(SFConstants.LOG_TAG, "Ha fallado en la prefirma la operacion de firma con Cl@ve Firma", cause); //$NON-NLS-1$
+	public void fireLoadDataFailed(Throwable cause) {
+		PfLog.e(SFConstants.LOG_TAG, "Ha fallado en la prefirma la operacion de firma con Cl@ve Firma", cause); //$NON-NLS-1$
 
 		synchronized (this) {
 			this.numRequestToSignPending = 0;
@@ -1548,7 +1608,7 @@ public final class PetitionListActivity extends FragmentActivity implements
 				setVisibilityLoadingMessage(false, null, null);
 
 				final String errorMsg = getString(R.string.error_msg_procesing_requests);
-				Log.w(SFConstants.LOG_TAG, "Error: " + errorMsg); //$NON-NLS-1$
+				PfLog.w(SFConstants.LOG_TAG, "Error: " + errorMsg); //$NON-NLS-1$
 				showErrorDialog(DIALOG_ERROR_PROCESSING, errorMsg);
 			}
 		}
@@ -1556,24 +1616,30 @@ public final class PetitionListActivity extends FragmentActivity implements
 
 
 	@Override
-	public void firePostSignSuccess(RequestResult[] requestResults) {
+	public void fireSignSuccess(boolean allResultOk) {
 
 		synchronized (this) {
 			this.numRequestToSignPending = 0;
 
 			if (this.numRequestToApprovePending <= 0) {
 				setVisibilityLoadingMessage(false, null, null);
-
-				// Una vez finalizada una operacion, recargamos el listado por
-				// la primera pagina
-				updateCurrentList(1);
+				if (allResultOk) {
+					// Una vez finalizada una operacion, recargamos el listado por
+					// la primera pagina
+					updateCurrentList(FIRST_PAGE);
+				}
+				else {
+					final String errorMsg = getString(R.string.error_msg_procesing_requests);
+					PfLog.w(SFConstants.LOG_TAG, "Ha fallado la firma de una o mas peticiones con FIRe"); //$NON-NLS-1$
+					showErrorDialog(DIALOG_ERROR_PROCESSING, errorMsg);
+				}
 			}
 		}
 	}
 
 	@Override
-	public void firePostSignFailed(Throwable cause) {
-		Log.e(SFConstants.LOG_TAG, "Ha fallado en la postfirma la operacion de firma con Cl@ve Firma", cause); //$NON-NLS-1$
+	public void fireSignFailed(Throwable cause) {
+		PfLog.e(SFConstants.LOG_TAG, "Ha fallado en la postfirma la operacion de firma con Cl@ve Firma", cause); //$NON-NLS-1$
 
 		synchronized (this) {
 			this.numRequestToSignPending = 0;
@@ -1583,7 +1649,7 @@ public final class PetitionListActivity extends FragmentActivity implements
 				setVisibilityLoadingMessage(false, null, null);
 
 				final String errorMsg = getString(R.string.error_msg_procesing_requests);
-				Log.w(SFConstants.LOG_TAG, "Error: " + errorMsg); //$NON-NLS-1$
+				PfLog.w(SFConstants.LOG_TAG, "Error: " + errorMsg); //$NON-NLS-1$
 				showErrorDialog(DIALOG_ERROR_PROCESSING, errorMsg);
 			}
 		}
@@ -1605,7 +1671,7 @@ public final class PetitionListActivity extends FragmentActivity implements
 				apiAvailability.getErrorDialog(this, resultCode, PLAY_SERVICES_RESOLUTION_REQUEST)
 						.show();
 			} else {
-				Log.w(SFConstants.LOG_TAG, "Dispositivo no soportado.");
+				PfLog.w(SFConstants.LOG_TAG, "Dispositivo no soportado.");
 				Toast.makeText(this, R.string.error_msg_unsupported_device, Toast.LENGTH_SHORT).show();
 				finish();
 			}
@@ -1624,7 +1690,7 @@ public final class PetitionListActivity extends FragmentActivity implements
 		// Si aun no se ha registrado, lo hacemos
 		String userProxyId = getUserProxyId();
 		Intent intent = new Intent(this, RegistrationIntentService.class);
-		intent.putExtra(RegistrationIntentService.EXTRA_RESOURCE_CERT_B64, this.certB64);
+		intent.putExtra(RegistrationIntentService.EXTRA_RESOURCE_DNI, this.dni);
 		intent.putExtra(RegistrationIntentService.EXTRA_RESOURCE_USER_PROXY_ID, userProxyId);
 		startService(intent);
 	}

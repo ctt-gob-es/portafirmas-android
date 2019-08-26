@@ -1,12 +1,13 @@
 package es.gob.afirma.android.signfolder;
 
+import android.os.AsyncTask;
+
 import java.util.List;
 
-import android.os.AsyncTask;
-import android.util.Log;
 import es.gob.afirma.android.signfolder.proxy.CommManager;
 import es.gob.afirma.android.signfolder.proxy.PartialSignRequestsList;
 import es.gob.afirma.android.signfolder.proxy.SignRequest;
+import es.gob.afirma.android.util.PfLog;
 
 /** Tarea as&iacute;ncrona para la carga de peticiones de firma en una lista de peticiones. */
 final class LoadSignRequestsTask extends AsyncTask<Void, Void, PartialSignRequestsList> {
@@ -57,7 +58,7 @@ final class LoadSignRequestsTask extends AsyncTask<Void, Void, PartialSignReques
     	catch (final Exception e) {
     		e.printStackTrace();
     		signRequests = null;
-    		Log.e(SFConstants.LOG_TAG, "Ocurrio un error al recuperar las peticiones de firma: " + e); //$NON-NLS-1$
+    		PfLog.e(SFConstants.LOG_TAG, "Ocurrio un error al recuperar las peticiones de firma: " + e); //$NON-NLS-1$
 			// Si se ha perdido la sesion o el certificado de autenticacion no es valido vuelve a la pantalla de login
 			if(e.getMessage().contains(AUTH_ERROR)) {
                 if(this.commManager.isOldProxy()) {
@@ -71,7 +72,7 @@ final class LoadSignRequestsTask extends AsyncTask<Void, Void, PartialSignReques
     	catch (final Throwable t) {
     		t.printStackTrace();
     		signRequests = null;
-    		Log.e(SFConstants.LOG_TAG, "Problema grave al listar las peticiones: " + t); //$NON-NLS-1$
+    		PfLog.e(SFConstants.LOG_TAG, "Problema grave al listar las peticiones: " + t); //$NON-NLS-1$
     	}
 
     	return signRequests;

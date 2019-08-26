@@ -1,15 +1,16 @@
 package es.gob.afirma.android.signfolder;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
-import android.util.Log;
+import es.gob.afirma.android.util.PfLog;
 
 /** Preferencias de la aplicaci&oacute;n. */
 public final class AppPreferences {
@@ -47,7 +48,7 @@ public final class AppPreferences {
 	private static final String PREFERENCES_KEY_PREFIX_SERVER = "server"; //$NON-NLS-1$
 
 	/** Token actual para el env&iacute;o de notificaciones. */
-	 private static final String PREFERENCES_KEY_CURRENT_TOKEN = "currentToken";
+	static final String PREFERENCES_KEY_CURRENT_TOKEN = "currentToken";
 
 	private static final String CONFIG_SEPARATOR = ";"; //$NON-NLS-1$
 
@@ -134,7 +135,7 @@ public final class AppPreferences {
 				return Integer.parseInt(config.getProperty(KEY_CONNECTION_READ_TIMEOUT));
 			}
 			catch (final NumberFormatException e) {
-				Log.w(SFConstants.LOG_TAG,
+				PfLog.w(SFConstants.LOG_TAG,
 						"Error en el timeout configurado en el fichero de propiedades. Se usara el por defecto: " + DEFAULT_CONNECTION_READ_TIMEOUT); //$NON-NLS-1$
 			}
 		}
@@ -153,7 +154,7 @@ public final class AppPreferences {
 		return config.getProperty(KEY_HELP_URL);
 	}
 
-	String getPreference(final String key) {
+	private String getPreference(final String key) {
 		return sharedPref.getString(key.trim(), ""); //$NON-NLS-1$
 	}
 
@@ -226,11 +227,11 @@ public final class AppPreferences {
 		return getPreference(PREFERENCES_KEY_PREFIX_SERVER + alias, "");
 	}
 
-	void setCurrentToken(final String token) {
+	public void setCurrentToken(final String token) {
 		setPreference(PREFERENCES_KEY_CURRENT_TOKEN, token);
 	}
 
-	String getCurrentToken() {
+	public String getCurrentToken() {
 		return getPreference(PREFERENCES_KEY_CURRENT_TOKEN);
 	}
 

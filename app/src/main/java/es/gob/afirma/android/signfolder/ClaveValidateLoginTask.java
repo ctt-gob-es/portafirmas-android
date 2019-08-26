@@ -1,13 +1,13 @@
 package es.gob.afirma.android.signfolder;
 
 import android.os.AsyncTask;
-import android.util.Log;
 
 import java.util.Timer;
 import java.util.TimerTask;
 
 import es.gob.afirma.android.signfolder.proxy.CommManager;
 import es.gob.afirma.android.signfolder.proxy.ValidationLoginResult;
+import es.gob.afirma.android.util.PfLog;
 
 /**
  * Tarea que realiza el proceso de login con el servicio proxy por medio de Cl@ve.
@@ -38,7 +38,7 @@ public final class ClaveValidateLoginTask extends AsyncTask<Void, Void, Validati
 		try {
 			rr = this.comm.claveLoginValidation(this.tokenSaml);
 		} catch (Exception e) {
-			Log.w(SFConstants.LOG_TAG, "No se pudo conectar con el servicio proxy", e);
+			PfLog.w(SFConstants.LOG_TAG, "No se pudo conectar con el servicio proxy", e);
 			rr = new ValidationLoginResult(false);
 			rr.setErrorMsg("No se pudo conectar con el servicio proxy");
 		}

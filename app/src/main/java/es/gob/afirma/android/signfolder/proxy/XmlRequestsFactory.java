@@ -2,12 +2,8 @@ package es.gob.afirma.android.signfolder.proxy;
 
 import java.io.IOException;
 
-import android.util.Log;
-
-import org.w3c.dom.Element;
-
 import es.gob.afirma.android.util.Base64;
-import es.gob.afirma.core.signers.TriphaseData;
+import es.gob.afirma.android.util.PfLog;
 
 /** Factor&iacute;a para la creaci&oacute;n de solitidudes XML hacia el servidor de firmas multi-fase.
  * @author Tom&aacute;s Garc&iacute;a-Mer&aacute;s */
@@ -61,10 +57,6 @@ final class XmlRequestsFactory {
 		sb.append(pageSize);
 		sb.append("\">"); //$NON-NLS-1$
 
-		//sb.append(XML_CERT_OPEN);
-		//sb.append(certEncoded);
-		//sb.append(XML_CERT_CLOSE);
-
 		if (signFormats != null && signFormats.length > 0) {
 			sb.append("<fmts>"); //$NON-NLS-1$
 			for (final String signFormat : signFormats) {
@@ -111,11 +103,6 @@ final class XmlRequestsFactory {
 		final StringBuffer sb = new StringBuffer(XML_HEADER);
 		sb.append(XML_TRISIGN_OPEN);
 
-		// Certificado eliminado en la version nueva
-		/*sb.append(XML_CERT_OPEN);
-		sb.append(requesterCert);
-		sb.append(XML_CERT_CLOSE);*/
-
 		// Listado de peticiones
 		sb.append(XML_REQUESTS_OPEN);
 
@@ -128,7 +115,7 @@ final class XmlRequestsFactory {
 		documents = request.getDocs();
 		for (final SignRequestDocument document : documents) {
 
-			Log.i("es.gob.afirma", "Parametros que se agregan:\n" + document.getParams()); //$NON-NLS-1$ //$NON-NLS-2$
+			PfLog.i("es.gob.afirma", "Parametros que se agregan:\n" + document.getParams()); //$NON-NLS-1$ //$NON-NLS-2$
 
 			sb.append("<doc docid=\"") //$NON-NLS-1$
 			.append(document.getId())
@@ -164,11 +151,6 @@ final class XmlRequestsFactory {
 		final StringBuffer sb = new StringBuffer(XML_HEADER);
 		sb.append(XML_TRISIGN_OPEN);
 
-		// Certificado
-		/*sb.append(XML_CERT_OPEN);
-		sb.append(requesterCert);
-		sb.append(XML_CERT_CLOSE);*/
-
 		// Peticiones
 		sb.append(XML_REQUESTS_OPEN);
 	    TriphaseSignDocumentRequest[] documents;
@@ -183,7 +165,7 @@ final class XmlRequestsFactory {
 		    	documents = request.getDocumentsRequests();
 		    	for (final TriphaseSignDocumentRequest document : documents) {
 
-		    		Log.i("es.gob.afirma", "Parametros que se agregan:\n" + document.getParams()); //$NON-NLS-1$ //$NON-NLS-2$
+		    		PfLog.i("es.gob.afirma", "Parametros que se agregan:\n" + document.getParams()); //$NON-NLS-1$ //$NON-NLS-2$
 
 		    		sb.append("<doc docid=\"") //$NON-NLS-1$
 		    		.append(document.getId())
@@ -210,11 +192,11 @@ final class XmlRequestsFactory {
 		sb.append(XML_TRISIGN_CLOSE);
 
 		// Imprimimos la peticion en el log
-		Log.i("es.gob.afirma", "Peticion postfirma:"); //$NON-NLS-1$ //$NON-NLS-2$
+		PfLog.i("es.gob.afirma", "Peticion postfirma:"); //$NON-NLS-1$ //$NON-NLS-2$
 		final int BUFFER_LENGTH = 1000;
 		final String urlString = sb.toString();
 		for (int i = 0; i < urlString.length() / BUFFER_LENGTH + 1; i++) {
-			Log.i("es.gob.afirma", urlString .substring(i * BUFFER_LENGTH, Math.min((i + 1) * BUFFER_LENGTH, urlString.length()))); //$NON-NLS-1$
+			PfLog.i("es.gob.afirma", urlString .substring(i * BUFFER_LENGTH, Math.min((i + 1) * BUFFER_LENGTH, urlString.length()))); //$NON-NLS-1$
 		}
 
 		return sb.toString();
@@ -317,21 +299,21 @@ final class XmlRequestsFactory {
 	    return sb.toString();
 	}
 
-	static String createRegisterNotificationRequest(final String token, final String device, final String certB64) {
+	static String createRegisterNotificationRequest(final String token, final String device, final String idUsuario) {
 
 		final StringBuffer sb = new StringBuffer(XML_HEADER);
 		sb.append("<rqtreg ") //$NON-NLS-1$
 			.append("plt='1' ") //$NON-NLS-1$
 			.append("tkn='").append(token).append("' ") //$NON-NLS-1$ //$NON-NLS-2$
 			.append("dvc='").append(device).append("'>") //$NON-NLS-1$ //$NON-NLS-2$
-			.append("<cert>").append(certB64).append("</cert>") //$NON-NLS-1$ //$NON-NLS-2$
+			.append("<cert>").append(idUsuario).append("</cert>") //$NON-NLS-1$ //$NON-NLS-2$
 			.append("</rqtreg>"); //$NON-NLS-1$
 
 		return sb.toString();
 	}
 
 
-	static String createClaveFirmaPreSignRequest(SignRequest[] requests) throws IOException {
+	static String createFireLoadDataRequest(SignRequest[] requests) throws IOException {
 		if (requests == null) {
 			throw new IllegalArgumentException("La lista de peticiones no puede ser nula"); //$NON-NLS-1$
 		}
@@ -344,31 +326,11 @@ final class XmlRequestsFactory {
 		for (SignRequest request : requests) {
 
 			// Peticion
-			SignRequestDocument[] documents;
-
 			sb.append("<req id=\""); //$NON-NLS-1$
 			sb.append(request.getId());
-			sb.append("\">"); //$NON-NLS-1$
-			documents = request.getDocs();
-			for (final SignRequestDocument document : documents) {
+			sb.append("\"/>"); //$NON-NLS-1$
 
-				Log.i("es.gob.afirma", "Parametros que se agregan:\n" + document.getParams()); //$NON-NLS-1$ //$NON-NLS-2$
-
-				sb.append("<doc docid=\"") //$NON-NLS-1$
-						.append(document.getId())
-						.append("\" cop=\"") //$NON-NLS-1$
-						.append(document.getCryptoOperation())
-						.append("\" sigfrmt=\"") //$NON-NLS-1$
-						.append(document.getSignFormat())
-						.append("\" mdalgo=\"") //$NON-NLS-1$
-						.append(document.getMessageDigestAlgorithm())
-						.append("\">") //$NON-NLS-1$
-						.append(XML_PARAMS_OPEN)
-						.append(document.getParams() == null ? "" : document.getParams()) //$NON-NLS-1$
-						.append(XML_PARAMS_CLOSE)
-						.append("</doc>"); //$NON-NLS-1$
-			}
-			sb.append("</req>"); //$NON-NLS-1$
+			// No es necesario que indiquemos los documentos porque el Portafirmas ya los conoce
 		}
 		sb.append(XML_REQUESTS_CLOSE); // Cierre del listado de peticiones
 
@@ -377,71 +339,11 @@ final class XmlRequestsFactory {
 		return sb.toString();
 	}
 
-	static String createClaveFirmaPostSignRequest(FirePreSignResult firePreSignResult) throws IOException {
+	/** Crea una solicitud de firma de peticiones con FIRe.
+	 * @return XML para la solicitud de firma con FIRe. */
+	static String createFireSignRequest() {
 
-		if (firePreSignResult == null || firePreSignResult.getTransactionId() == null) {
-			throw new IllegalArgumentException("No se ha realizado previamente la transaccion con FIRe"); //$NON-NLS-1$
-		}
-		final StringBuffer sb = new StringBuffer(XML_HEADER);
-		sb.append("<rqtcf trid=\"" + firePreSignResult.getTransactionId() + "\">");
-
-		sb.append(XML_TRISIGN_OPEN);
-
-		// Certificado
-		/*sb.append(XML_CERT_OPEN);
-		sb.append(requesterCert);
-		sb.append(XML_CERT_CLOSE);*/
-
-		// Peticiones
-		sb.append(XML_REQUESTS_OPEN);
-		TriphaseSignDocumentRequest[] documents;
-		for (final TriphaseRequest request : firePreSignResult.getTriphaseRequests()) {
-			sb.append("<req id=\""); //$NON-NLS-1$
-			sb.append(request.getRef());
-			sb.append("\" status=\""); //$NON-NLS-1$
-			sb.append(request.isStatusOk() ? "OK" : "KO"); //$NON-NLS-1$ //$NON-NLS-2$
-			sb.append("\">"); //$NON-NLS-1$
-			// Solo procesamos los documentos si la peticion es buena
-			if (request.isStatusOk()) {
-				documents = request.getDocumentsRequests();
-				for (final TriphaseSignDocumentRequest document : documents) {
-
-					Log.i("es.gob.afirma", "Parametros que se agregan:\n" + document.getParams()); //$NON-NLS-1$ //$NON-NLS-2$
-
-					sb.append("<doc docid=\"") //$NON-NLS-1$
-							.append(document.getId())
-							.append("\" cop=\"") //$NON-NLS-1$
-							.append(document.getCryptoOperation())
-							.append("\" sigfrmt=\"") //$NON-NLS-1$
-							.append(document.getSignatureFormat())
-							.append("\" mdalgo=\"") //$NON-NLS-1$
-							.append(document.getMessageDigestAlgorithm())
-							.append("\">") //$NON-NLS-1$
-							.append(XML_PARAMS_OPEN)
-							.append(document.getParams() == null ? "" : document.getParams()) //$NON-NLS-1$
-							.append(XML_PARAMS_CLOSE)
-							.append(XML_RESULT_OPEN)
-							.append(document.getPartialResult().toXMLParamList())
-							.append(XML_RESULT_CLOSE)
-							.append("</doc>"); //$NON-NLS-1$
-				}
-			}
-			sb.append("</req>"); //$NON-NLS-1$
-		}
-		sb.append(XML_REQUESTS_CLOSE);
-
-		sb.append(XML_TRISIGN_CLOSE);
-
-		sb.append("</rqtcf>");
-
-		// Imprimimos la peticion en el log
-		Log.i("es.gob.afirma", "Peticion postfirma:"); //$NON-NLS-1$ //$NON-NLS-2$
-		final int BUFFER_LENGTH = 1000;
-		final String urlString = sb.toString();
-		for (int i = 0; i < urlString.length() / BUFFER_LENGTH + 1; i++) {
-			Log.i("es.gob.afirma", urlString .substring(i * BUFFER_LENGTH, Math.min((i + 1) * BUFFER_LENGTH, urlString.length()))); //$NON-NLS-1$
-		}
-
-		return sb.toString();
+		return XML_HEADER +
+				"<cfrq />";
 	}
 }

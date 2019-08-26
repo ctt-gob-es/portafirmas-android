@@ -1,7 +1,5 @@
 package es.gob.afirma.android.signfolder.proxy;
 
-import android.util.Log;
-
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
@@ -11,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import es.gob.afirma.android.signfolder.SFConstants;
+import es.gob.afirma.android.util.PfLog;
 
 /** Analizador de XML para la generaci&oacute;n de un listado de objetos
  * de tipo {@link TriphaseRequest} a partir
@@ -89,7 +88,7 @@ public class PostsignsClaveFirmaResponseParser {
 			// statusOk = true, salvo que la propiedad status tenga el valor "KO"
 			statusOk = attributeNode == null || !"KO".equalsIgnoreCase(attributeNode.getNodeValue()); //$NON-NLS-1$
 
-			Log.i(SFConstants.LOG_TAG, "Ref=" + ref + "; status=" + statusOk); //$NON-NLS-1$ //$NON-NLS-2$
+			PfLog.i(SFConstants.LOG_TAG, "Ref=" + ref + "; status=" + statusOk); //$NON-NLS-1$ //$NON-NLS-2$
 
 			return new RequestResult(ref, statusOk);
 		}

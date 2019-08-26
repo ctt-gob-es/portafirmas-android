@@ -1,12 +1,12 @@
 package es.gob.afirma.android.signfolder.proxy;
 
-import java.util.Vector;
-
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+
+import java.util.Vector;
 
 import es.gob.afirma.android.signfolder.proxy.SignRequest.RequestType;
 

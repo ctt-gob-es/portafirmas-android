@@ -1,12 +1,13 @@
 package es.gob.afirma.android.signfolder;
 
+import android.content.Context;
+import android.os.AsyncTask;
+import android.security.KeyChain;
+
 import java.security.KeyStore.PrivateKeyEntry;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 
-import android.content.Context;
-import android.os.AsyncTask;
-import android.security.KeyChain;
 import es.gob.afirma.android.crypto.MobileKeyStoreManager.KeySelectedEvent;
 import es.gob.afirma.android.crypto.MobileKeyStoreManager.PrivateKeySelectionListener;
 

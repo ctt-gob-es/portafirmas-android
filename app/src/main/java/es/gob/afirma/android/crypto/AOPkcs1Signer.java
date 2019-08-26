@@ -17,6 +17,7 @@ import java.security.Signature;
 import java.security.SignatureException;
 import java.security.cert.Certificate;
 import java.util.Properties;
+
 import es.gob.afirma.android.util.AOException;
 
 /** Firmador simple en formato PKCS#1.

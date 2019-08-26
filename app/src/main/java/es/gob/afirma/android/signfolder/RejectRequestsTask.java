@@ -1,61 +1,34 @@
 package es.gob.afirma.android.signfolder;
 
 import android.os.AsyncTask;
-import android.util.Log;
+
 import es.gob.afirma.android.signfolder.proxy.CommManager;
-import es.gob.afirma.android.signfolder.proxy.RequestDetail;
 import es.gob.afirma.android.signfolder.proxy.RequestResult;
 import es.gob.afirma.android.signfolder.proxy.SignRequest;
+import es.gob.afirma.android.util.PfLog;
 
 /** Tarea as&iacute;ncrona para el rechazo de peticiones de firma. Despu&eacute;s
  * del rechazo actualiza la lista con las peticiones pendientes. */
 final class RejectRequestsTask extends AsyncTask<Void, Void, RequestResult[]> {
 
 	private final String[] requestIds;
-	private final String certB64;
 	private final CommManager commManager;
 	private final OperationRequestListener listener;
-	private String reason = null;
+	private String reason;
 	private Throwable t;
 
 	/**
 	 * Crea una tarea as&iacute;ncrona para el rechazo de peticiones.
 	 * @param requests Listado de peticiones que se desean rechazar.
-	 * @param certB64 Certificado codificado en base64 para autenticar la operaci&oacute;n.
 	 * @param commManager Manejador de las comunicaciones para el rechazo de las peticiones.
 	 * @param listener Manejador que gestiona el comportamiento de la operaci&oacute;n al finalizar.
+	 * @param reason Motivo del rechazo indicado por el usuario.
 	 */
-	 RejectRequestsTask(final SignRequest[] requests, 
-			 final String certB64, 
+	 RejectRequestsTask(final SignRequest[] requests,
 			 final CommManager commManager, 
 			 final OperationRequestListener listener,
 			 final String reason) {
 		this.requestIds = new String[requests.length];
-		this.certB64 = certB64;
-		this.commManager = commManager;
-		this.listener = listener;
-		this.reason = reason;
-		this.t = null;
-
-		for (int i = 0; i < requests.length; i++) {
-			this.requestIds[i] = requests[i].getId();
-		}
-	}
-
-	/**
-	 * Crea una tarea as&iacute;ncrona para el rechazo de peticiones.
-	 * @param requests Listado de peticiones que se desean rechazar.
-	 * @param certB64 Certificado codificado en base64 para autenticar la operaci&oacute;n.
-	 * @param commManager Manejador de las comunicaciones para el rechazo de las peticiones.
-	 * @param listener Manejador que gestiona el comportamiento de la operaci&oacute;n al finalizar.
-	 */
-	RejectRequestsTask(final RequestDetail[] requests, 
-						final String certB64, 
-						final CommManager commManager, 
-						final OperationRequestListener listener,
-						final String reason) {
-		this.requestIds = new String[requests.length];
-		this.certB64 = certB64;
 		this.commManager = commManager;
 		this.listener = listener;
 		this.reason = reason;
@@ -69,17 +42,15 @@ final class RejectRequestsTask extends AsyncTask<Void, Void, RequestResult[]> {
 	/**
 	 * Crea una tarea as&iacute;ncrona para el rechazo de una petici&oacute;n.
 	 * @param requestId Identificador de la petici&oacute;n a rechazar.
-	 * @param certB64 Certificado codificado en base64 para autenticar la operaci&oacute;n.
 	 * @param commManager Manejador de las comunicaciones para el rechazo de las peticiones.
 	 * @param listener Manejador que gestiona el comportamiento de la operaci&oacute;n al finalizar.
+	 * @param reason Motivo del rechazo indicado por el usuario.
 	 */
-	RejectRequestsTask(final String requestId, 
-			final String certB64, 
-			final CommManager commManager, 
+	RejectRequestsTask(final String requestId,
+			final CommManager commManager,
 			final OperationRequestListener listener,
 			final String reason) {
 		this.requestIds = new String[] { requestId };
-		this.certB64 = certB64;
 		this.commManager = commManager;
 		this.listener = listener;
 		this.reason = reason;
@@ -94,7 +65,7 @@ final class RejectRequestsTask extends AsyncTask<Void, Void, RequestResult[]> {
         try {
 			result = this.commManager.rejectRequests(this.requestIds, this.reason);
 		} catch (final Exception e) {
-			Log.w(SFConstants.LOG_TAG, "Ocurrio un error en el rechazo de las solicitudes de firma: " + e); //$NON-NLS-1$
+			PfLog.w(SFConstants.LOG_TAG, "Ocurrio un error en el rechazo de las solicitudes de firma: " + e); //$NON-NLS-1$
 			this.t = e;
 		}
 

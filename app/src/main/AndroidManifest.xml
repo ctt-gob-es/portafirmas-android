@@ -1,19 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="es.gob.afirma.android.signfolder"
-    android:versionCode="9"
-    android:versionName="1.4">
+    package="es.gob.afirma.android.signfolder" >
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
-    <!-- GCM requires a Google account. -->
+
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <permission android:name="es.gob.afirma.android.signfolder.permission.C2D_MESSAGE" android:protectionLevel="signature" />
-    <uses-permission android:name="es.gob.android.afirma.signfolder.permission.C2D_MESSAGE" />
-    <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
@@ -21,22 +15,19 @@
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/AppTheme">
-        <meta-data android:name="com.google.android.gms.version" android:value="@integer/google_play_services_version" />
-
-        <receiver
-            android:name="es.gob.afirma.android.gcm.GCMBroadcastReceiver"
-            android:exported="true"
-            android:permission="com.google.android.c2dm.permission.SEND" >
+        <meta-data
+			android:name="com.google.android.gms.version"
+			android:value="@integer/google_play_services_version" />
+        <meta-data android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_notification" />
+        <service android:name="es.gob.afirma.android.fcm.FCMService">
             <intent-filter>
-                <action android:name="com.google.android.c2dm.intent.RECEIVE" />
-                <action android:name="com.google.android.c2dm.intent.REGISTRATION" />
-                <category android:name="es.gob.afirma.signfolder" />
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
-        </receiver>
-
-        <service android:enabled="true" android:name="es.gob.afirma.android.gcm.GCMIntentService" />
+        </service>
+		
         <service
-            android:name="es.gob.afirma.android.gcm.RegistrationIntentService"
+            android:name="es.gob.afirma.android.fcm.RegistrationIntentService"
             android:exported="false">
         </service>
 
@@ -67,25 +58,24 @@
         <activity
             android:name=".PetitionListActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
-            android:label="@string/title_unresolved_petition_list"></activity>
+            android:label="@string/title_unresolved_petition_list" />
         <activity
             android:name=".PetitionDetailsActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
-            android:label="@string/title_activity_request_details"></activity>
+            android:label="@string/title_activity_request_details" />
         <activity
             android:name=".FileChooserActivity"
-            android:label="@string/title_activity_cert_chooser"></activity>
+            android:label="@string/title_activity_cert_chooser" />
         <activity
             android:name=".ClaveWebViewActivity"
             android:label="@string/title_clave_login"
-            android:screenOrientation="portrait">
-        </activity>
+            android:screenOrientation="portrait" />
         <activity
             android:name=".FireWebViewActivity"
-            android:label="@string/title_fire_webview"></activity>
+            android:label="@string/title_fire_webview" />
         <activity
-            android:name="es.gob.afirma.android.gcm.StartFromNotificationActivity"
-            android:label="@string/title_activity_notifications"></activity>
+            android:name="es.gob.afirma.android.fcm.StartFromNotificationActivity"
+            android:label="@string/title_activity_notifications" />
     </application>
 
 </manifest>

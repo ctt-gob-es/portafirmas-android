@@ -1,16 +1,12 @@
 package es.gob.afirma.android.signfolder;
 
-import android.app.Activity;
-import android.content.Context;
 import android.os.AsyncTask;
-import android.util.Log;
 
-import java.security.KeyStore;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import es.gob.afirma.android.signfolder.proxy.CommManager;
-import es.gob.afirma.android.signfolder.proxy.RequestResult;
+import es.gob.afirma.android.util.PfLog;
 
 /** Carga los datos remotos necesarios para la configuraci&oacute;n de la aplicaci&oacute;n. */
 final class LogoutRequestTask extends AsyncTask<Void, Void, Void> {
@@ -46,7 +42,7 @@ final class LogoutRequestTask extends AsyncTask<Void, Void, Void> {
 		try {
 			this.commManager.logoutRequest();
 		} catch (final Exception e) {
-			Log.w(SFConstants.LOG_TAG, "No se pudo realizar el logout: " + e); //$NON-NLS-1$
+			PfLog.w(SFConstants.LOG_TAG, "No se pudo realizar el logout: " + e); //$NON-NLS-1$
 		}
 		timer.cancel();
 		return null;

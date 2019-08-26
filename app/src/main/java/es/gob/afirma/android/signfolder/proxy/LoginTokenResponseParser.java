@@ -1,15 +1,13 @@
 package es.gob.afirma.android.signfolder.proxy;
 
-import android.util.Log;
-
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-
 import es.gob.afirma.android.signfolder.ErrorManager;
 import es.gob.afirma.android.signfolder.SFConstants;
+import es.gob.afirma.android.util.PfLog;
 
 /** Analizador de XML para la generaci&oacute;n de una petici&oacute;n de login o logout.
  * @author Sergio Mart&iacute;nez. */
@@ -95,7 +93,7 @@ class LoginTokenResponseParser {
 				statusOk = false;
 			}
 
-			Log.i(SFConstants.LOG_TAG, "Id=" + ref + "; status=" + statusOk); //$NON-NLS-1$ //$NON-NLS-2$
+			PfLog.i(SFConstants.LOG_TAG, "Id=" + ref + "; status=" + statusOk); //$NON-NLS-1$ //$NON-NLS-2$
 
 			return new RequestResult(ref, statusOk);
 		}
