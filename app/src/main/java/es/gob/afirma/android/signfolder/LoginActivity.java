@@ -514,7 +514,7 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
 				is.close();
 			} catch (final IOException e) {
 				showErrorDialog(getString(R.string.error_loading_selected_file, filename));
-				PfLog.e(SFConstants.LOG_TAG, "Error al cargar el fichero: " + e.toString(), e); //$NON-NLS-1$
+				PfLog.e(SFConstants.LOG_TAG, "Error al cargar el fichero: " + e, e); //$NON-NLS-1$
 				return;
 			}
 
@@ -543,8 +543,10 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
             else {
                 PfLog.e(SFConstants.LOG_TAG, "Error al acceder con Cl@ve"); //$NON-NLS-1$
                 String errorType = data != null ? data.getStringExtra("type") : null; //$NON-NLS-1$
+				String errorErrorMsg = data != null ? data.getStringExtra("msg") : null; //$NON-NLS-1$
 
                 PfLog.e(SFConstants.LOG_TAG, "Tipo de error: " + errorType);
+				PfLog.e(SFConstants.LOG_TAG, "Mensaje de error: " + errorErrorMsg);
 
                 // Mostramos un mensaje u otro segun el tipo de error
                 if ("validation".equals(errorType)) {
@@ -630,7 +632,7 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
         openWebViewActivity(
 				ClaveWebViewActivity.class,
         		loginResult.getRedirectionUrl(),
-				loginResult.getSessionId(),
+				loginResult.getCookieId(),
 				R.string.title_clave_login,
 				true);
     }

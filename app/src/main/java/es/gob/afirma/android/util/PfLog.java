@@ -32,9 +32,9 @@ public class PfLog {
      * @param message Message to write.
      */
     public static void w(String tag, String message) {
-        if (!isProduction) {
+//        if (!isProduction) {
             Log.w(tag, message);
-        }
+//        }
     }
 
     /**
@@ -45,9 +45,9 @@ public class PfLog {
      * @param e       Exception to throw.
      */
     public static void w(String tag, String message, Exception e) {
-        if (!isProduction) {
+//        if (!isProduction) {
             Log.w(tag, message, e);
-        }
+//        }
     }
 
     /**
@@ -58,9 +58,9 @@ public class PfLog {
      * @param t       Throwable object to include in the log message.
      */
     public static void w(String tag, String message, Throwable t) {
-        if (!isProduction) {
+//        if (!isProduction) {
             Log.w(tag, message, t);
-        }
+//        }
     }
 
     /**

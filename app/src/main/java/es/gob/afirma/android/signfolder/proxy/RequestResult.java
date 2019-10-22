@@ -9,14 +9,28 @@ public class RequestResult {
 
 	private final boolean statusOk;
 
+	/** Identificador de sesi&oacute;n compartida. */
+	private String ssid;
+
 	/**
 	 * Resultado de una petici&oacute;n particular.
 	 * @param id Identificador de la petici&oacute;n.
 	 * @param ok Resultado de la petici&oacute;n.
 	 */
 	public RequestResult(final String id, final boolean ok) {
+		this(id, ok, null);
+	}
+
+	/**
+	 * Resultado de una petici&oacute;n particular.
+	 * @param id Identificador de la petici&oacute;n.
+	 * @param ok Resultado de la petici&oacute;n.
+	 * @param ssid Identificador de sesi&oacute;n compartida.
+	 */
+	public RequestResult(final String id, final boolean ok, final String ssid) {
 		this.id = id;
 		this.statusOk = ok;
+		this.ssid = ssid;
 	}
 
 	/**
@@ -34,5 +48,19 @@ public class RequestResult {
 	 */
 	public boolean isStatusOk() {
 		return this.statusOk;
+	}
+
+	/**
+	 * Recupera el identificador de sesi&oacute;n compartida.
+	 * @return Identificador de sesi&oacute;n compartida.
+	 */
+	public String getSsid() { return this.ssid; }
+
+	/**
+	 * Establece el identificador de sesi&oacute;n compartida.
+	 * @param ssid Identificador de sesi&oacute;n compartida.
+	 */
+	public void setSsid(String ssid) {
+		this.ssid = ssid;
 	}
 }

@@ -34,8 +34,9 @@ public final class CommManager  extends CommManagerOldVersion{
 
 	private static final String HTTPS = "https"; //$NON-NLS-1$
 
-	private static final String PARAMETER_NAME_OPERATION = "op"; //$NON-NLS-1$
-	private static final String PARAMETER_NAME_DATA = "dat"; //$NON-NLS-1$
+	private static final String PARAMETER_NAME_OPERATION_FIRST = "?op="; //$NON-NLS-1$
+	private static final String PARAMETER_NAME_DATA = "&dat="; //$NON-NLS-1$
+	private static final String PARAMETER_NAME_SHARED_SESSION_ID = "&ssid="; //$NON-NLS-1$
 
 	private static final String OPERATION_PRESIGN = "0"; //$NON-NLS-1$
 	private static final String OPERATION_POSTSIGN = "1"; //$NON-NLS-1$
@@ -57,13 +58,17 @@ public final class CommManager  extends CommManagerOldVersion{
 
 	private static final String OPERATION_CLAVE_LOGIN_REQUEST = "14"; //$NON-NLS-1$
 
-	private static final String OPERATION_CLAVE_LOGIN_VALIDATION = "15"; //$NON-NLS-1$
-
 	private static final String OPERATION_PRESIGN_CLAVE_FIRMA = "16"; //$NON-NLS-1$
 
 	private static final String OPERATION_POSTSIGN_CLAVE_FIRMA = "17"; //$NON-NLS-1$
 
+	// Variables utilizadas en la autenticacion con certificado local
+	/** Certificado de autenticaci&oacute;n en base 64. */
 	private String certb64;
+
+	// Variables utilizadas en la autenticacion con certificado en la nube
+	/** Identificador de sesi&oacute;n remoto. */
+	private String remoteId = null;
 
 	private boolean oldProxy = false;
 
@@ -88,38 +93,19 @@ public final class CommManager  extends CommManagerOldVersion{
 		instance = null;
 	}
 
-	private static String prepareParam(final String param) {
-		return Base64.encode(param.getBytes(), true);
+	/**
+	 * Elimina restos de las sesiones de la instancia actual.
+	 */
+	private void reset() {
+		this.certb64 = null;
+		this.remoteId = null;
+		this.oldProxy = false;
 	}
 
     /** Devuelve true si se conecta con el proxy antiguo. */
 	public boolean isOldProxy() {
         return oldProxy;
     }
-
-	private String prepareUrl(final String operation, final String dataB64UrlSafe) {
-		return this.signFolderProxyUrl + "?"
-				+ PARAMETER_NAME_OPERATION + "=" + operation + "&"
-				+ PARAMETER_NAME_DATA + "=" + dataB64UrlSafe;
-	}
-
-	public FireLoadDataResult firePrepareSigns(final SignRequest[] requests) throws IOException, SAXException {
-		final String dataB64UrlSafe = prepareParam(
-				XmlRequestsFactory.createFireLoadDataRequest(requests)
-		);
-
-		return FireLoadDataResponseParser.parse(getRemoteDocument(prepareUrl(
-				OPERATION_PRESIGN_CLAVE_FIRMA, dataB64UrlSafe)));
-	}
-
-	public FireSignResult fireSignRequests() throws IOException, SAXException {
-		final String dataB64UrlSafe = prepareParam(
-				XmlRequestsFactory.createFireSignRequest()
-		);
-
-		return FireSignResponseParser.parse(getRemoteDocument(prepareUrl(
-				OPERATION_POSTSIGN_CLAVE_FIRMA, dataB64UrlSafe)));
-	}
 
 	public ClaveLoginResult claveLoginRequest() throws Exception {
 
@@ -129,41 +115,24 @@ public final class CommManager  extends CommManagerOldVersion{
 
 		ConnectionResponse response = getRemoteData(url);
 
-        InputStream is = response.getDataIs();
-		String xmlResponse = new String(AOUtil.getDataFromInputStream(is));
-		is.close();
-
-		PfLog.i(SFConstants.LOG_TAG," ===== Respuesta a la peticion de login a clave:\n" + xmlResponse); //$NON-NLS-1$
-
-		Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder()
-				.parse(new InputSource(new StringReader(xmlResponse)));
+		Document doc = this.db.parse(response.getDataIs());
 
         final ClaveLoginResult result = ClaveLoginRequestResponseParser.parse(doc);
-        result.setSessionId(response.getCookieId());
+        result.setCookieId(response.getCookieId());
 
-        PfLog.i(SFConstants.LOG_TAG, "Session Id envidada desde el servidor: " + response.getCookieId());
+        PfLog.i(SFConstants.LOG_TAG, "Cookie Id envidada desde el servidor: " + response.getCookieId());
+
+        // Almacenamos el identificador remoto y lo eliminamos del resultado
+        this.remoteId = result.getTransactionId();
+        result.setTransactionId(null);
 
 		return result;
 	}
 
-	public ValidationLoginResult claveLoginValidation(String tokenSaml) throws Exception {
-		final UrlHttpManager urlManager = UrlHttpManagerFactory.getInstalledManager();
-
-		String xml = "<claveLoginValidation samltkn=\"" + tokenSaml + "\"/>"; //$NON-NLS-1$
-
-		String url = this.signFolderProxyUrl + createUrlParams(OPERATION_CLAVE_LOGIN_VALIDATION, xml); //$NON-NLS-1$
-
-		String xmlResponse = new String(urlManager.readUrl(url, UrlHttpMethod.POST));
-
-		System.out.println("Respuesta a la verificacion de login con clave:\n" + xmlResponse); //$NON-NLS-1$
-
-		Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder()
-				.parse(new InputSource(new StringReader(xmlResponse)));
-
-		return ClaveLoginValidationResponseParser.parse(doc);
-	}
-
 	public RequestResult loginRequest() throws OldProxyException, IOException, SAXException {
+
+		// Limpiamos restos de sesiones anteriores
+		reset();
 
 		// --------------------------
 		// Llamada al metodo de login
@@ -179,21 +148,30 @@ public final class CommManager  extends CommManagerOldVersion{
 			throw new OldProxyException("El proxy no soporta la nueva operacion de login");
 		}
 
-		return LoginTokenResponseParser.parse(doc);
+		RequestResult result = LoginTokenResponseParser.parse(doc);
+
+		// Almacenamos el identificador remoto y lo eliminamos del resultado
+		this.remoteId = result.getSsid();
+		result.setSsid(null);
+
+		return result;
 	}
 
 	public ValidationLoginResult tokenValidation(final byte[] pkcs1, String cert) throws Exception {
 
-		// Enviamos el token firmado a validar
-		String xml = "<rqtvl><cert>" + cert + "</cert><pkcs1>" + Base64.encode(pkcs1) + "</pkcs1></rqtvl>"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+		String xml = XmlRequestsFactory.createValidateLogin(cert, pkcs1);
 		String url = this.signFolderProxyUrl + createUrlParams(OPERATION_LOGIN_VALIDATION, xml); //$NON-NLS-1$
-		Document doc = getRemoteDocument(url);
-
-		return LoginValidationResponseParser.parse(doc);
+		return LoginValidationResponseParser.parse(getRemoteDocument(url));
 	}
 
-	private static String createUrlParams(final String op, final String data) {
-		return "?op=" + op + "&dat=" + Base64.encode(data.getBytes(), true); //$NON-NLS-1$ //$NON-NLS-2$
+	private String createUrlParams(final String op, final String data) {
+		String url = PARAMETER_NAME_OPERATION_FIRST + op + PARAMETER_NAME_DATA +
+				Base64.encode(data.getBytes(), true);
+
+		if (this.remoteId != null) {
+			url += PARAMETER_NAME_SHARED_SESSION_ID + remoteId;
+		}
+		return url;
 	}
 
 	public void logoutRequest() throws Exception {
@@ -205,7 +183,6 @@ public final class CommManager  extends CommManagerOldVersion{
 			final UrlHttpManager urlManager = UrlHttpManagerFactory.getInstalledManager();
 
 			String xml = "<lgorq />"; //$NON-NLS-1$
-
 			String url = this.signFolderProxyUrl + createUrlParams(OPERATION_LOGOUT_REQUEST, xml); //$NON-NLS-1$
 
 			byte[] data = urlManager.readUrl(url, UrlHttpMethod.POST);
@@ -271,13 +248,11 @@ public final class CommManager  extends CommManagerOldVersion{
 			IOException {
 		PartialSignRequestsList rsl;
 		if (!oldProxy) {
-			final String dataB64UrlSafe = prepareParam(XmlRequestsFactory
-					.createRequestListRequest(signRequestState,
-							AppPreferences.getInstance().getSupportedFormats(), filters, numPage,
-							pageSize));
-
-			rsl = RequestListResponseParser.parse(getRemoteDocument(prepareUrl(
-					OPERATION_REQUEST, dataB64UrlSafe)));
+			String[] signFormats = AppPreferences.getInstance().getSupportedFormats();
+			String xml = XmlRequestsFactory.createRequestListRequest(
+					signRequestState, signFormats, filters, numPage, pageSize);
+			String url = this.signFolderProxyUrl + createUrlParams(OPERATION_REQUEST, xml); //$NON-NLS-1$
+			rsl = RequestListResponseParser.parse(getRemoteDocument(url));
 		}
 		else {
 			return CommManagerOldVersion.getInstance().getSignRequests(this.certb64, signRequestState, filters, numPage, pageSize);
@@ -295,12 +270,9 @@ public final class CommManager  extends CommManagerOldVersion{
 			CertificateException,
 			SAXException {
 		if(!oldProxy) {
-			final String dataB64UrlSafe = prepareParam(
-					XmlRequestsFactory.createPresignRequest(request)
-			);
-
-			return PresignsResponseParser.parse(getRemoteDocument(prepareUrl(
-					OPERATION_PRESIGN, dataB64UrlSafe)));
+			String xml = XmlRequestsFactory.createPresignRequest(request);
+			String url = this.signFolderProxyUrl + createUrlParams(OPERATION_PRESIGN, xml);
+			return PresignsResponseParser.parse(getRemoteDocument(url));
 		}
 		else {
 			CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
@@ -322,20 +294,13 @@ public final class CommManager  extends CommManagerOldVersion{
 	 * @throws SAXException
 	 *             Si ocurren errores analizando el XML de respuesta
 	 */
-	public RequestResult postSignRequests(final TriphaseRequest[] requests) throws IOException,
-			SAXException {
-		final String dataB64UrlSafe;
-		if(!oldProxy) {
-			dataB64UrlSafe = prepareParam(XmlRequestsFactory
-					.createPostsignRequest(requests));
-		}
-		else {
-			dataB64UrlSafe = prepareParam(XmlRequestsFactoryOldVersion
-					.createPostsignRequest(requests, this.certb64));
-		}
-
-		return PostsignsResponseParser.parse(getRemoteDocument(prepareUrl(
-				OPERATION_POSTSIGN, dataB64UrlSafe)));
+	public RequestResult postSignRequests(final TriphaseRequest[] requests)
+			throws IOException, SAXException {
+		String xml = oldProxy ?
+				XmlRequestsFactoryOldVersion.createPostsignRequest(requests, this.certb64) :
+				XmlRequestsFactory.createPostsignRequest(requests);
+		String url = this.signFolderProxyUrl + createUrlParams(OPERATION_POSTSIGN, xml);
+		return PostsignsResponseParser.parse(getRemoteDocument(url));
 	}
 
 	/**
@@ -351,12 +316,10 @@ public final class CommManager  extends CommManagerOldVersion{
 	 *             de XML o al recuperar la respuesta del servidor.
 	 */
 	public RequestDetail getRequestDetail(final String requestId) throws SAXException, IOException {
-		String dataB64UrlSafe;
 		if(!oldProxy) {
-			dataB64UrlSafe = prepareParam(XmlRequestsFactory
-					.createDetailRequest(requestId));
-			return RequestDetailResponseParser.parse(getRemoteDocument(prepareUrl(
-					OPERATION_DETAIL, dataB64UrlSafe)));
+			String xml = XmlRequestsFactory.createDetailRequest(requestId);
+			String url = this.signFolderProxyUrl + createUrlParams(OPERATION_DETAIL, xml);
+			return RequestDetailResponseParser.parse(getRemoteDocument(url));
 		}
 		else {
 			return CommManagerOldVersion.getInstance().getRequestDetail(this.certb64, requestId);
@@ -380,12 +343,10 @@ public final class CommManager  extends CommManagerOldVersion{
 			throws SAXException, IOException {
 		this.certb64 = certB64;
 
-		// Preparamos a peticion. En caso de usarse el proxy nuevo, no se necesita el certificado
-		final String dataB64UrlSafe = prepareParam(
-				XmlRequestsFactory.createAppListRequest(this.oldProxy ? certB64 : null));
-
-		return ApplicationListResponseParser.parse(
-				getRemoteDocument(prepareUrl(OPERATION_APP_LIST, dataB64UrlSafe)));
+		// Preparamos la peticion. En caso de usarse el proxy nuevo, no se necesita el certificado
+		String xml = XmlRequestsFactory.createAppListRequest(this.oldProxy ? certB64 : null);
+		String url = this.signFolderProxyUrl + createUrlParams(OPERATION_APP_LIST, xml);
+		return ApplicationListResponseParser.parse(getRemoteDocument(url));
 	}
 
 	/**
@@ -403,18 +364,11 @@ public final class CommManager  extends CommManagerOldVersion{
 	 */
 	public RequestResult[] rejectRequests(final String[] requestIds,
 			final String reason) throws SAXException, IOException {
-		final String dataB64UrlSafe;
-		if(!oldProxy) {
-			dataB64UrlSafe = prepareParam(XmlRequestsFactory
-					.createRejectRequest(requestIds, reason));
-		}
-		else {
-			dataB64UrlSafe = prepareParam(XmlRequestsFactoryOldVersion
-					.createRejectRequest(requestIds, this.certb64, reason));
-		}
-
-		return RejectsResponseParser.parse(getRemoteDocument(prepareUrl(
-				OPERATION_REJECT, dataB64UrlSafe)));
+		String xml = oldProxy ?
+				XmlRequestsFactoryOldVersion.createRejectRequest(requestIds, this.certb64, reason) :
+				XmlRequestsFactory.createRejectRequest(requestIds, reason);
+		String url = this.signFolderProxyUrl + createUrlParams(OPERATION_REJECT, xml);
+		return RejectsResponseParser.parse(getRemoteDocument(url));
 	}
 
 	/** Obtiene la previsualizaci&oacute;n de un documento.
@@ -485,18 +439,14 @@ public final class CommManager  extends CommManagerOldVersion{
 	private DocumentData getPreview(final String operation,
 			final String documentId, final String filename,
 			final String mimetype) throws IOException {
-		final String dataB64UrlSafe;
-		if (!oldProxy) {
-			dataB64UrlSafe = prepareParam(XmlRequestsFactory
-					.createPreviewRequest(documentId));
-		}
-		else {
-			dataB64UrlSafe = prepareParam(XmlRequestsFactoryOldVersion
-					.createPreviewRequest(documentId, this.certb64));
-		}
+
+		String xml = oldProxy ?
+				XmlRequestsFactoryOldVersion.createPreviewRequest(documentId, this.certb64) :
+				XmlRequestsFactory.createPreviewRequest(documentId);
+		String url = this.signFolderProxyUrl + createUrlParams(operation, xml);
 
 		final DocumentData docData = new DocumentData(documentId, filename, mimetype);
-		docData.setDataIs(getRemoteDocumentIs(prepareUrl(operation, dataB64UrlSafe)));
+		docData.setDataIs(getRemoteDocumentIs(url));
 
 		return docData;
 	}
@@ -514,20 +464,26 @@ public final class CommManager  extends CommManagerOldVersion{
 	 *             de XML o al recuperar la respuesta del servidor.
 	 */
 	public RequestResult[] approveRequests(final String[] requestIds) throws SAXException, IOException {
-
-		final String dataB64UrlSafe;
-		if(!oldProxy) {
-			dataB64UrlSafe = prepareParam(XmlRequestsFactory
-					.createApproveRequest(requestIds));
-		}
-		else {
-			dataB64UrlSafe = prepareParam(XmlRequestsFactoryOldVersion
-					.createApproveRequest(requestIds, this.certb64));
-		}
-
-		return ApproveResponseParser.parse(getRemoteDocument(prepareUrl(
-				OPERATION_APPROVE, dataB64UrlSafe)));
+		String xml = oldProxy ?
+				XmlRequestsFactoryOldVersion.createApproveRequest(requestIds, this.certb64) :
+				XmlRequestsFactory.createApproveRequest(requestIds);
+		String url = this.signFolderProxyUrl + createUrlParams(OPERATION_APPROVE, xml);
+		return ApproveResponseParser.parse(getRemoteDocument(url));
 	}
+
+
+	public FireLoadDataResult firePrepareSigns(final SignRequest[] requests) throws IOException, SAXException {
+		String xml = XmlRequestsFactory.createFireLoadDataRequest(requests);
+		String url = this.signFolderProxyUrl + createUrlParams(OPERATION_PRESIGN_CLAVE_FIRMA, xml);
+		return FireLoadDataResponseParser.parse(getRemoteDocument(url));
+	}
+
+	public FireSignResult fireSignRequests() throws IOException, SAXException {
+		String xml = XmlRequestsFactory.createFireSignRequest();
+		String url = this.signFolderProxyUrl + createUrlParams(OPERATION_POSTSIGN_CLAVE_FIRMA, xml);
+		return FireSignResponseParser.parse(getRemoteDocument(url));
+	}
+
 
 	/**
 	 * Da de alta en el sistema de notificaciones.
@@ -553,13 +509,10 @@ public final class CommManager  extends CommManagerOldVersion{
 			return null;
 		}
 
-		// Componentemos el XML con la peticion
-		final String dataB64UrlSafe = prepareParam(XmlRequestsFactory
-					.createRegisterNotificationRequest(token, device, dni));
-
 		// Realizamos la peticion
-		return RegisterOnNotificationParser.parse(
-				getRemoteDocument(prepareUrl(OPERATION_NOTIFICATION_SERVICE_REGISTER, dataB64UrlSafe)));
+		String xml = XmlRequestsFactory.createRegisterNotificationRequest(token, device, dni);
+		String url = this.signFolderProxyUrl + createUrlParams(OPERATION_NOTIFICATION_SERVICE_REGISTER, xml);
+		return RegisterOnNotificationParser.parse(getRemoteDocument(url));
 	}
 
 	/**

@@ -1,5 +1,7 @@
 package es.gob.afirma.android.signfolder;
 
+import android.util.Log;
+
 import java.io.IOException;
 import java.net.CookieManager;
 import java.net.CookiePolicy;
@@ -43,6 +45,11 @@ public class WebkitCookieManagerProxy extends CookieManager {
             // process each of the headers
             for (String headerValue : responseHeaders.get(headerKey))
             {
+                Log.w(SFConstants.LOG_TAG, " ========== Establecemos:");
+                Log.w(SFConstants.LOG_TAG, " ========== Cookie Key: " + headerKey);
+                Log.w(SFConstants.LOG_TAG, " ========== Cookie Header: " + headerValue);
+                Log.w(SFConstants.LOG_TAG, " ========== URL: " + url);
+
                 this.webkitCookieManager.setCookie(url, headerValue);
             }
         }
@@ -65,6 +72,11 @@ public class WebkitCookieManagerProxy extends CookieManager {
 
         // return it
         if (cookie != null) res.put("Cookie", Arrays.asList(cookie));
+
+        Log.w(SFConstants.LOG_TAG, " ========== Recuperamos:");
+        Log.w(SFConstants.LOG_TAG, " ========== Cookie: " + cookie);
+        Log.w(SFConstants.LOG_TAG, " ========== URL: " + url);
+
         return res;
     }
 

@@ -45,6 +45,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 import es.gob.afirma.android.fcm.RegistrationIntentService;
 import es.gob.afirma.android.signfolder.ConfigureFilterDialogBuilder.FilterConfig;
@@ -151,9 +152,6 @@ public final class PetitionListActivity extends WebViewParentActivity implements
 
 	/** Tarea de carga en ejecuci&oacute;n. */
 	private LoadSignRequestsTask loadingTask = null;
-
-	/** Informacion trifasica que se obtiene en la prefirma y reutiliza en la postfirma. */
-	private FireLoadDataResult fireLoadDataResult = null;
 
 	private String dni = null;
 	private String certB64 = null;
@@ -816,7 +814,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
 			int days = AppPreferences.getInstance().getPreferenceInt(KEY_DAYS_TO_EXPIRE, DEFAULT_DAYS_TO_EXPIRE);
 
 			// Identificamos la fecha maxima de caducidad
-			DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+			DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH);
 			Calendar c = Calendar.getInstance();
 			c.setTime(new Date());
 			c.add(Calendar.DATE, days);
@@ -1272,7 +1270,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
 
 	/**
 	 * Muestra un mensaje en un toast.
-	 * @param message
+	 * @param message Mensaje a mostrar.
 	 */
 	void showToastMessage(final String message) {
 		dismissProgressDialog();
@@ -1582,15 +1580,12 @@ public final class PetitionListActivity extends WebViewParentActivity implements
 	@Override
 	public void fireLoadDataSuccess(FireLoadDataResult loadDataResult) {
 
-		// Almacenamos la informacion trifasica para reutilizarla al solicitar las postfirmas
-		this.fireLoadDataResult = loadDataResult;
-
-		PfLog.w(SFConstants.LOG_TAG, "Resultado de la carga de datos en FIRe:\n" + this.fireLoadDataResult);
+		PfLog.w(SFConstants.LOG_TAG, "Resultado de la carga de datos en FIRe:\n" + loadDataResult);
 
 		// Abrimos una actividad con un WebView en la que se muestre la URL recibida
 		openWebViewActivity(
 				ClaveWebViewActivity.class,
-				fireLoadDataResult.getURL(),
+				loadDataResult.getURL(),
 				null,
 				R.string.title_fire_webview,
 				true);

@@ -1,12 +1,15 @@
 package es.gob.afirma.android.signfolder;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
 import android.graphics.Bitmap;
 import android.net.http.SslError;
 import android.os.Build;
 import android.os.Bundle;
 import android.webkit.CookieManager;
+import android.webkit.HttpAuthHandler;
 import android.webkit.SslErrorHandler;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
@@ -16,12 +19,15 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import es.gob.afirma.android.util.PfLog;
 
 /** Actividad para entrada con usuario y contrase&ntilde;a en Cl@ve. */
 public final class ClaveWebViewActivity extends Activity {
+
+	private static final boolean DEBUG = ApplicationInfo.FLAG_DEBUGGABLE != 0;
 
 	public void onCreate(Bundle savedInstanceState) {
 
@@ -34,6 +40,8 @@ public final class ClaveWebViewActivity extends Activity {
 		setContentView(R.layout.activity_webview);
 
 		WebView webView = findViewById(R.id.webView);
+
+		PfLog.i(SFConstants.LOG_TAG, " ------ Cargamos el WebView");
 
 		// Definimos el comportamiento del WebView
 		webView.setWebViewClient(new WebViewClient() {
@@ -70,22 +78,53 @@ public final class ClaveWebViewActivity extends Activity {
 				}
 			}
 
+			@TargetApi(23)
 			@Override
 			public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
-				super.onReceivedError(view, request, error);
-				PfLog.e(SFConstants.LOG_TAG,"Error recibido en el WebView: " + error);
+				String errorMsg = null;
+				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+					PfLog.e(SFConstants.LOG_TAG, String.format(Locale.ENGLISH,
+							"Error %1d recibido en el WebView con la descripcion: %2s",
+							error.getErrorCode(), error.getDescription()));
+					errorMsg = error.getDescription() != null ?
+							error.getDescription().toString() : "Error en el WebView";
+				}
+				else {
+					PfLog.e(SFConstants.LOG_TAG, "Error recibido en el WebView");
+				}
+				Intent result = createErrorIntent("claveerror", errorMsg);
+				setResult(Activity.RESULT_FIRST_USER, result);
+				closeActivity();
 			}
 
 			@Override
 			public void onReceivedHttpError(WebView view, WebResourceRequest request, WebResourceResponse errorResponse) {
-				super.onReceivedHttpError(view, request, errorResponse);
-				PfLog.w(SFConstants.LOG_TAG,"No se ha podido cargar en el el recurso: " + request);
+				PfLog.w(SFConstants.LOG_TAG,"No se ha podido cargar la URL requerida");
+				closeByStatusError(errorResponse);
 			}
 
 			@Override
 			public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
-				super.onReceivedSslError(view, handler, error);
-				PfLog.e(SFConstants.LOG_TAG,"Error de SSL recibido en el WebView con la URL: " + error.getUrl());
+				if (DEBUG) {
+					PfLog.i(SFConstants.LOG_TAG, "Se ignora error SSL en la pagina cargada");
+					handler.proceed();
+					return;
+				}
+				PfLog.e(SFConstants.LOG_TAG, String.format(Locale.ENGLISH,
+						"Error de SSL (%1d) recibido en el WebView con la URL: %2s",
+						error.getPrimaryError(), error.getUrl()));
+				Intent result = createErrorIntent("claveerror", "Error SSL en la conexion con Cl@ve");
+				setResult(Activity.RESULT_FIRST_USER, result);
+				closeActivity();
+			}
+
+			@Override
+			public void onReceivedHttpAuthRequest(WebView view, HttpAuthHandler handler, String host, String realm) {
+
+				PfLog.e(SFConstants.LOG_TAG,"Error al autenticarse en la Web cargada");
+				Intent result = createErrorIntent("claveerror", "Error al autenticar al usuario en la pagina");
+				setResult(Activity.RESULT_FIRST_USER, result);
+				closeActivity();
 			}
 		});
 
@@ -99,13 +138,36 @@ public final class ClaveWebViewActivity extends Activity {
 		String url = getIntent().getStringExtra(WebViewParentActivity.EXTRA_RESOURCE_URL);
 		String cookieId = getIntent().getStringExtra(WebViewParentActivity.EXTRA_RESOURCE_COOKIE_ID);
 
+		if (url == null) {
+			PfLog.e(SFConstants.LOG_TAG, "No se ha proporcionado la URL que cargar en el WebView");
+			Intent result = createErrorIntent("arguments", "No se encuentra la URL a cargar");
+			setResult(Activity.RESULT_FIRST_USER, result);
+			closeActivity();
+			return;
+		}
+
+		PfLog.i(SFConstants.LOG_TAG, "---- Cookie con el que se inicio la sesion: " + cookieId);
+
 		// Si se ha indicado un id de cookie de sesi&oacute;n, lo asociamos a la URL y configuramos
 		// unas cabeceras de petici&oacute;n para el uso de esa cookie
+
 		Map<String, String> headers = null;
 		if (cookieId != null) {
+			PfLog.w(SFConstants.LOG_TAG, "---- Id de cookie cargada: " + cookieId);
 			headers = configureCookies(webView, url, cookieId);
 		}
 		webView.loadUrl(url, headers);
+	}
+
+	@TargetApi(21)
+	private void closeByStatusError(WebResourceResponse errorResponse) {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+			PfLog.w(SFConstants.LOG_TAG, "Estatus Error: " + errorResponse.getStatusCode());
+		}
+		Intent result = createErrorIntent("claveerror",
+				"Error recibido del servicio en la nube");
+		setResult(Activity.RESULT_FIRST_USER, result);
+		closeActivity();
 	}
 
 	/**
@@ -124,6 +186,8 @@ public final class ClaveWebViewActivity extends Activity {
 			cookieManager.setAcceptThirdPartyCookies(webView, true);
 		}
 
+		PfLog.w(SFConstants.LOG_TAG, "---- Cookie del WebView antes de establecerla: " + cookieManager.getCookie(url));
+
 		if (cookieId != null) {
 			cookieManager.setCookie(url, cookieId);
 		}
@@ -140,7 +204,6 @@ public final class ClaveWebViewActivity extends Activity {
 		return headers;
 	}
 
-
 	private static Intent saveParamsInDataIntent(String urlParams) {
 		Intent result = new Intent();
 		if (urlParams != null && !urlParams.trim().isEmpty()) {
@@ -152,6 +215,16 @@ public final class ClaveWebViewActivity extends Activity {
 				}
 			}
 		}
+		return result;
+	}
+
+	private static Intent createErrorIntent(String type, String message) {
+		Intent result = new Intent();
+		result.putExtra("type", type);
+		if (message != null) {
+			result.putExtra("msg", message);
+		}
+
 		return result;
 	}
 

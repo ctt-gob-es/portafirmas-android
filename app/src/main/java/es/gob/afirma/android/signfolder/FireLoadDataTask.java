@@ -65,7 +65,7 @@ public final class FireLoadDataTask extends AsyncTask<Void, Void, FireLoadDataRe
 
 	@Override
 	protected void onPostExecute(final FireLoadDataResult firePreSignResult) {
-		if(firePreSignResult != null) {
+		if (firePreSignResult != null && firePreSignResult.isStatusOk()) {
 			this.listener.fireLoadDataSuccess(firePreSignResult);
 		}
 		else {

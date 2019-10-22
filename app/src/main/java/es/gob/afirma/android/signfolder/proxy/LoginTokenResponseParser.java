@@ -66,6 +66,7 @@ class LoginTokenResponseParser {
 
 		private static final String LOGIN_NODE = "lgnrq"; //$NON-NLS-1$
 		private static final String ID_ATTRIBUTE = "id"; //$NON-NLS-1$
+		private static final String SSID_ATTRIBUTE = "ssid"; //$NON-NLS-1$
 		private static final String ERROR_ATTRIBUTE = "err"; //$NON-NLS-1$
 
 		static RequestResult parse(final Node requestNode) {
@@ -87,6 +88,12 @@ class LoginTokenResponseParser {
 						ID_ATTRIBUTE + "' en un peticion de login"); //$NON-NLS-1$
 			}
 
+			String ssid = null;
+			attributeNode = attributes.getNamedItem(SSID_ATTRIBUTE);
+			if (attributeNode != null) {
+				ssid = attributeNode.getNodeValue();
+			}
+
 			attributeNode = attributes.getNamedItem(ERROR_ATTRIBUTE);
 			// Si existe el atributo de error significa que se ha producido un error
 			if (attributeNode != null) {
@@ -95,7 +102,7 @@ class LoginTokenResponseParser {
 
 			PfLog.i(SFConstants.LOG_TAG, "Id=" + ref + "; status=" + statusOk); //$NON-NLS-1$ //$NON-NLS-2$
 
-			return new RequestResult(ref, statusOk);
+			return new RequestResult(ref, statusOk, ssid);
 		}
 	}
 }

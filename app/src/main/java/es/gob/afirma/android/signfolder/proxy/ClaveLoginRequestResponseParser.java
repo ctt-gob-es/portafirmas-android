@@ -32,36 +32,30 @@ class ClaveLoginRequestResponseParser {
 					CLAVE_LOGIN_RESPONSE_NODE + "' y aparece: " + //$NON-NLS-1$
 					doc.getDocumentElement().getNodeName());
 		}
-
-		final NodeList requestNodes = doc.getDocumentElement().getChildNodes();
-		final int nextIndex = XmlUtils.nextNodeElementIndex(requestNodes, 0);
-		final Node requestNode;
-		if (nextIndex == -1) {
-			requestNode = doc.getDocumentElement();
-		}
-		else {
-			requestNode = requestNodes.item(nextIndex);
-		}
-		return ResultParser.parse(requestNode);
+		return ResultParser.parse(doc.getDocumentElement());
 	}
 
 	private static final class ResultParser {
 
-		private static final String CLAVE_LOGIN_RESPONSE_NODE = "lgnrq"; //$NON-NLS-1$
-		private static final String ID_ATTRIBUTE = "id"; //$NON-NLS-1$
+		private static final String URL_NODE = "url"; //$NON-NLS-1$
+		private static final String SESSION_ID_NODE = "sessionId"; //$NON-NLS-1$
 
 		static ClaveLoginResult parse(final Node requestNode) {
 
-			if (!CLAVE_LOGIN_RESPONSE_NODE.equalsIgnoreCase(requestNode.getNodeName())) {
-				throw new IllegalArgumentException("Se encontro un elemento '" + //$NON-NLS-1$
-						requestNode.getNodeName() + "' en el listado de peticiones"); //$NON-NLS-1$
-			}
+			NodeList childNodes = requestNode.getChildNodes();
 
-			// Datos de la peticion
-			String url = requestNode.getTextContent();
-
+			// Obtenemos los distintos elementos del XML
 			final ClaveLoginResult result = new ClaveLoginResult(true);
-			result.setRedirectionUrl(url);
+			for (int i = 0; i < childNodes.getLength(); i++) {
+				Node childNode = childNodes.item(i);
+				if (childNode.getNodeType() == Node.ELEMENT_NODE) {
+					if (childNode.getNodeName().equals(URL_NODE)) {
+						result.setRedirectionUrl(childNode.getTextContent());
+					} else if (childNode.getNodeName().equals(SESSION_ID_NODE)) {
+						result.setTransactionId(childNode.getTextContent());
+					}
+				}
+			}
 
 			return result;
 		}

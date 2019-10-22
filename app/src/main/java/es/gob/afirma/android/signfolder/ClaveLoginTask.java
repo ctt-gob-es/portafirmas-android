@@ -35,6 +35,10 @@ public final class ClaveLoginTask extends AsyncTask<Void, Void, ClaveLoginResult
 		ClaveLoginResult rr;
 		try {
 			rr = com.claveLoginRequest();
+		} catch (IllegalArgumentException e) {
+			PfLog.w(SFConstants.LOG_TAG, "Error en la comunicaci\u00F3n con el servicio proxy", e);
+			rr = new ClaveLoginResult(false);
+			rr.setErrorMsg("Error en la comunicaci\u00F3n con el servicio proxy");
 		} catch (Exception e) {
 			PfLog.w(SFConstants.LOG_TAG, "No se pudo conectar con el servicio proxy", e);
 			rr = new ClaveLoginResult(false);

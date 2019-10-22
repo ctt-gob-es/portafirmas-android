@@ -39,6 +39,18 @@ final class XmlRequestsFactory {
 		// No permitimos la instanciacion
 	}
 
+	static String createValidateLogin(String cert, byte[] pkcs1) {
+		final StringBuffer sb = new StringBuffer(XML_HEADER);
+		sb.append("<rqtvl><cert>"); //$NON-NLS-1$
+		sb.append(cert);
+		sb.append("</cert><pkcs1>");
+		sb.append(Base64.encode(pkcs1));
+		sb.append("</pkcs1></rqtvl>");
+
+		return sb.toString();
+	}
+
+
 	/**
 	 * Crea un XML para la solicitud al proxy de un listado de peticiones.
 	 * @param state Estado de la petici&oacute;n.

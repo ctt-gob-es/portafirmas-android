@@ -7,7 +7,9 @@ public class ClaveLoginResult {
 
 	private final boolean statusOk;
 
-	private String sessionId;
+	private String transactionId;
+
+	private String cookieId;
 
 	private String redirectionUrl;
 
@@ -25,16 +27,32 @@ public class ClaveLoginResult {
 	 * Recupera el identificador de autenticaci&oacute;n.
 	 * @return Identificador de autenticaci&oacute;n.
 	 */
-	public String getSessionId() {
-		return this.sessionId;
+	public String getCookieId() {
+		return this.cookieId;
 	}
 
 	/**
 	 * Establece el identificador de autenticaci&oacute;n.
-	 * @param id Identificador de autenticaci&oacute;n.
+	 * @param cookieId Identificador de autenticaci&oacute;n.
 	 */
-	void setSessionId(String sessionId) {
-		this.sessionId = sessionId;
+	void setCookieId(String cookieId) {
+		this.cookieId = cookieId;
+	}
+
+	/**
+	 * Recupera el identificador de autenticaci&oacute;n.
+	 * @return Identificador de autenticaci&oacute;n.
+	 */
+	public String getTransactionId() {
+		return this.transactionId;
+	}
+
+	/**
+	 * Establece el identificador de transacci&oacute;n.
+	 * @param transactionId Identificador de transacci&oacute;n.
+	 */
+	void setTransactionId(String transactionId) {
+		this.transactionId = transactionId;
 	}
 
 	/**
