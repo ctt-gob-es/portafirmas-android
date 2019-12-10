@@ -649,8 +649,11 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
 			lcdt.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 		}
 		else {
-			showErrorDialog(
-					getString(R.string.error_loading_app_configuration));
+			String errMsg = result.getErrorMsg();
+			if (errMsg == null || errMsg.isEmpty()) {
+				errMsg = getString(R.string.error_loading_app_configuration);
+			}
+			showErrorDialog(errMsg);
 		}
 	}
 

@@ -145,7 +145,7 @@ public final class CommManager  extends CommManagerOldVersion{
 			doc = getRemoteDocument(url);
 		}
 		catch (UnknownHostException e) {
-			throw new OldProxyException("El proxy no soporta la nueva operacion de login");
+			throw new OldProxyException("El proxy no soporta la nueva operacion de login", e);
 		}
 
 		RequestResult result = LoginTokenResponseParser.parse(doc);

@@ -1044,7 +1044,6 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
 	 * Inicia el proceso de firma con Cl@ve Firma.
 	 */
 	private void doSignWithFire() {
-		// Se inicia el WebView
 		FireLoadDataTask cct = new FireLoadDataTask(new SignRequest[] { this.reqDetails }, this);
 		cct.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 	}

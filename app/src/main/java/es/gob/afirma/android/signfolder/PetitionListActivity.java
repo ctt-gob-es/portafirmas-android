@@ -1510,7 +1510,6 @@ public final class PetitionListActivity extends WebViewParentActivity implements
 	 */
 	private void doSignWithFire(final SignRequest[] requests) {
 		FireLoadDataTask cct = new FireLoadDataTask(requests, this);
-		//showProgressDialog(getString(R.string.dialog_msg_clave),null);
 		cct.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 	}
 

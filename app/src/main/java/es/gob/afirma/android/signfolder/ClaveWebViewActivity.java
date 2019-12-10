@@ -8,9 +8,11 @@ import android.graphics.Bitmap;
 import android.net.http.SslError;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.webkit.CookieManager;
 import android.webkit.HttpAuthHandler;
 import android.webkit.SslErrorHandler;
+import android.webkit.ValueCallback;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
@@ -178,6 +180,7 @@ public final class ClaveWebViewActivity extends Activity {
 	 * @param cookieId Identificador de la cookie de sesi&oacute;n a utilizar.
 	 * @return Cabeceras que proporcionar al WebView para realizar la carga de la URL.
 	 */
+	@TargetApi(21)
 	private Map<String, String> configureCookies(WebView webView, String url, String cookieId) {
 		final CookieManager cookieManager = CookieManager.getInstance();
 		cookieManager.setAcceptCookie(true);
@@ -189,6 +192,9 @@ public final class ClaveWebViewActivity extends Activity {
 		PfLog.w(SFConstants.LOG_TAG, "---- Cookie del WebView antes de establecerla: " + cookieManager.getCookie(url));
 
 		if (cookieId != null) {
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+				cookieManager.removeSessionCookies(new RemoveCookiesCallback());
+			}
 			cookieManager.setCookie(url, cookieId);
 		}
 
@@ -339,4 +345,16 @@ public final class ClaveWebViewActivity extends Activity {
 //		AlertDialog alert = builder.create();
 //		alert.show();
 //	}
+
+	/**
+	 * Clase para conocer el resultado de la eliminaci&oacute;n de las cockies de sesi&oacute;n.
+	 */
+	private class RemoveCookiesCallback implements ValueCallback<Boolean> {
+		@Override
+		public void onReceiveValue(Boolean value) {
+			if (!value.equals(Boolean.TRUE)) {
+				Log.w(SFConstants.LOG_TAG, "Error al eliminar una de las cookies de sesion");
+			}
+		}
+	}
 }

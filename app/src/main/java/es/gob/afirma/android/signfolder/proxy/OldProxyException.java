@@ -13,4 +13,13 @@ public class OldProxyException extends Exception {
     public OldProxyException(String msg) {
         super(msg);
     }
+
+    /**
+     * Crea la excepci&oacute;n con un mensaje y la causa.
+     * @param msg Mensaje que describe el problema producido.
+     * @param t Motivo origen del error.
+     */
+    public OldProxyException(String msg, Throwable t) {
+        super(msg, t);
+    }
 }

@@ -32,22 +32,9 @@ public class PfLog {
      * @param message Message to write.
      */
     public static void w(String tag, String message) {
-//        if (!isProduction) {
+        if (!isProduction) {
             Log.w(tag, message);
-//        }
-    }
-
-    /**
-     * Method that write a log line if the app it is not in production.
-     *
-     * @param tag     Log tag.
-     * @param message Message to write.
-     * @param e       Exception to throw.
-     */
-    public static void w(String tag, String message, Exception e) {
-//        if (!isProduction) {
-            Log.w(tag, message, e);
-//        }
+        }
     }
 
     /**
@@ -58,9 +45,9 @@ public class PfLog {
      * @param t       Throwable object to include in the log message.
      */
     public static void w(String tag, String message, Throwable t) {
-//        if (!isProduction) {
+        if (!isProduction) {
             Log.w(tag, message, t);
-//        }
+        }
     }
 
     /**
@@ -72,19 +59,6 @@ public class PfLog {
     public static void v(String tag, String message) {
         if (!isProduction) {
             Log.v(tag, message);
-        }
-    }
-
-    /**
-     * Method that write a log line if the app it is not in production.
-     *
-     * @param tag     Log tag.
-     * @param message Message to write.
-     * @param e       Exception to throw.
-     */
-    public static void v(String tag, String message, Exception e) {
-        if (!isProduction) {
-            Log.v(tag, message, e);
         }
     }
 
@@ -118,19 +92,6 @@ public class PfLog {
      *
      * @param tag     Log tag.
      * @param message Message to write.
-     * @param e       Exception to throw.
-     */
-    public static void i(String tag, String message, Exception e) {
-        if (!isProduction) {
-            Log.i(tag, message, e);
-        }
-    }
-
-    /**
-     * Method that write a log line if the app it is not in production.
-     *
-     * @param tag     Log tag.
-     * @param message Message to write.
      * @param t       Throwable object to include in the log message.
      */
     public static void i(String tag, String message, Throwable t) {
@@ -148,19 +109,6 @@ public class PfLog {
     public static void e(String tag, String message) {
         if (!isProduction) {
             Log.e(tag, message);
-        }
-    }
-
-    /**
-     * Method that write a log line if the app it is not in production.
-     *
-     * @param tag     Log tag.
-     * @param message Message to write.
-     * @param e       Exception to throw.
-     */
-    public static void e(String tag, String message, Exception e) {
-        if (!isProduction) {
-            Log.e(tag, message, e);
         }
     }
 
@@ -194,19 +142,6 @@ public class PfLog {
      *
      * @param tag     Log tag.
      * @param message Message to write.
-     * @param e       Exception to throw.
-     */
-    public static void d(String tag, String message, Exception e) {
-        if (!isProduction) {
-            Log.d(tag, message, e);
-        }
-    }
-
-    /**
-     * Method that write a log line if the app it is not in production.
-     *
-     * @param tag     Log tag.
-     * @param message Message to write.
      * @param t       Throwable object to include in the log message.
      */
     public static void d(String tag, String message, Throwable t) {
@@ -224,19 +159,6 @@ public class PfLog {
     public static void wtf(String tag, String message) {
         if (!isProduction) {
             Log.wtf(tag, message);
-        }
-    }
-
-    /**
-     * Method that write a log line if the app it is not in production.
-     *
-     * @param tag     Log tag.
-     * @param message Message to write.
-     * @param e       Exception to throw.
-     */
-    public static void wtf(String tag, String message, Exception e) {
-        if (!isProduction) {
-            Log.wtf(tag, message, e);
         }
     }
 

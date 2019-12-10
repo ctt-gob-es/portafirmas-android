@@ -53,7 +53,7 @@ class LoginValidationResponseParser {
 
 		private static final String REQUEST_NODE = "vllgnrq"; //$NON-NLS-1$
 		private static final String OK_ATTRIBUTE = "ok"; //$NON-NLS-1$
-		private static final String ERROR_ATTRIBUTE = "err"; //$NON-NLS-1$
+		private static final String ERROR_ATTRIBUTE = "er"; //$NON-NLS-1$
 		private static final String DNI_ATTRIBUTE = "dni"; //$NON-NLS-1$
 
 		static ValidationLoginResult parse(final Node requestNode) {

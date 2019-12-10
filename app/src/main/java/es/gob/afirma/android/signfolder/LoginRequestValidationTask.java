@@ -1,7 +1,11 @@
 package es.gob.afirma.android.signfolder;
 
+import android.app.Application;
+import android.content.Context;
 import android.os.AsyncTask;
+import android.os.Message;
 
+import java.io.IOException;
 import java.security.KeyStore;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -75,7 +79,7 @@ final class LoginRequestValidationTask extends AsyncTask<Void, Void, ValidationL
             PfLog.i(SFConstants.LOG_TAG, "Se ha encontrado una version segura del proxy"); //$NON-NLS-1$
 
 			if (!token.isStatusOk()) {
-				result.setErrorMsg("Error al solicitar el token de login");
+				result.setErrorMsg("Error al solicitar el token de login.");
 			}
 			// Si el proceso no ha fallado, continuamos
 			else {
@@ -92,9 +96,12 @@ final class LoginRequestValidationTask extends AsyncTask<Void, Void, ValidationL
             PfLog.w(SFConstants.LOG_TAG, "Login no necesario: Se trabaja con una version antigua del portafirmas"); //$NON-NLS-1$
             CommManager.getInstance().setOldProxy();
             result.setStatusOk(true);
+		} catch (final IOException e) {
+			PfLog.w(SFConstants.LOG_TAG, "No se pudo conectar con el servidor", e); //$NON-NLS-1$
+			result.setErrorMsg("No se pudo conectar con el servidor.");
 		} catch (final Exception e) {
 			PfLog.w(SFConstants.LOG_TAG, "No se pudo realizar el login", e); //$NON-NLS-1$
-            result.setErrorMsg("No se pudo completar la autenticacion del usuario");
+            result.setErrorMsg("No se pudo completar la autenticacion del usuario.");
 		}
 		timer.cancel();
 
