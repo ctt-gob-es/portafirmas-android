@@ -2,7 +2,7 @@
 <resources>
 
     <string name="app_name">Port@firmas</string>
-    <string name="app_title">Port@firmas v1.4</string>
+    <string name="app_title">Port@firmas v1.5.1</string>
     <string name="close">Cerrar</string>
     <string name="error">Error</string>
     <string name="server_select">Servidores Portafirmas</string>
@@ -37,7 +37,7 @@
     <string name="question_reject_petition">\u00BFDesea rechazar la solicitud seleccionada?</string>
     <string name="yes">S\u00ED</string>
     <string name="no">No</string>
-    <string name="title_activity_request_details">Detalles del fichero</string>
+    <string name="title_activity_request_details">Detalles de la petici\u00F3n</string>
     <string name="subject">Asunto</string>
     <string name="ref">Referencia</string>
     <string name="date">Fecha</string>

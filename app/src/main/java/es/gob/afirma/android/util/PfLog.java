@@ -12,7 +12,7 @@ public class PfLog {
     /**
      * Attribute that indicates if the app is in production or not.
      */
-    private static boolean isProduction;
+    public static final boolean isProduction;
 
     static {
         //noinspection ConstantConditions

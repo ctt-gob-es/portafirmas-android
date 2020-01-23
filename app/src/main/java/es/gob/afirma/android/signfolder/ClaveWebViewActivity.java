@@ -8,7 +8,6 @@ import android.graphics.Bitmap;
 import android.net.http.SslError;
 import android.os.Build;
 import android.os.Bundle;
-import android.util.Log;
 import android.webkit.CookieManager;
 import android.webkit.HttpAuthHandler;
 import android.webkit.SslErrorHandler;
@@ -353,7 +352,7 @@ public final class ClaveWebViewActivity extends Activity {
 		@Override
 		public void onReceiveValue(Boolean value) {
 			if (!value.equals(Boolean.TRUE)) {
-				Log.w(SFConstants.LOG_TAG, "Error al eliminar una de las cookies de sesion");
+				PfLog.w(SFConstants.LOG_TAG, "Error al eliminar una de las cookies de sesion");
 			}
 		}
 	}

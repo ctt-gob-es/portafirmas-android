@@ -76,7 +76,7 @@ public final class AppPreferences {
 
 	/** Inicializa las preferencias a partir de su fichero de propiedades.
 	 * @param activity Actividad padre. */
-	void init(final Context activity) {
+	public void init(final Context activity) {
 		if (config ==  null) {
 			config = new Properties();
 			try {

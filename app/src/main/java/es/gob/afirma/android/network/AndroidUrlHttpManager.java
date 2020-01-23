@@ -31,6 +31,9 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
+import es.gob.afirma.android.signfolder.SFConstants;
+import es.gob.afirma.android.util.PfLog;
+
 /** Implementacion de una clase para la lectura del contenido de una URL. */
 public final class AndroidUrlHttpManager {
 
@@ -115,6 +118,9 @@ public final class AndroidUrlHttpManager {
 		if (cookieField == null) {
 			cookieField = conn.getHeaderField("Set-Cookie2");
 		}
+
+		PfLog.i(SFConstants.LOG_TAG, "Cookie: " + cookieField);
+
 		if (cookieField != null) {
 			String[] params = cookieField.split(";");
 			for (String param : params) {

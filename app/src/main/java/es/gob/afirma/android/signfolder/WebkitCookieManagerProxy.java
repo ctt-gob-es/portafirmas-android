@@ -1,7 +1,5 @@
 package es.gob.afirma.android.signfolder;
 
-import android.util.Log;
-
 import java.io.IOException;
 import java.net.CookieManager;
 import java.net.CookiePolicy;
@@ -10,6 +8,8 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+
+import es.gob.afirma.android.util.PfLog;
 
 public class WebkitCookieManagerProxy extends CookieManager {
 
@@ -31,7 +31,9 @@ public class WebkitCookieManagerProxy extends CookieManager {
     public void put(URI uri, Map<String, List<String>> responseHeaders) throws IOException
     {
         // make sure our args are valid
-        if ((uri == null) || (responseHeaders == null)) return;
+        if (uri == null || responseHeaders == null) {
+            return;
+        }
 
         // save our url once
         String url = uri.toString();
@@ -40,15 +42,17 @@ public class WebkitCookieManagerProxy extends CookieManager {
         for (String headerKey : responseHeaders.keySet())
         {
             // ignore headers which aren't cookie related
-            if ((headerKey == null) || !(headerKey.equalsIgnoreCase("Set-Cookie2") || headerKey.equalsIgnoreCase("Set-Cookie"))) continue;
+            if (headerKey == null ||
+                    !(headerKey.equalsIgnoreCase("Set-Cookie2") ||
+                            headerKey.equalsIgnoreCase("Set-Cookie"))) {
+                continue;
+            }
 
             // process each of the headers
             for (String headerValue : responseHeaders.get(headerKey))
             {
-                Log.w(SFConstants.LOG_TAG, " ========== Establecemos:");
-                Log.w(SFConstants.LOG_TAG, " ========== Cookie Key: " + headerKey);
-                Log.w(SFConstants.LOG_TAG, " ========== Cookie Header: " + headerValue);
-                Log.w(SFConstants.LOG_TAG, " ========== URL: " + url);
+
+                PfLog.i(SFConstants.LOG_TAG, "PUT URL: " + url + "\nCookie: " + headerValue);
 
                 this.webkitCookieManager.setCookie(url, headerValue);
             }
@@ -56,26 +60,28 @@ public class WebkitCookieManagerProxy extends CookieManager {
     }
 
     @Override
-    public Map<String, List<String>> get(URI uri, Map<String, List<String>> requestHeaders) throws IOException
+    public Map<String, List<String>> get(URI uri, Map<String, List<String>> requestHeaders)
     {
         // make sure our args are valid
-        if ((uri == null) || (requestHeaders == null)) throw new IllegalArgumentException("Argument is null");
+        if ((uri == null) || (requestHeaders == null)) {
+            throw new IllegalArgumentException("Argument is null");
+        }
 
         // save our url once
         String url = uri.toString();
 
         // prepare our response
-        Map<String, List<String>> res = new java.util.HashMap<String, List<String>>();
+        Map<String, List<String>> res = new java.util.HashMap<>();
 
         // get the cookie
         String cookie = this.webkitCookieManager.getCookie(url);
 
-        // return it
-        if (cookie != null) res.put("Cookie", Arrays.asList(cookie));
+        PfLog.i(SFConstants.LOG_TAG, "GET URL: " + url + "\nCookie: " + cookie);
 
-        Log.w(SFConstants.LOG_TAG, " ========== Recuperamos:");
-        Log.w(SFConstants.LOG_TAG, " ========== Cookie: " + cookie);
-        Log.w(SFConstants.LOG_TAG, " ========== URL: " + url);
+        // return it
+        if (cookie != null) {
+            res.put("Cookie", Arrays.asList(cookie));
+        }
 
         return res;
     }

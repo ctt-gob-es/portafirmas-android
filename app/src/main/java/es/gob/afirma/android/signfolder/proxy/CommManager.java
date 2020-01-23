@@ -5,6 +5,7 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
@@ -62,6 +63,8 @@ public final class CommManager  extends CommManagerOldVersion{
 
 	private static final String OPERATION_POSTSIGN_CLAVE_FIRMA = "17"; //$NON-NLS-1$
 
+	private static final int BUFFER_SIZE = 1024;
+
 	// Variables utilizadas en la autenticacion con certificado local
 	/** Certificado de autenticaci&oacute;n en base 64. */
 	private String certb64;
@@ -107,7 +110,7 @@ public final class CommManager  extends CommManagerOldVersion{
         return oldProxy;
     }
 
-	public ClaveLoginResult claveLoginRequest() throws Exception {
+	public ClaveLoginResult claveLoginRequest() throws ServerControlledException, IOException, SAXException {
 
 		String xml = "<lgnrq />"; //$NON-NLS-1$
 
@@ -115,9 +118,17 @@ public final class CommManager  extends CommManagerOldVersion{
 
 		ConnectionResponse response = getRemoteData(url);
 
-		Document doc = this.db.parse(response.getDataIs());
+		InputStream is = response.getDataIs();
+		if (!PfLog.isProduction) {
+			byte[] data = readDataFromInpuStream(is);
+			PfLog.i(SFConstants.LOG_TAG, "Respuesta de la peticion: " + new String(data));
+			is = new ByteArrayInputStream(data);
+		}
+
+		Document doc = this.db.parse(is);
 
         final ClaveLoginResult result = ClaveLoginRequestResponseParser.parse(doc);
+
         result.setCookieId(response.getCookieId());
 
         PfLog.i(SFConstants.LOG_TAG, "Cookie Id envidada desde el servidor: " + response.getCookieId());
@@ -127,6 +138,22 @@ public final class CommManager  extends CommManagerOldVersion{
         result.setTransactionId(null);
 
 		return result;
+	}
+
+	/**
+	 * Lee el contenido completo de un flujo de entrada de datos.
+	 * @param is Flujo de entrada de datos.
+	 * @return Datos contenidos en el flujo.
+	 * @throws IOException Cuando no se pueden leer los datos.
+	 */
+	private static byte[] readDataFromInpuStream(InputStream is) throws IOException {
+		int n;
+		byte[] buffer = new byte[BUFFER_SIZE];
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		while ((n = is.read(buffer)) > 0) {
+			baos.write(buffer, 0, n);
+		}
+		return baos.toByteArray();
 	}
 
 	public RequestResult loginRequest() throws OldProxyException, IOException, SAXException {
@@ -189,7 +216,7 @@ public final class CommManager  extends CommManagerOldVersion{
 
 			String xmlResponse = new String(data);
 
-			System.out.println("Respuesta a la peticion de logout:\n" + xmlResponse); //$NON-NLS-1$
+			PfLog.i(SFConstants.LOG_TAG, "Respuesta a la peticion de logout:\n" + xmlResponse);
 
 			Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder()
 					.parse(new InputSource(new StringReader(xmlResponse)));
@@ -244,7 +271,7 @@ public final class CommManager  extends CommManagerOldVersion{
 	 */
 	public PartialSignRequestsList getSignRequests(
 			final String signRequestState, final String[] filters,
-			final int numPage, final int pageSize) throws SAXException,
+			final int numPage, final int pageSize) throws ServerControlledException, SAXException,
 			IOException {
 		PartialSignRequestsList rsl;
 		if (!oldProxy) {
@@ -483,7 +510,6 @@ public final class CommManager  extends CommManagerOldVersion{
 		String url = this.signFolderProxyUrl + createUrlParams(OPERATION_POSTSIGN_CLAVE_FIRMA, xml);
 		return FireSignResponseParser.parse(getRemoteDocument(url));
 	}
-
 
 	/**
 	 * Da de alta en el sistema de notificaciones.

@@ -32,7 +32,7 @@ final class RequestListResponseParser {
 	 * @return Objeto con los datos del XML.
 	 * @throws IllegalArgumentException Cuando el XML no tiene el formato esperado.
 	 */
-	static PartialSignRequestsList parse(final Document doc) {
+	static PartialSignRequestsList parse(final Document doc) throws ServerControlledException {
 
 		if (doc == null) {
 			throw new IllegalArgumentException("El documento proporcionado no puede ser nulo");  //$NON-NLS-1$
@@ -41,8 +41,8 @@ final class RequestListResponseParser {
 		final Element docElement = doc.getDocumentElement();
 
 		if (ERROR_NODE.equalsIgnoreCase(docElement.getNodeName())) {
-			final String errorType = docElement.getAttribute(CD_ATTRIBUTE);
-			throw new ServerException("El servicio proxy notifico un error (" + errorType + "): " + XmlUtils.getTextContent(docElement)); //$NON-NLS-1$ //$NON-NLS-2$
+			final String errorCode = docElement.getAttribute(CD_ATTRIBUTE);
+			throw new ServerControlledException(errorCode, XmlUtils.getTextContent(docElement));
 		}
 
 		if (!LIST_NODE.equalsIgnoreCase(docElement.getNodeName())) {

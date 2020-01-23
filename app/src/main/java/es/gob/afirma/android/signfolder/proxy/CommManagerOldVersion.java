@@ -123,7 +123,7 @@ public class CommManagerOldVersion {
 	PartialSignRequestsList getSignRequests(final String certEncodedB64,
 												   final String signRequestState, final String[] filters,
 												   final int numPage, final int pageSize) throws SAXException,
-			IOException {
+			IOException, ServerControlledException {
 
 		final String dataB64UrlSafe = prepareParam(XmlRequestsFactoryOldVersion
 				.createRequestListRequest(certEncodedB64, signRequestState,

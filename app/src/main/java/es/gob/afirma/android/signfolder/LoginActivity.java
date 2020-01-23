@@ -29,6 +29,7 @@ import java.io.InputStream;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.util.List;
+import java.util.Locale;
 
 import es.gob.afirma.android.crypto.LoadKeyStoreManagerTask;
 import es.gob.afirma.android.crypto.LoadKeyStoreManagerTask.KeystoreManagerListener;
@@ -651,6 +652,11 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
 		else {
 			String errMsg = result.getErrorMsg();
 			if (errMsg == null || errMsg.isEmpty()) {
+				errMsg = getString(R.string.error_loading_app_configuration);
+			}
+			// Si la aplicacion contiene un mensaje de excepcion o si trata de mostrar una URL
+			// nos aseguramos de no mostrarselo a los usuarios
+			else if (errMsg.contains("Exception:") || errMsg.toLowerCase(Locale.US).contains("://")) {
 				errMsg = getString(R.string.error_loading_app_configuration);
 			}
 			showErrorDialog(errMsg);

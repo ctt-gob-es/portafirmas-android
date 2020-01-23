@@ -848,23 +848,26 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
 		PfLog.i(SFConstants.LOG_TAG, "Abrimos el documento descargado con el MimeType: " + mimetype);
 
 		Uri fileUri;
-        if (external) {
+/*        if (external) {
             fileUri = Uri.fromFile(documentFile);
         }
-        else {
+        else {*/
             fileUri = FileProvider.getUriForFile(
                     this,
                     getPackageName() + ".fileprovider",
                     documentFile);
             this.grantUriPermission(getPackageName(), fileUri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        }
+        /*}*/
+
+		final Intent intent = new Intent(Intent.ACTION_VIEW);
+		intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
 		if (mimetype != null && mimetype.equals(PDF_MIMETYPE) ||
 				documentFile.getName().toLowerCase(Locale.US).endsWith(PDF_FILE_EXTENSION)) {
-			viewPdf(fileUri);
+			intent.setDataAndType(fileUri, PDF_MIMETYPE);
+			viewPdf(intent);
 		}
 		else {
-			final Intent intent = new Intent(Intent.ACTION_VIEW);
 			intent.setDataAndType(fileUri, mimetype);
 			try {
 				this.startActivity(intent);
@@ -887,16 +890,13 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
 		}
 	}
 
-	private void viewPdf (final Uri fileUri) {
+	private void viewPdf (final Intent openFileIntent) {
         final String adobePackage = "com.adobe.reader"; //$NON-NLS-1$
         final String gdrivePackage = "com.google.android.apps.viewer"; //$NON-NLS-1$
         boolean isGdriveInstalled = false;
 
-        final Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.setDataAndType(fileUri, PDF_MIMETYPE);
-
         final PackageManager pm = getApplicationContext().getPackageManager();
-        final List<ResolveInfo> list = pm.queryIntentActivities(intent, 0);
+        final List<ResolveInfo> list = pm.queryIntentActivities(openFileIntent, 0);
         if (list.isEmpty()) {
             PfLog.w(SFConstants.LOG_TAG, "No hay visor pdf instalado"); //$NON-NLS-1$
             new AlertDialog.Builder(PetitionDetailsActivity.this)
@@ -912,20 +912,21 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
         }
         else {
 
+
             for (final ResolveInfo resolveInfo : list) {
                 if (resolveInfo.activityInfo.name.startsWith(adobePackage)) {
-                    intent.setPackage(resolveInfo.activityInfo.packageName);
-                    startActivity(intent);
+					openFileIntent.setPackage(resolveInfo.activityInfo.packageName);
+                    startActivity(openFileIntent);
                     return;
                 }
                 else if (resolveInfo.activityInfo.name.startsWith(gdrivePackage)) {
-                    intent.setPackage(resolveInfo.activityInfo.packageName);
+					openFileIntent.setPackage(resolveInfo.activityInfo.packageName);
                     isGdriveInstalled = true;
                 }
             }
 
             if (isGdriveInstalled) {
-            	startActivity(intent);
+            	startActivity(openFileIntent);
                 return;
             }
 
@@ -936,7 +937,7 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
                 .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
                     @Override
 					public void onClick(final DialogInterface dialog, final int which) {
-                        startActivity(intent);
+                        startActivity(openFileIntent);
                     }
                 })
                 .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {

@@ -6,6 +6,8 @@ import java.util.List;
 
 import es.gob.afirma.android.signfolder.proxy.CommManager;
 import es.gob.afirma.android.signfolder.proxy.PartialSignRequestsList;
+import es.gob.afirma.android.signfolder.proxy.ServerControlledException;
+import es.gob.afirma.android.signfolder.proxy.ServerErrors;
 import es.gob.afirma.android.signfolder.proxy.SignRequest;
 import es.gob.afirma.android.util.PfLog;
 
@@ -18,11 +20,6 @@ final class LoadSignRequestsTask extends AsyncTask<Void, Void, PartialSignReques
 	private final LoadSignRequestListener listener;
 	private final int numPage;
 	private final int pageSize;
-
-	/**
-	 * Codigo de error de autenticacion (perdida de sesion)
-	 */
-	private static final String AUTH_ERROR = "ERR-11"; //$NON-NLS-1$
 
 	/**
 	 * Crea la tarea asincrona para la carga de peticiones de firma.
@@ -55,12 +52,24 @@ final class LoadSignRequestsTask extends AsyncTask<Void, Void, PartialSignReques
     				this.numPage,
     				this.pageSize);
     	}
-    	catch (final Exception e) {
-    		e.printStackTrace();
-    		signRequests = null;
-    		PfLog.e(SFConstants.LOG_TAG, "Ocurrio un error al recuperar las peticiones de firma: " + e); //$NON-NLS-1$
+    	catch (final ServerControlledException e) {
+			signRequests = null;
+			PfLog.e(SFConstants.LOG_TAG, "Ocurrio un error controlado al recuperar las peticiones de firma", e); //$NON-NLS-1$
 			// Si se ha perdido la sesion o el certificado de autenticacion no es valido vuelve a la pantalla de login
-			if(e.getMessage().contains(AUTH_ERROR)) {
+			if (ServerErrors.ERROR_AUTHENTICATING_REQUEST.equals(e.getErrorCode())) {
+				if(this.commManager.isOldProxy()) {
+					this.listener.invalidCredentials();
+				}
+				else {
+					this.listener.lostSession();
+				}
+			}
+		}
+    	catch (final Exception e) {
+    		signRequests = null;
+    		PfLog.e(SFConstants.LOG_TAG, "Ocurrio un error al recuperar las peticiones de firma", e); //$NON-NLS-1$
+			// Si se ha perdido la sesion o el certificado de autenticacion no es valido vuelve a la pantalla de login
+			if(e.getMessage().contains(ServerErrors.ERROR_AUTHENTICATING_REQUEST)) {
                 if(this.commManager.isOldProxy()) {
                     this.listener.invalidCredentials();
                 }

@@ -7,6 +7,8 @@ import java.util.TimerTask;
 
 import es.gob.afirma.android.signfolder.proxy.ClaveLoginResult;
 import es.gob.afirma.android.signfolder.proxy.CommManager;
+import es.gob.afirma.android.signfolder.proxy.ServerControlledException;
+import es.gob.afirma.android.signfolder.proxy.ServerErrors;
 import es.gob.afirma.android.util.PfLog;
 
 /**
@@ -35,6 +37,15 @@ public final class ClaveLoginTask extends AsyncTask<Void, Void, ClaveLoginResult
 		ClaveLoginResult rr;
 		try {
 			rr = com.claveLoginRequest();
+		} catch (ServerControlledException e) {
+			PfLog.w(SFConstants.LOG_TAG, "Error devuelto por el servicio proxy: " + e.getMessage(), e);
+			rr = new ClaveLoginResult(false);
+			if (ServerErrors.ERROR_AUTHENTICATING_REQUEST.equals(e.getErrorCode())) {
+				rr.setErrorMsg("El Portafirmas seleccionado no soporta el uso de certificados remotos");
+			}
+			else {
+				rr.setErrorMsg("Error en la comunicaci\u00F3n con el servicio proxy");
+			}
 		} catch (IllegalArgumentException e) {
 			PfLog.w(SFConstants.LOG_TAG, "Error en la comunicaci\u00F3n con el servicio proxy", e);
 			rr = new ClaveLoginResult(false);
