@@ -1,5 +1,7 @@
 package es.gob.afirma.android.signfolder.proxy;
 
+import android.util.Log;
+
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -212,7 +214,9 @@ public final class CommManager  extends CommManagerOldVersion{
 			String xml = "<lgorq />"; //$NON-NLS-1$
 			String url = this.signFolderProxyUrl + createUrlParams(OPERATION_LOGOUT_REQUEST, xml); //$NON-NLS-1$
 
-			byte[] data = urlManager.readUrl(url, UrlHttpMethod.POST);
+			final InputStream is = getRemoteDocumentIs(url);
+			byte[] data = AOUtil.getDataFromInputStream(is);
+			is.close();
 
 			String xmlResponse = new String(data);
 
@@ -584,6 +588,9 @@ public final class CommManager  extends CommManagerOldVersion{
      *             Error en la lectura del documento.
      */
     private ConnectionResponse getRemoteData(final String url) throws IOException {
+
+		PfLog.i(SFConstants.LOG_TAG, "PETICION AL PROXY NUEVO");
+    	PfLog.i(SFConstants.LOG_TAG, url);
 
         if (url.startsWith(HTTPS)) {
             try {

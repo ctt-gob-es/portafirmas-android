@@ -21,6 +21,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -114,11 +115,11 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
 	/** Identificador de la firma PAdES. */
 	public static final String SIGN_FORMAT_PADES = "PAdES"; //$NON-NLS-1$
 
-    /** Identificador de la firma PAdES. */
+    /** Identificador secundario de la firma PAdES. */
     public static final String SIGN_FORMAT_PDF = "PDF"; //$NON-NLS-1$
 
-	/** Identificador de la firma XAdES por defecto. */
-	public static final String SIGN_FORMAT_XADES = "XAdES"; //$NON-NLS-1$
+	/** Identificador de la firma CAdES por defecto. */
+	public static final String SIGN_FORMAT_CADES = "CAdES"; //$NON-NLS-1$
 
 	private String dni = null;
 	private String certAlias = null;
@@ -358,8 +359,8 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
     }
 
     private final static String PADES_EXTENSION = "pdf";  //$NON-NLS-1$
-    private final static String CADES_EXTENSION = "cades";  //$NON-NLS-1$
-    private final static String XADES_EXTENSION = "xades";  //$NON-NLS-1$
+    private final static String CADES_EXTENSION = "csig";  //$NON-NLS-1$
+    private final static String XADES_EXTENSION = "xsig";  //$NON-NLS-1$
 
     /**
      * Devuelve la extensi&oacute;n correspondiente a una firma a partir del formato de firma utilizado.
@@ -370,12 +371,13 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
     	if (SIGN_FORMAT_PADES.equalsIgnoreCase(signFormat) || SIGN_FORMAT_PDF.equalsIgnoreCase(signFormat)) {
     		ext = PADES_EXTENSION;
     	}
-    	else if (SIGN_FORMAT_XADES.equalsIgnoreCase(signFormat)) {
-    		ext = XADES_EXTENSION;
-    	}
-    	else {
+    	else if (SIGN_FORMAT_CADES.equalsIgnoreCase(signFormat)) {
     		ext = CADES_EXTENSION;
     	}
+    	else {
+    		ext = XADES_EXTENSION;
+    	}
+
     	return ext;
     }
 
@@ -793,13 +795,16 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
                                         final String mimetype, final int docType,
                                         final boolean externalDir) {
 		dismissProgressDialog();
-		if (this.tempDocuments == null) {
-			this.tempDocuments = new ArrayList<File>();
-		}
-		this.tempDocuments.add(documentFile);
 
-		// Si el fichero no es de firma, lo abrimos
+		// Si el fichero no es de firma, lo abrimos y guardamos una referencia al mismo para
+		// borrarlo posteriormente
 		if (docType != DownloadFileTask.DOCUMENT_TYPE_SIGN) {
+
+			if (this.tempDocuments == null) {
+				this.tempDocuments = new ArrayList<File>();
+			}
+			this.tempDocuments.add(documentFile);
+
 			openFile(documentFile, mimetype, externalDir);
 		}
 		else {

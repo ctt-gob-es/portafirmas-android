@@ -163,7 +163,7 @@ public final class ClaveWebViewActivity extends Activity {
 	@TargetApi(21)
 	private void closeByStatusError(WebResourceResponse errorResponse) {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-			PfLog.w(SFConstants.LOG_TAG, "Estatus Error: " + errorResponse.getStatusCode());
+			PfLog.w(SFConstants.LOG_TAG, "Status Error: " + errorResponse.getStatusCode());
 		}
 		Intent result = createErrorIntent("claveerror",
 				"Error recibido del servicio en la nube");
