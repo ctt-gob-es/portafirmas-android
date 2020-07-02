@@ -1,5 +1,6 @@
 package es.gob.afirma.android.signfolder;
 
+import android.Manifest;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
@@ -8,8 +9,12 @@ import android.content.DialogInterface;
 import android.content.DialogInterface.OnKeyListener;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Base64;
 import android.view.KeyEvent;
@@ -122,6 +127,8 @@ public final class PetitionListActivity extends WebViewParentActivity implements
 	/** Di&aacute;logo para mostrar el resultado devuelto por la pantalla de detalle. */
 	private final static int DIALOG_RESULT_SIMPLE_REQUEST = 16;
 
+	private final static int PERMISSION_TO_OPEN_HELP = 22;
+
 	/**
 	 * Di&aacute;logo de notificaci&oacute;n de error al procesar las
 	 * peticiones.
@@ -219,43 +226,55 @@ public final class PetitionListActivity extends WebViewParentActivity implements
 		getListView().setOnItemClickListener(this);
 
 		if (!CommManager.getInstance().isOldProxy()) {
+			checkChangesOnNotificationToken();
+		}
+	}
 
-			String userProxyId = getUserProxyId();
+	/**
+	 * Comprueba si el usuario estaba dado de alta en el sistema de notificaciones y, en caso de
+	 * estarlo, comprueba el token de notificaciones actual y lo enviar a actualizar al Portafirmas
+	 * si no era el mismo que se registr&oacute; anteriormente.
+	 */
+	private void checkChangesOnNotificationToken() {
 
-			AppPreferences prefs = AppPreferences.getInstance();
-			boolean registered = prefs.getPreferenceBool(
-					AppPreferences.PREFERENCES_KEY_PREFIX_NOTIFICATION_ACTIVE + userProxyId,
-					false);
+		String userProxyId = getUserProxyId();
 
-			PfLog.i(SFConstants.LOG_TAG, "Las notificaciones se encuentran activadas: " + registered);
+		AppPreferences prefs = AppPreferences.getInstance();
+		boolean registered = prefs.getPreferenceBool(
+				AppPreferences.PREFERENCES_KEY_PREFIX_NOTIFICATION_ACTIVE + userProxyId,
+				false);
 
-			if (registered) {
+		PfLog.i(SFConstants.LOG_TAG, "Las notificaciones se encuentran activadas: " + registered);
 
-				// Comprobamos si el token de notificaciones que tiene dado de alta ese usuario
-				// es igual al actual. En caso contrario, se actualiza
-				if (prefs.getCurrentToken() != null
-						&& !prefs.getCurrentToken().equals(
-								prefs.getPreference(
-								AppPreferences.PREFERENCES_KEY_PREFIX_NOTIFICATION_TOKEN + userProxyId,
-								null)
-						)
-				) {
+		if (registered) {
 
-					PfLog.i(SFConstants.LOG_TAG, "Damos de alta el nuevo token de notificaciones");
+			// Comprobamos si el token de notificaciones que tiene dado de alta ese usuario
+			// es igual al actual. En caso contrario, se actualiza
 
-					Intent intent = new Intent(this, RegistrationIntentService.class);
-					if (this.certB64 != null) {
-						intent.putExtra(RegistrationIntentService.EXTRA_RESOURCE_CERT_B64, this.certB64);
-					}
-					if (this.dni != null) {
-						intent.putExtra(RegistrationIntentService.EXTRA_RESOURCE_DNI, this.dni);
-					}
-					intent.putExtra(RegistrationIntentService.EXTRA_RESOURCE_USER_PROXY_ID, userProxyId);
-					startService(intent);
+			if (prefs.getCurrentToken() != null || prefs.getCurrentToken().isEmpty()) {
+				PfLog.i(SFConstants.LOG_TAG, "No se han encontrado cambios en el token de notificaciones");
+			}
+			else if (!prefs.getCurrentToken().equals(
+					prefs.getPreference(
+							AppPreferences.PREFERENCES_KEY_PREFIX_NOTIFICATION_TOKEN + userProxyId,
+							null)
+			)
+			) {
+				PfLog.i(SFConstants.LOG_TAG, "Detectado cambio en el token de notificaciones. Damos de alta el nuevo: "
+						+ prefs.getCurrentToken());
+
+				Intent intent = new Intent(this, RegistrationIntentService.class);
+				if (this.certB64 != null) {
+					intent.putExtra(RegistrationIntentService.EXTRA_RESOURCE_CERT_B64, this.certB64);
 				}
-				else {
-					PfLog.i(SFConstants.LOG_TAG, "El usuario ya tiene dado de alta el token de notificaciones correcto");
+				if (this.dni != null) {
+					intent.putExtra(RegistrationIntentService.EXTRA_RESOURCE_DNI, this.dni);
 				}
+				intent.putExtra(RegistrationIntentService.EXTRA_RESOURCE_USER_PROXY_ID, userProxyId);
+				startService(intent);
+			}
+			else {
+				PfLog.i(SFConstants.LOG_TAG, "El usuario ya tiene dado de alta el token de notificaciones correcto");
 			}
 		}
 	}
@@ -601,14 +620,28 @@ public final class PetitionListActivity extends WebViewParentActivity implements
 		// Habilitar/deshabilitar notificaciones
 		else if (item.getItemId() == R.id.notifications) {
 			if (checkPlayServices()) {
-				// Start IntentService to register this application with GCM.
+				// Start IntentService to register this application with FireBase.
 				registerReceiver();
 			}
 		}
 		// Abrir ayuda
 		else if (item.getItemId() == R.id.help) {
-			OpenHelpDocumentTask task = new OpenHelpDocumentTask(this);
-			task.execute();
+			boolean storagePerm = (
+					ContextCompat.checkSelfPermission(
+							this,
+							Manifest.permission.WRITE_EXTERNAL_STORAGE
+					) == PackageManager.PERMISSION_GRANTED
+			);
+
+			if (storagePerm) {
+				openHelp();
+			}
+			else {
+				ActivityCompat.requestPermissions(
+						this,
+						new String[]{ Manifest.permission.WRITE_EXTERNAL_STORAGE },
+						PERMISSION_TO_OPEN_HELP);
+			}
 		}
 		// Cerrar sesion
 		else if (item.getItemId() == R.id.logout) {
@@ -616,6 +649,36 @@ public final class PetitionListActivity extends WebViewParentActivity implements
 		}
 
 		return true;
+	}
+
+	@Override
+	public void onRequestPermissionsResult(int requestCode,
+										   @NonNull String[] permissions,
+										   @NonNull int[] grantResults) {
+		super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+		switch (requestCode) {
+			case PERMISSION_TO_OPEN_HELP: {
+				if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+					PfLog.i(SFConstants.LOG_TAG, "Permisos concedidos para abrir el fichero de ayuda");
+					openHelp();
+				}
+				else {
+					Toast.makeText(
+							this,
+							getString(R.string.nopermtoopenhelp),
+							Toast.LENGTH_LONG
+					).show();
+				}
+			}
+		}
+	}
+
+	/**
+	 * Abre el fichero de ayuda de la aplicaci&oacute;n.
+	 */
+	private void openHelp() {
+		OpenHelpDocumentTask task = new OpenHelpDocumentTask(this);
+		task.execute();
 	}
 
 	/** Actualiza la lista de peticiones que se muestra actualmente. */
@@ -1686,6 +1749,9 @@ public final class PetitionListActivity extends WebViewParentActivity implements
 		Intent intent = new Intent(this, RegistrationIntentService.class);
 		intent.putExtra(RegistrationIntentService.EXTRA_RESOURCE_DNI, this.dni);
 		intent.putExtra(RegistrationIntentService.EXTRA_RESOURCE_USER_PROXY_ID, userProxyId);
+		// Indicamos que se le debe mostrar al usuario un mensaje con el resultado del registro
+		intent.putExtra(RegistrationIntentService.EXTRA_RESOURCE_NOTICE_USER, true);
+
 		startService(intent);
 	}
 
@@ -1693,12 +1759,16 @@ public final class PetitionListActivity extends WebViewParentActivity implements
 
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			if(intent.getExtras() != null && intent.getExtras().getBoolean("success")) {
+			if (intent.getExtras() != null && intent.getExtras().getBoolean("success")) {
 				menuRef.findItem(R.id.notifications).setVisible(false);
-				Toast.makeText(context, R.string.toast_msg_gcm_connection_ok, Toast.LENGTH_SHORT).show();
+				if (intent.getExtras().getBoolean("noticeUser")) {
+					Toast.makeText(context, R.string.toast_msg_gcm_connection_ok, Toast.LENGTH_SHORT).show();
+				}
 			}
 			else {
-				Toast.makeText(context, R.string.toast_msg_gcm_connection_ko, Toast.LENGTH_SHORT).show();
+				if (intent.getExtras() != null && intent.getExtras().getBoolean("noticeUser")) {
+					Toast.makeText(context, R.string.toast_msg_gcm_connection_ko, Toast.LENGTH_SHORT).show();
+				}
 			}
 		}
 	};

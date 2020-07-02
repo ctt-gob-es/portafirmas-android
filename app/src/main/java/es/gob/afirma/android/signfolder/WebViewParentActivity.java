@@ -30,8 +30,8 @@ public class WebViewParentActivity extends FragmentActivity {
         final Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setClass(this, webViewClass);
 
-        PfLog.i(SFConstants.LOG_TAG, " ========= Cargamos el WebView con la URL: " + url);
-        PfLog.i(SFConstants.LOG_TAG, " ========= Cargamos el WebView con el id de sesion: " + cookieId);
+        PfLog.i(SFConstants.LOG_TAG, "Cargamos el WebView con la URL: " + url);
+        PfLog.i(SFConstants.LOG_TAG, "Cargamos el WebView con el id de sesion: " + cookieId);
 
         intent.putExtra(EXTRA_RESOURCE_URL, url);
         intent.putExtra(EXTRA_RESOURCE_NEED_JAVASCRIPT, needJavaScript);

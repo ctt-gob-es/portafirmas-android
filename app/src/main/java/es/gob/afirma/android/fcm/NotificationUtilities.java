@@ -18,9 +18,8 @@ import com.google.firebase.iid.InstanceIdResult;
 
 import es.gob.afirma.android.signfolder.AppPreferences;
 import es.gob.afirma.android.signfolder.R;
+import es.gob.afirma.android.signfolder.SFConstants;
 import es.gob.afirma.android.util.PfLog;
-
-import static android.content.ContentValues.TAG;
 
 public final class NotificationUtilities {
 
@@ -39,7 +38,7 @@ public final class NotificationUtilities {
      */
     private static NotificationChannel defaultNotChannel = null;
 
-    private static String FCMToken = null;
+    private static String token = null;
 
     /**
      * Intent used to display a message in the screen.
@@ -195,45 +194,28 @@ public final class NotificationUtilities {
     }
 
     /**
-     * Method that gets the current notification token of the application,.
-     *
-     * @return the current notification token or null if it doesn't exist.
+     * Check current notification token of the application.
      */
-    public static String getCurrentToken() {
-        if (FCMToken == null) {
-            getToken();
+    public static void checkCurrentToken() {
+
+        if (token == null) {
+            FirebaseInstanceId.getInstance().getInstanceId()
+                    .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
+                        @Override
+                        public void onComplete(@NonNull Task<InstanceIdResult> task) {
+                            if (!task.isSuccessful()) {
+                                PfLog.w(SFConstants.LOG_TAG, "No se pudo recuperar el token de notificaciones actual", task.getException());
+                                return;
+                            }
+
+                            // Recuperamos el token y lo almacenamos en el atributo.
+                            if (task.getResult() != null) {
+                                token = task.getResult().getToken();
+                                PfLog.i(SFConstants.LOG_TAG, "Se obtiene el token de notificaciones actual: " + token);
+                                AppPreferences.getInstance().setCurrentToken(token);
+                            }
+                        }
+                    });
         }
-        return FCMToken;
     }
-
-    /**
-     * Method that stores the notification token in the app preferences.
-     *
-     * @param token Notification token.
-     */
-    public static void storeTokenInPreferences(String token) {
-        AppPreferences.getInstance().setCurrentToken(token);
-    }
-
-    /**
-     * Method that gets the current notification token of the application.
-     */
-    private static void getToken() {
-        FirebaseInstanceId.getInstance().getInstanceId()
-                .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
-                    @Override
-                    public void onComplete(@NonNull Task<InstanceIdResult> task) {
-                        if (!task.isSuccessful()) {
-                            PfLog.w(TAG, "getInstanceId failed", task.getException());
-                            return;
-                        }
-
-                        // Recuperamos el token y lo almacenamos en el atributo.
-                        if (task.getResult() != null) {
-                            FCMToken = task.getResult().getToken();
-                        }
-                    }
-                });
-    }
-
 }

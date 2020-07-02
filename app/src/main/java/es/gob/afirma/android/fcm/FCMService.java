@@ -149,7 +149,7 @@ public class FCMService extends FirebaseMessagingService {
      */
     @Override
     public void onNewToken(String token) {
-        if (token != null) {
+        if (token != null && !token.isEmpty()) {
             PfLog.i(SFConstants.LOG_TAG, "Token para notificaciones: " + token);
             // Registramos el token en las preferencias de la app.
             AppPreferences.getInstance().setCurrentToken(token);

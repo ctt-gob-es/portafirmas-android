@@ -99,8 +99,7 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
 		// Una vez, tras el inicio de la aplicacion, obtenemos el token para el envio de
 		// notificaciones a la aplicacion y lo registramos
 		if (!notificationTokenChecked) {
-            String token = NotificationUtilities.getCurrentToken();
-            NotificationUtilities.storeTokenInPreferences(token);
+			NotificationUtilities.checkCurrentToken();
 			notificationTokenChecked = true;
 		}
 	}
@@ -159,19 +158,12 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
 				browseKeyStore();
 			}
 			else {
-                requestPermissions(
-                        PERMISSION_TO_BROWSE_FILE,
-				        new String[]{ Manifest.permission.WRITE_EXTERNAL_STORAGE });
+				ActivityCompat.requestPermissions(
+						this,
+						new String[]{ Manifest.permission.WRITE_EXTERNAL_STORAGE },
+						PERMISSION_TO_BROWSE_FILE);
 			}
 		}
-	}
-
-	private void requestPermissions(int requestCode, String[] permissions) {
-		ActivityCompat.requestPermissions(
-				this,
-				permissions,
-                requestCode
-		);
 	}
 
 	@Override
@@ -215,7 +207,7 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
 		LoadKeyStoreManagerTask lksmt = new LoadKeyStoreManagerTask(this, this);
 		showProgressDialog(getString(R.string.dialog_msg_accessing_keystore),this, lksmt);
 		lksmt.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-		}
+	}
 
 	/** Abre un activity para la seleccion de un fichero PKCS#12 local. */
 	public void browseKeyStore() {
@@ -355,9 +347,10 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
                 openHelp();
             }
             else {
-                requestPermissions(
-                        PERMISSION_TO_OPEN_HELP,
-                        new String[]{ Manifest.permission.WRITE_EXTERNAL_STORAGE });
+				ActivityCompat.requestPermissions(
+						this,
+						new String[]{ Manifest.permission.WRITE_EXTERNAL_STORAGE },
+						PERMISSION_TO_OPEN_HELP);
             }
 		}
     	return true;

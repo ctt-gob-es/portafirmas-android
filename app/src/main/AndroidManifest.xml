@@ -48,6 +48,7 @@
             android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+                <action android:name="android.intent.action.VIEW" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
@@ -71,9 +72,6 @@
             android:name=".ClaveWebViewActivity"
             android:label="@string/title_clave_login"
             android:screenOrientation="portrait" />
-        <activity
-            android:name=".FireWebViewActivity"
-            android:label="@string/title_fire_webview" />
         <activity
             android:name="es.gob.afirma.android.fcm.StartFromNotificationActivity"
             android:label="@string/title_activity_notifications" />

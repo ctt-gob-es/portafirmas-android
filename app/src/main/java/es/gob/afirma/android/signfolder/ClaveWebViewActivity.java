@@ -42,8 +42,6 @@ public final class ClaveWebViewActivity extends Activity {
 
 		WebView webView = findViewById(R.id.webView);
 
-		PfLog.i(SFConstants.LOG_TAG, " ------ Cargamos el WebView");
-
 		// Definimos el comportamiento del WebView
 		webView.setWebViewClient(new WebViewClient() {
 

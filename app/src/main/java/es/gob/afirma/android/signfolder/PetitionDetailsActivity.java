@@ -112,6 +112,8 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
 	/** Tag para la presentaci&oacute;n de di&aacute;logos */
 	private final static String DIALOG_TAG = "dialog"; //$NON-NLS-1$
 
+	private final static int PERMISSION_TO_OPEN_HELP = 22;
+
 	/** Identificador de la firma PAdES. */
 	public static final String SIGN_FORMAT_PADES = "PAdES"; //$NON-NLS-1$
 
@@ -497,6 +499,19 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
 					Toast.makeText(
 							this,
 							getString(R.string.nopermtopreviewdocs),
+							Toast.LENGTH_LONG
+					).show();
+				}
+			}
+			case PERMISSION_TO_OPEN_HELP: {
+				if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+					PfLog.i(SFConstants.LOG_TAG, "Permisos concedidos para abrir el fichero de ayuda");
+					openHelp();
+				}
+				else {
+					Toast.makeText(
+							this,
+							getString(R.string.nopermtoopenhelp),
 							Toast.LENGTH_LONG
 					).show();
 				}
@@ -1366,8 +1381,22 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
 	public boolean onOptionsItemSelected(final MenuItem item) {
 		// Abrir ayuda
 		if (item.getItemId() == R.id.help) {
-			OpenHelpDocumentTask task = new OpenHelpDocumentTask(this);
-			task.execute();
+			boolean storagePerm = (
+					ContextCompat.checkSelfPermission(
+							this,
+							Manifest.permission.WRITE_EXTERNAL_STORAGE
+					) == PackageManager.PERMISSION_GRANTED
+			);
+
+			if (storagePerm) {
+				openHelp();
+			}
+			else {
+				ActivityCompat.requestPermissions(
+						this,
+						new String[]{ Manifest.permission.WRITE_EXTERNAL_STORAGE },
+						PERMISSION_TO_OPEN_HELP);
+			}
 		}
 		// Cerrar sesion
 		else if (item.getItemId() == R.id.logout) {
@@ -1375,6 +1404,14 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
 		}
 
 		return true;
+	}
+
+	/**
+	 * Abre el fichero de ayuda de la aplicaci&oacute;n.
+	 */
+	private void openHelp() {
+		OpenHelpDocumentTask task = new OpenHelpDocumentTask(this);
+		task.execute();
 	}
 
 	/**
