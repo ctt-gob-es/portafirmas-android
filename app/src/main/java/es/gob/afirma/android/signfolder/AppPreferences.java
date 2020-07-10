@@ -4,7 +4,11 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
+import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -37,6 +41,9 @@ public final class AppPreferences {
 
 	/** Clave de preferencia de alias del proxy seleccionado . */
 	private static final String PREFERENCES_KEY_SELECTED_PROXY_ALIAS = "alias"; //$NON-NLS-1$
+
+	/** Clave de preferencia del conjunto de las huellas de los certificados. */
+	private static final String PREFERENCES_KEY_TRUSTED_CERTS = "trustedSslCerts";
 
 	/** Prefijo de clave de preferencia para registrar cuando un usuario tiene activas las
 	 * notificaciones para un proxy. */
@@ -168,6 +175,12 @@ public final class AppPreferences {
 		editor.apply();
 	}
 
+	public void setPreference(final String key, final Set<String> value) {
+		final SharedPreferences.Editor editor = sharedPref.edit();
+		editor.putStringSet(key.trim(), value);
+		editor.apply();
+	}
+
 	public int getPreferenceInt(final String key, final int defaultValue) {
 		return sharedPref.getInt(key.trim(), defaultValue);
 	}
@@ -254,6 +267,38 @@ public final class AppPreferences {
 	    	}
 	    }
 	    return servers;
+	}
+
+	public void addTrustedCertificate(X509Certificate cert) {
+		Set<String> trustedCerts = sharedPref.getStringSet(PREFERENCES_KEY_TRUSTED_CERTS, null);
+		if (trustedCerts == null) {
+			trustedCerts = new HashSet<>();
+		}
+		try {
+			MessageDigest md = MessageDigest.getInstance("SHA-256");
+			trustedCerts.add(String.format("%040x", new BigInteger(1, md.digest(cert.getEncoded()))));
+		}
+		catch (Exception e) {
+			PfLog.w(SFConstants.LOG_TAG, "No se ha podido codificar el certificado para su guardado", e);
+			return;
+		}
+		setPreference(PREFERENCES_KEY_TRUSTED_CERTS, trustedCerts);
+	}
+
+	public boolean isTrustedCertificate(X509Certificate cert) {
+
+		String certKey;
+		try {
+			MessageDigest md = MessageDigest.getInstance("SHA-256");
+			certKey = String.format("%040x", new BigInteger(1, md.digest(cert.getEncoded())));
+		}
+		catch (Exception e) {
+			PfLog.w(SFConstants.LOG_TAG, "No se ha podido codificar el certificado para evaluar si es de confianza", e);
+			return false;
+		}
+
+		Set<String> trustedCerts = sharedPref.getStringSet(PREFERENCES_KEY_TRUSTED_CERTS, null);
+		return trustedCerts != null && trustedCerts.contains(certKey);
 	}
 
 	/**

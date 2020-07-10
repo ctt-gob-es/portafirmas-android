@@ -2,7 +2,7 @@
 <resources>
 
     <string name="app_name">Port@firmas</string>
-    <string name="app_title">Port@firmas v1.5.2</string>
+    <string name="app_title">Port@firmas v1.5.4</string>
     <string name="close">Cerrar</string>
     <string name="error">Error</string>
     <string name="server_select">Servidores Portafirmas</string>
@@ -242,7 +242,22 @@
     <string name="invalid_url">La URL del Portafirmas no es v\u00E1lida</string>
 
     <string name="no_pdf_viewer_msg">No hay aplicaciones instaladas para visualizar pdf.</string>
-    <string name="no_adobe_reader_msg">No tiene instalado adobe reader, por lo que la visualizacion del pdf puede no ser correcta.</string>
+    <string name="no_adobe_reader_msg">No tiene instalado adobe reader, por lo que la visualizaci\u00F3n del pdf puede no ser correcta.</string>
     <string name="title_activity_notifications">NotificationsActivity</string>
+
+    <!-- Dialogo con informacion de un certificado - Copyright (C) 2008 The Android Open Source Project -->
+    <string name="trust_in_cert">"¿Confiar en este certificado?"</string>
+    <string name="issued_to">"Emitido para:"</string>
+    <string name="common_name">"Nombre com\u00FAn:"</string>
+    <string name="org_name">"Organizaci\u00F3n:"</string>
+    <string name="org_unit">"Departamento:"</string>
+    <string name="issued_by">"Emitido por:"</string>
+    <string name="validity_period">"Validez:"</string>
+    <string name="issued_on">"Fecha de emisi\u00F3n:"</string>
+    <string name="expires_on">"Fecha de caducidad:"</string>
+    <string name="serial_number">"N\u00FAmero de serie:"</string>
+    <string name="fingerprints">"Huellas digitales:"</string>
+    <string name="sha256_fingerprint">"Huella digital SHA-256:"</string>
+    <string name="sha1_fingerprint">"Huella digital SHA-1:"</string>
 
 </resources>

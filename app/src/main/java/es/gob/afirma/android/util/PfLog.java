@@ -3,6 +3,8 @@ package es.gob.afirma.android.util;
 import android.content.pm.ApplicationInfo;
 import android.util.Log;
 
+import es.gob.afirma.android.signfolder.BuildConfig;
+
 /**
  * Utilities class that manages the app logs messages.
  */
@@ -16,7 +18,7 @@ public class PfLog {
 
     static {
         //noinspection ConstantConditions
-        isProduction = ApplicationInfo.FLAG_DEBUGGABLE == 0;
+        isProduction = !BuildConfig.DEBUG;
     }
 
     /**

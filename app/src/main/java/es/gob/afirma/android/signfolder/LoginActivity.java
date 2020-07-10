@@ -130,6 +130,7 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
 				return;
 			}
 
+
 			// Acceso con certificado local
 			if (!AppPreferences.getInstance().isCloudCertEnabled()) {
 			    // Iniciamos la carga del certificado
@@ -312,9 +313,11 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
     @Override
     public boolean onCreateOptionsMenu(final Menu menu) {
     	getMenuInflater().inflate(R.menu.activity_login_options_menu, menu);
+
 		MenuItem item = menu.findItem(R.id.clavefirma);
 		boolean cloudCertEnabled = AppPreferences.getInstance().isCloudCertEnabled();
 		item.setChecked(cloudCertEnabled);
+
         return true;
     }
 
@@ -327,6 +330,7 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
     		final LoginOptionsDialogBuilder dialogBuilder = new LoginOptionsDialogBuilder(this, this);
     		dialogBuilder.show();
     	}
+
     	// Configurar el uso de Clave/FIRe
     	else if (item.getItemId() == R.id.clavefirma) {
     	    // Activamos/desactivamos la propiedad
@@ -334,6 +338,7 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
 			AppPreferences.getInstance().setCloudCertEnabled(!cloudCertEnabled);
 			item.setChecked(!cloudCertEnabled);
 		}
+
 		// Abrir ayuda
 		else if (item.getItemId() == R.id.help) {
             boolean storagePerm = (

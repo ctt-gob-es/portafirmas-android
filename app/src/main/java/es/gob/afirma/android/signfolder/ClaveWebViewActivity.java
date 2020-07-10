@@ -3,11 +3,12 @@ package es.gob.afirma.android.signfolder;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Intent;
-import android.content.pm.ApplicationInfo;
 import android.graphics.Bitmap;
+import android.net.http.SslCertificate;
 import android.net.http.SslError;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.v4.app.FragmentActivity;
 import android.webkit.CookieManager;
 import android.webkit.HttpAuthHandler;
 import android.webkit.SslErrorHandler;
@@ -19,6 +20,8 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
+import java.lang.reflect.Field;
+import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -26,9 +29,9 @@ import java.util.Map;
 import es.gob.afirma.android.util.PfLog;
 
 /** Actividad para entrada con usuario y contrase&ntilde;a en Cl@ve. */
-public final class ClaveWebViewActivity extends Activity {
+public final class ClaveWebViewActivity extends FragmentActivity implements WebViewAuthorizable {
 
-	private static final boolean DEBUG = ApplicationInfo.FLAG_DEBUGGABLE != 0;
+	private static final boolean DEBUG = BuildConfig.DEBUG;
 
 	public void onCreate(Bundle savedInstanceState) {
 
@@ -39,6 +42,15 @@ public final class ClaveWebViewActivity extends Activity {
 			setTitle(titleStringId);
 		}
 		setContentView(R.layout.activity_webview);
+
+		// Cargamos la pagina
+		loadPage();
+	}
+
+	/**
+	 * Carga la URL proporcionada a la actividad en la p&aacute;gina.
+	 */
+	public void loadPage() {
 
 		WebView webView = findViewById(R.id.webView);
 
@@ -51,26 +63,25 @@ public final class ClaveWebViewActivity extends Activity {
 
 				int paramsPos = url.indexOf('?');
 
-				String cleanUrl = paramsPos != -1 ?  url.substring(0, paramsPos) : url;
+				String cleanUrl = paramsPos != -1 ? url.substring(0, paramsPos) : url;
 				int pathPos = cleanUrl.lastIndexOf('/');
 				if (pathPos == -1) {
 					return;
 				}
 
 				String path = cleanUrl.substring(pathPos); // La '/' forma parte del path
-				String params = paramsPos != -1 ?  url.substring(paramsPos + 1) : null;
+				String params = paramsPos != -1 ? url.substring(paramsPos + 1) : null;
 
 				PfLog.i(SFConstants.LOG_TAG, "---- Particula final: " + path);
 
 				// Cerramos el webview si somos redirigidos a la pagina "ok" o "error"
-                // devolviendo el resultado pertinente en cada caso
+				// devolviendo el resultado pertinente en cada caso
 
 				if (path.startsWith("/ok")) {
 					final Intent result = saveParamsInDataIntent(params);
 					setResult(Activity.RESULT_OK, result);
 					closeActivity();
-				}
-				else if (path.startsWith("/error")) {
+				} else if (path.startsWith("/error")) {
 					final Intent result = saveParamsInDataIntent(params);
 					setResult(Activity.RESULT_FIRST_USER, result);
 					closeActivity();
@@ -87,8 +98,7 @@ public final class ClaveWebViewActivity extends Activity {
 							error.getErrorCode(), error.getDescription()));
 					errorMsg = error.getDescription() != null ?
 							error.getDescription().toString() : "Error en el WebView";
-				}
-				else {
+				} else {
 					PfLog.e(SFConstants.LOG_TAG, "Error recibido en el WebView");
 				}
 				Intent result = createErrorIntent("claveerror", errorMsg);
@@ -98,29 +108,72 @@ public final class ClaveWebViewActivity extends Activity {
 
 			@Override
 			public void onReceivedHttpError(WebView view, WebResourceRequest request, WebResourceResponse errorResponse) {
-				PfLog.w(SFConstants.LOG_TAG,"No se ha podido cargar la URL requerida");
+				PfLog.w(SFConstants.LOG_TAG, "No se ha podido cargar la URL requerida");
 				closeByStatusError(errorResponse);
 			}
 
 			@Override
 			public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
-				if (DEBUG) {
-					PfLog.i(SFConstants.LOG_TAG, "Se ignora error SSL en la pagina cargada");
-					handler.proceed();
-					return;
+
+				PfLog.w(SFConstants.LOG_TAG, String.format("Error SSL en la pagina: %1s", error.getUrl()));
+
+				boolean permissibleError = true;
+				boolean needUserPermission = false;
+				if (error.hasError(SslError.SSL_NOTYETVALID) ||
+						error.hasError(SslError.SSL_EXPIRED) ||
+						error.hasError(SslError.SSL_DATE_INVALID)) {
+					PfLog.w(SFConstants.LOG_TAG, "El certificado SSL no se encuentra en su periodo de validez");
+					permissibleError = false;
 				}
-				PfLog.e(SFConstants.LOG_TAG, String.format(Locale.ENGLISH,
-						"Error de SSL (%1d) recibido en el WebView con la URL: %2s",
-						error.getPrimaryError(), error.getUrl()));
-				Intent result = createErrorIntent("claveerror", "Error SSL en la conexion con Cl@ve");
-				setResult(Activity.RESULT_FIRST_USER, result);
-				closeActivity();
+
+				if (error.hasError(SslError.SSL_INVALID)) {
+					PfLog.w(SFConstants.LOG_TAG, "El certifiado SSL es invalido");
+					permissibleError = false;
+				}
+
+				if (error.hasError(SslError.SSL_IDMISMATCH)) {
+					PfLog.w(SFConstants.LOG_TAG, "El certificado SSL no se ha expedido para el dominio de la pagina");
+					permissibleError = false;
+				}
+
+				X509Certificate sslCert = null;
+				if (error.hasError(SslError.SSL_UNTRUSTED)) {
+					PfLog.w(SFConstants.LOG_TAG, "El certificado SSL no esta internacionalmente reconocido");
+
+					// Comprobamos si el usuario no ha confiado anteriormente en este certificado
+					// para pedirle permiso ahora
+					sslCert = getX509Certificate(error.getCertificate());
+					if (!AppPreferences.getInstance().isTrustedCertificate(sslCert)) {
+						PfLog.i(SFConstants.LOG_TAG, "El usuario ya marco anteriormente el certificado como de confianza");
+						needUserPermission = true;
+					}
+				}
+
+				if (DEBUG) {
+					PfLog.i(SFConstants.LOG_TAG, "Se ignora error SSL de la pagina por estar en modo DEBUG");
+					handler.proceed();
+				} else if (permissibleError) {
+					PfLog.i(SFConstants.LOG_TAG, "Se ignora error SSL de la pagina por estar controlado");
+					handler.proceed();
+				} else if (needUserPermission) {
+					// Por lo pronto, cancelamos la conexion, pero preguntamos al usuario si desea
+					// confiar en el certificado
+					handler.cancel();
+					requestUserPermission(sslCert);
+				} else {
+					handler.cancel();
+
+					PfLog.e(SFConstants.LOG_TAG, "Se cierra la conexion con la pagina");
+					Intent result = createErrorIntent("claveerror", "Error SSL en la conexion");
+					setResult(Activity.RESULT_FIRST_USER, result);
+					closeActivity();
+				}
 			}
 
 			@Override
 			public void onReceivedHttpAuthRequest(WebView view, HttpAuthHandler handler, String host, String realm) {
 
-				PfLog.e(SFConstants.LOG_TAG,"Error al autenticarse en la Web cargada");
+				PfLog.e(SFConstants.LOG_TAG, "Error al autenticarse en la Web cargada");
 				Intent result = createErrorIntent("claveerror", "Error al autenticar al usuario en la pagina");
 				setResult(Activity.RESULT_FIRST_USER, result);
 				closeActivity();
@@ -155,6 +208,7 @@ public final class ClaveWebViewActivity extends Activity {
 			PfLog.w(SFConstants.LOG_TAG, "---- Id de cookie cargada: " + cookieId);
 			headers = configureCookies(webView, url, cookieId);
 		}
+
 		webView.loadUrl(url, headers);
 	}
 
@@ -171,10 +225,12 @@ public final class ClaveWebViewActivity extends Activity {
 
 	/**
 	 * Configura la cookies de sesi&oacute;n en un WebView.
-	 * @param webView WebView en el que se van a cargar la URL con las coIdentificador de la cookie
-	 *                   de sesi&oacute;n a utilizar.
-	 * @param url URL para la que se desean utilizar las cookies.
+	 *
+	 * @param webView  WebView en el que se van a cargar la URL con las coIdentificador de la cookie
+	 *                 de sesi&oacute;n a utilizar.
+	 * @param url      URL para la que se desean utilizar las cookies.
 	 * @param cookieId Identificador de la cookie de sesi&oacute;n a utilizar.
+	 *
 	 * @return Cabeceras que proporcionar al WebView para realizar la carga de la URL.
 	 */
 	@TargetApi(21)
@@ -231,14 +287,59 @@ public final class ClaveWebViewActivity extends Activity {
 		return result;
 	}
 
-	/** Cierra la actividad liberando recursos. */
+	/**
+	 * Cierra la actividad liberando recursos.
+	 */
 	public void closeActivity() {
 		finish();
 	}
 
+	void requestUserPermission(X509Certificate sslCertificate) {
 
+		Bundle arguments = new Bundle();
+		arguments.putSerializable(PermissionRequestorDialogFragment.ARG_SSL_CERTIFICATE, sslCertificate);
 
-//	private ProgressDialog progressDialog = null;
+		PermissionRequestorDialogFragment dialog = new PermissionRequestorDialogFragment();
+		dialog.setArguments(arguments);
+		dialog.setWebView(this);
+		dialog.show(getSupportFragmentManager(), "NoticeDialogFragment");
+	}
+
+	/**
+	 * Recupera el certificado X509 que produjo el error de SSL.
+	 * @param cert Objeto con la informacion certificado notificada por el error.
+	 * @return Certificado X509.
+	 */
+	private static X509Certificate getX509Certificate(SslCertificate cert) {
+
+		X509Certificate sslX509Cert;
+		try {
+			Field certField = SslCertificate.class.getDeclaredField("mX509Certificate");
+			certField.setAccessible(true);
+			sslX509Cert = (X509Certificate) certField.get(cert);
+		}
+		catch(Exception e) {
+			throw new IllegalArgumentException("No se ha proporcionado o no se ha podido obtener el certificado SSL", e);
+		}
+		return sslX509Cert;
+	}
+
+	@Override
+	public void allowPermission(X509Certificate cert) {
+		AppPreferences.getInstance().addTrustedCertificate(cert);
+		loadPage();
+	}
+
+	@Override
+	public void denyPermission(X509Certificate cert) {
+		PfLog.e(SFConstants.LOG_TAG,"El usuario deniega el acceso a la pagina no segura");
+		Intent result = createErrorIntent("claveerror",
+				"Se cierra la conexión por haber encontrado un SSL no seguro");
+		setResult(Activity.RESULT_FIRST_USER, result);
+		closeActivity();
+	}
+
+	//	private ProgressDialog progressDialog = null;
 //	ProgressDialog getProgressDialog() {
 //		return this.progressDialog;
 //	}
