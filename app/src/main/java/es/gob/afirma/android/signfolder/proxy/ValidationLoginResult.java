@@ -1,5 +1,9 @@
 package es.gob.afirma.android.signfolder.proxy;
 
+import java.util.List;
+
+import es.gob.afirma.android.user.configuration.ConfigurationRole;
+
 /**
  * Resultado final del proceso de login.
  */
@@ -21,6 +25,11 @@ public class ValidationLoginResult {
     private String certificateB64;
 
 	private String errorMsg;
+
+	/**
+	 * Lista de roles asociados al usuario.
+	 */
+	private List<ConfigurationRole> roleLs;
 
 	/**
 	 * Resultado de una petici&oacute;n login.
@@ -109,5 +118,21 @@ public class ValidationLoginResult {
 	 */
 	public boolean isStatusOk() {
 		return this.statusOk;
+	}
+
+	/**
+	 * Recupera la lista de roles asociados al usuario.
+	 * @return lista de roles asociados al usuario.
+	 */
+	public List<ConfigurationRole> getRoleLs() {
+		return roleLs;
+	}
+
+	/**
+	 * Establece la lista de roles asociados al usuario.
+	 * @param roleLs Lista de roles asociados al usuario.
+	 */
+	public void setRoleLs(List<ConfigurationRole> roleLs) {
+		this.roleLs = roleLs;
 	}
 }

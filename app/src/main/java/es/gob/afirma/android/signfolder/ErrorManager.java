@@ -80,7 +80,7 @@ public final class ErrorManager {
 	/** Recupera el mensaje asociado a un c&oacute;digo de error.
 	 * @param code C&oacute;digo de error.
 	 * @return Mensaje. */
-	static String getErrorMessage(final String code) {
+	public static String getErrorMessage(final String code) {
 		return ERRORS.get(code);
 	}
 }

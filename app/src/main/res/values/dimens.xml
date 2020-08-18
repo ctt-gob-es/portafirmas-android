@@ -5,4 +5,5 @@
     <dimen name="activity_vertical_margin">16dp</dimen>
     <dimen name="activity_land_margin_vertical">10dp</dimen>
 	<dimen name="dialog_dimen">16dp</dimen>
+    <dimen name="fab_margin">16dp</dimen>
 </resources>

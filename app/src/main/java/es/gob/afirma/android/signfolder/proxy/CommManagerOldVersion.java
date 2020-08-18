@@ -17,6 +17,10 @@ import es.gob.afirma.android.network.AndroidUrlHttpManager;
 import es.gob.afirma.android.network.ConnectionResponse;
 import es.gob.afirma.android.signfolder.AppPreferences;
 import es.gob.afirma.android.signfolder.SFConstants;
+import es.gob.afirma.android.signfolder.proxy.parsers.ApplicationListResponseParser;
+import es.gob.afirma.android.signfolder.proxy.parsers.PresignsResponseParser;
+import es.gob.afirma.android.signfolder.proxy.parsers.RequestDetailResponseParser;
+import es.gob.afirma.android.signfolder.proxy.parsers.RequestListResponseParser;
 import es.gob.afirma.android.util.Base64;
 import es.gob.afirma.android.util.PfLog;
 

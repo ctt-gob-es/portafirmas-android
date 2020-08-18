@@ -29,22 +29,22 @@ final public class MessageDialog extends DialogFragment {
 		}
 	}
 
-	void setMessage(final String message) {
+	public void setMessage(final String message) {
 		this.message = message;
 	}
 
-	void setTitle(final String title) {
+	public void setTitle(final String title) {
 		this.title = title;
 	}
 
-	void setListeners(final DialogInterface.OnClickListener positiveListener, final DialogInterface.OnClickListener negativeListener) {
+	public void setListeners(final DialogInterface.OnClickListener positiveListener, final DialogInterface.OnClickListener negativeListener) {
 		this.positiveListener = positiveListener;
 		this.negativeListener = negativeListener;
 	}
 
 	public void setNeedShowNegativeButton(final boolean needShowNegativeButton) { this.needShowNegativeButton = needShowNegativeButton; }
 
-	void setContext(final Context context) { this.dialogBuilder = new AlertDialog.Builder(context); }
+	public void setContext(final Context context) { this.dialogBuilder = new AlertDialog.Builder(context); }
 
 	@Override
 	public Dialog onCreateDialog(final Bundle savedInstanceState) {

@@ -8,7 +8,7 @@ import org.w3c.dom.NodeList;
  * manteniendo la compatibilidad con JME.
  * @author Tom&aacute;s Garc&iacute;a-Mer&aacute;s
  */
-final class XmlUtils {
+public final class XmlUtils {
 
 	/**
 	 * Recupera el &iacute;ndice siguiente nodo de la lista de tipo Element. Empieza a comprobar
@@ -18,7 +18,7 @@ final class XmlUtils {
 	 * @param currentIndex &Iacute;ndice del listado a partir del cual se empieza la comprobaci&oacute;n.
 	 * @return &Iacute;ndice del siguiente node de tipo Element o -1 si no se encontr&oacute;.
 	 */
-	static int nextNodeElementIndex(final NodeList nodes, final int currentIndex) {
+	public static int nextNodeElementIndex(final NodeList nodes, final int currentIndex) {
 		Node node;
 		int i = currentIndex;
 		while (i < nodes.getLength()) {
@@ -34,7 +34,7 @@ final class XmlUtils {
 	/**
 	 * Sustituto para JME de {@code Boolean.parseBoolean()}.
 	 */
-	static boolean parseBoolean(final String bool) {
+	public static boolean parseBoolean(final String bool) {
 		if ("true".equalsIgnoreCase(bool)) { //$NON-NLS-1$
 			return true;
 		}
@@ -47,7 +47,7 @@ final class XmlUtils {
 	 * @param node Nodo del que se desea el contenido.
 	 * @return Contenido del nodo.
 	 */
-	static String getTextContent(final Node node) {
+	public static String getTextContent(final Node node) {
 		Node child;
 		String sContent = node.getNodeValue() != null ? node.getNodeValue() : ""; //$NON-NLS-1$
 		final NodeList nodes = node.getChildNodes();

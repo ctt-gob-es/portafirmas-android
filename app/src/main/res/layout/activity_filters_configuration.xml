@@ -34,7 +34,8 @@
 		        android:layout_marginLeft="11dp"
 		        android:layout_marginRight="11dp"
 		        android:text="@string/label_order_rule"
-		        android:textAppearance="?android:attr/textAppearanceMedium" />
+		        android:textAppearance="?android:attr/textAppearanceMedium"
+				android:layout_alignParentStart="true" />
 			<!-- Seleccionable del criterio -->
 		    <Spinner
 		        android:id="@+id/spinner_order"
@@ -43,7 +44,8 @@
 		        android:layout_alignParentLeft="true"
 		      	android:layout_below="@+id/infoServerLabel"
 		        android:layout_marginLeft="11dp"
-		        android:layout_marginRight="11dp" />
+		        android:layout_marginRight="11dp"
+				android:layout_alignParentStart="true" />
 	
 		<!-- FILTROS -->
 			<!-- Titulo "Filtros" -->	
@@ -58,7 +60,8 @@
 		        android:text="@string/label_filters"
 		        android:textAppearance="?android:attr/textAppearanceMedium"
 		        android:layout_marginTop="20dp"
-		        style="@style/Section_Header" />
+		        style="@style/Section_Header"
+				android:layout_alignParentStart="true" />
 		
 		    <TextView
 		        android:id="@+id/textView4"
@@ -81,7 +84,9 @@
 		        android:layout_alignParentRight="true"
 		        android:layout_marginRight="11dp"
 		        android:checked="false"
-		        android:longClickable="false" />
+		        android:longClickable="false"
+				android:layout_alignParentEnd="true"
+				android:layout_marginEnd="11dp" />
 		    
 		    <TextView
 		        android:id="@+id/lb_filter_subject"
@@ -93,21 +98,28 @@
 		        android:layout_marginTop="11dp"
 		        android:layout_marginLeft="15dp"
 		        android:text="@string/label_filters_by_subject"
-		        android:textAppearance="?android:attr/textAppearanceMedium" />
-		
-		    <EditText
-		        android:id="@+id/et_filter_subject"
-				android:filterTouchesWhenObscured="true"
-		        android:layout_width="match_parent"
-		        android:layout_height="wrap_content"
-		        android:layout_alignParentLeft="true"
-		        android:layout_below="@+id/lb_filter_subject"
-		        android:layout_marginLeft="15dp"
-		        android:layout_marginRight="11dp"
-		        android:ems="10"
-		        android:inputType="textNoSuggestions" >
-		
-		    </EditText>
+		        android:textAppearance="?android:attr/textAppearanceMedium"
+				android:layout_alignParentStart="true"
+				android:layout_marginStart="15dp" />
+
+		<EditText
+			android:id="@+id/et_filter_subject"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_below="@+id/lb_filter_subject"
+			android:layout_alignParentStart="true"
+			android:layout_alignParentLeft="true"
+			android:layout_marginStart="15dp"
+			android:layout_marginLeft="15dp"
+			android:layout_marginEnd="11dp"
+			android:layout_marginRight="11dp"
+			android:autofillHints=""
+			android:ems="10"
+			android:filterTouchesWhenObscured="true"
+			android:hint="@string/subject_hint_filter"
+			android:inputType="textNoSuggestions">
+
+		</EditText>
 		
 		    <TextView
 		        android:id="@+id/lb_filter_apps"
@@ -120,7 +132,10 @@
 		        android:layout_marginLeft="15dp"
 		        android:layout_marginRight="11dp"
 		        android:text="@string/label_filters_by_app"
-		        android:textAppearance="?android:attr/textAppearanceMedium" />
+		        android:textAppearance="?android:attr/textAppearanceMedium"
+				android:layout_alignParentStart="true"
+				android:layout_marginStart="15dp"
+				android:layout_marginEnd="11dp" />
 		
 		    <Spinner
 		        android:id="@+id/spinner_app"
@@ -130,7 +145,10 @@
 		        android:layout_below="@+id/lb_filter_apps"
 		        android:layout_marginLeft="15dp"
 		        android:layout_marginRight="11dp"
-		        android:spinnerMode="dialog" />
+		        android:spinnerMode="dialog"
+				android:layout_alignParentStart="true"
+				android:layout_marginStart="15dp"
+				android:layout_marginEnd="11dp" />
 		    
 		    <TextView
 		        android:id="@+id/lb_filter_date_start"
@@ -143,7 +161,10 @@
 		        android:layout_marginLeft="15dp"
 		        android:layout_marginRight="11dp"
 		        android:text="@string/label_filters_by_date_start"
-		        android:textAppearance="?android:attr/textAppearanceMedium" />
+		        android:textAppearance="?android:attr/textAppearanceMedium"
+				android:layout_alignParentStart="true"
+				android:layout_marginStart="15dp"
+				android:layout_marginEnd="11dp" />
 		    
 		    <TextView
 		        android:id="@+id/et_filter_date_start"
@@ -159,7 +180,12 @@
 		        android:background="?android:attr/editTextBackground"
 		        android:clickable="true"
 		        android:ems="10"
-		        android:textIsSelectable="false" />
+		        android:textIsSelectable="false"
+				android:layout_alignParentStart="true"
+				android:layout_toStartOf="@+id/bt_filter_date_start_clear"
+				android:layout_marginStart="15dp"
+				android:layout_marginEnd="11dp"
+				android:focusable="true" />
 
 		<Button
 			android:id="@+id/bt_filter_date_start_clear"
@@ -172,7 +198,9 @@
 			android:layout_marginRight="11dp"
 			android:paddingTop="3dp"
 			android:gravity="top|center_horizontal"
-			android:text="Limpiar" />
+			android:text="@string/clean_filter_text"
+			android:layout_alignParentEnd="true"
+			android:layout_marginEnd="11dp" />
 		    
 		    <TextView
 		        android:id="@+id/lb_filter_date_end"
@@ -185,7 +213,10 @@
 		        android:layout_marginLeft="15dp"
 		        android:layout_marginRight="11dp"
 		        android:text="@string/label_filters_by_date_end"
-		        android:textAppearance="?android:attr/textAppearanceMedium" />
+		        android:textAppearance="?android:attr/textAppearanceMedium"
+				android:layout_alignParentStart="true"
+				android:layout_marginStart="15dp"
+				android:layout_marginEnd="11dp" />
 		
 		    <TextView
 		        android:id="@+id/et_filter_date_end"
@@ -201,7 +232,12 @@
 		        android:background="?android:attr/editTextBackground"
 		        android:clickable="true"
 		        android:ems="10"
-		        android:textIsSelectable="false" />
+		        android:textIsSelectable="false"
+				android:layout_alignParentStart="true"
+				android:layout_toStartOf="@+id/bt_filter_date_end_clear"
+				android:layout_marginStart="15dp"
+				android:layout_marginEnd="11dp"
+				android:focusable="true" />
 
 		<Button
 			android:id="@+id/bt_filter_date_end_clear"
@@ -214,7 +250,34 @@
 			android:layout_marginRight="11dp"
 			android:paddingTop="3dp"
 			android:gravity="top|center_horizontal"
-			android:text="Limpiar" />
-	
+			android:text="@string/clean_filter_text"
+			android:layout_alignParentEnd="true"
+			android:layout_marginEnd="11dp" />
+
+		<TextView
+			android:id="@+id/textView5"
+			android:filterTouchesWhenObscured="true"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_below="@+id/et_filter_date_end"
+			android:layout_marginTop="25dp"
+			android:layout_marginLeft="11dp"
+			android:layout_marginRight="11dp"
+			android:text="@string/label_filters_show_verified_rq"
+			android:textAppearance="?android:attr/textAppearanceMedium" />
+
+		<CheckBox
+			android:id="@+id/show_verifier_rq_filter"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignBaseline="@+id/textView5"
+			android:layout_alignBottom="@+id/textView5"
+			android:layout_alignParentRight="true"
+			android:layout_marginRight="11dp"
+			android:checked="false"
+			android:longClickable="false"
+			android:layout_alignParentEnd="true"
+			android:layout_marginEnd="11dp" />
+
 	</RelativeLayout>
 </ScrollView>    

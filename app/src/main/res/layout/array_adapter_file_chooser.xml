@@ -10,7 +10,7 @@
         android:layout_height="wrap_content"
         android:layout_marginLeft="5dip"
         android:layout_marginTop="5dip"
-        android:contentDescription="@string/accesibility_icon_filetype"/>
+        android:contentDescription="@string/accessibility_icon_filetype"/>
     
     <TextView
         android:id="@+id/TextView01"

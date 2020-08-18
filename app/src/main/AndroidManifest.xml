@@ -12,26 +12,27 @@
 
     <application
         android:allowBackup="false"
-        android:label="@string/app_name"
         android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:networkSecurityConfig="@xml/network_security_config"
         android:roundIcon="@mipmap/ic_launcher_round"
-        android:theme="@style/AppTheme"
-        android:networkSecurityConfig="@xml/network_security_config">
+        android:theme="@style/AppTheme">
+
         <meta-data
-			android:name="com.google.android.gms.version"
-			android:value="@integer/google_play_services_version" />
-        <meta-data android:name="com.google.firebase.messaging.default_notification_icon"
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
             android:resource="@mipmap/ic_notification" />
+
         <service android:name="es.gob.afirma.android.fcm.FCMService">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
-		
         <service
             android:name="es.gob.afirma.android.fcm.RegistrationIntentService"
-            android:exported="false">
-        </service>
+            android:exported="false"/>
 
         <provider
             android:name="android.support.v4.content.FileProvider"
@@ -40,11 +41,11 @@
             android:grantUriPermissions="true">
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/provider_paths"/>
+                android:resource="@xml/provider_paths" />
         </provider>
 
         <activity
-            android:name=".LoginActivity"
+            android:name=".activities.LoginActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:label="@string/app_name">
             <intent-filter>
@@ -55,27 +56,46 @@
             </intent-filter>
             <intent-filter>
                 <action android:name="OPEN_ACTIVITY_1" />
+
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
         <activity
-            android:name=".PetitionListActivity"
+            android:name=".activities.PetitionListActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:label="@string/title_unresolved_petition_list" />
         <activity
-            android:name=".PetitionDetailsActivity"
+            android:name=".activities.PetitionDetailsActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:label="@string/title_activity_request_details" />
         <activity
-            android:name=".FileChooserActivity"
+            android:name=".activities.FileChooserActivity"
             android:label="@string/title_activity_cert_chooser" />
         <activity
-            android:name=".ClaveWebViewActivity"
+            android:name=".activities.ClaveWebViewActivity"
             android:label="@string/title_clave_login"
             android:screenOrientation="portrait" />
         <activity
             android:name="es.gob.afirma.android.fcm.StartFromNotificationActivity"
             android:label="@string/title_activity_notifications" />
+        <activity
+            android:name=".activities.UserConfigurationActivity"
+            android:label="@string/title_activity_user_configuration" />
+        <activity
+            android:name=".activities.CreateNewRoleActivity"
+            android:label="@string/title_activity_create_role" />
+        <activity
+            android:name=".activities.LoginWithRoleActivity"
+            android:label="@string/app_name" />
+        <activity
+            android:name=".activities.AuthRoleInfoActivity"
+            android:label="@string/title_activity_auth_role_info" />
+        <activity
+            android:name=".activities.CreateNewAuthorizedActivity"
+            android:label="@string/title_activity_create_authorizer_role" />
+        <activity
+            android:name=".activities.CreateNewVerifierActivity"
+            android:label="@string/title_activity_create_verifier_role" />
     </application>
 
 </manifest>

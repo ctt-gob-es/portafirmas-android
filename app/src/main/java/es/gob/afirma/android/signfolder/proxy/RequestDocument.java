@@ -21,7 +21,7 @@ public class RequestDocument {
 	 * @param size Tama&ntilde;o.
 	 * @param mimeType MimeType.
 	 */
-	RequestDocument(final String id, final String name, final int size, final String mimeType) {
+	public RequestDocument(final String id, final String name, final int size, final String mimeType) {
 		this.id = id;
 		this.name = name;
 		this.size = size;

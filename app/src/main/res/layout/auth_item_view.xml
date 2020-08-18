@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/white">
+
+    <ImageView
+        android:id="@+id/statusIconId"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="5dp"
+        android:layout_marginRight="5dp"
+        android:contentDescription="@string/accessibility_icon_auth_status"
+        android:src="@drawable/icon_check_16" />
+
+    <ImageView
+        android:id="@+id/inputOutputIconId"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="5dp"
+        android:layout_marginRight="5dp"
+        android:layout_toEndOf="@+id/statusIconId"
+        android:layout_toRightOf="@+id/statusIconId"
+        android:contentDescription="@string/accessibility_icon_auth_status"
+        android:src="@drawable/icon_authorized_out_16" />
+
+    <TextView
+        android:id="@+id/authNameId"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="10dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="5dp"
+        android:layout_toEndOf="@+id/inputOutputIconId"
+        android:layout_toRightOf="@+id/inputOutputIconId"
+        android:singleLine="true"
+        android:text="@string/user_name"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:textIsSelectable="false" />
+
+    <TextView
+        android:id="@+id/authEndDateId"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/authNameId"
+        android:layout_alignStart="@id/authNameId"
+        android:layout_alignLeft="@id/authNameId"
+        android:layout_alignEnd="@id/authNameId"
+        android:layout_alignRight="@id/authNameId"
+        android:singleLine="true"
+        android:text="@string/date"
+        android:textIsSelectable="false" />
+
+    <View
+        android:id="@+id/divider4"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_below="@+id/authEndDateId"
+        android:background="?android:attr/listDivider" />
+
+</RelativeLayout>

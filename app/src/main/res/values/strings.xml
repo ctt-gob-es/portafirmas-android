@@ -15,11 +15,13 @@
     <string name="see_details">Ver detalle</string>
     <string name="sign_vb">Firmar/V\u00BAB\u00BA</string>
     <string name="sign">Firmar</string>
+    <string name="verify">Validar</string>
     <string name="vb">Visto Bueno</string>
     <string name="reject">Rechazar</string>
     <string name="filter">Filtrar</string>
     <string name="nofilter">Eliminar filtro</string>
     <string name="update">Actualizar</string>
+    <string name="back">Volver</string>
     <string name="loading">Cargando\u002E\u002E\u002E</string>
     <string name="title_activity_petition_results_list">Lista de peticiones</string>
     <string name="title_unresolved_petition_list">Solicitudes pendientes</string>
@@ -27,9 +29,10 @@
     <string name="title_rejected_petition_list">Solicitudes rechazadas</string>
     <string name="title_activity_login">Acceso al Portafirmas</string>
     <string name="help">Ayuda</string>
+    <string name="settings">Configuraci\u00F3n</string>
     <string name="logout">Cerrar Sesi\u00F3n</string>
     <string name="select_all">Seleccionar todas</string>
-    <string name="unselect_all">Quitar selección</string>
+    <string name="unselect_all">Quitar selecci\u00F3n</string>
     <string name="see_unresolves">Ver solicitudes pendientes</string>
     <string name="see_rejects">Ver solicitudes rechazadas</string>
     <string name="see_signeds">Ver solicitudes firmadas</string>
@@ -60,8 +63,6 @@
     <string name="signfolder_logo">Logo del portafirmas</string>
     <string name="label_presentation_text">Portafirmas es el aplicativo m\u00F3vil de las administraciones p\u00FAblicas para acceder a sus servicios de portafirmas. Para poder acceder al servicio deber\u00E1n haberle dado de alta en el sistema y disponer del certificado digital necesario para su autenticaci\u00F3n importado en su dispositivo.</string>
     <string name="label_presentation_text_mini">Portafirmas es el aplicativo m\u00F3vil de las administraciones p\u00FAblicas para acceder a sus servicios de portafirmas. Para acceder al servicio deber\u00E1n haberle dado de alta en el sistema y disponer del certificado digital necesario para su autenticaci\u00F3n importado en su dispositivo.</string>
-    <string name="button_import_cert">Importar certificado</string>
-    <string name="button_login">Acceder</string>
     <string name="signline_header">L\u00EDnea %1$d de</string>
     <string name="sign_dialog_sign">Se va a firmar 1 petici\u00F3n.</string>
     <string name="sign_dialog_signs">Se van a firmar %d peticiones.</string>
@@ -78,11 +79,44 @@
     <string name="sign_report">report_%s.pdf</string>
     <string name="exp_date_requests">Solicitudes pr\u00F3ximas a caducar</string>
     <string name="reminding_requests">Solicitudes pendientes</string>
+    <string name="verifiersBtn">Validadores</string>
+    <string name="authorizedBtn">Autorizaciones</string>
+    <string name="addRoleBtn">Añadir nuevo</string>
+    <string name="searchUserInputField">Buscar usuario por DNI, nombre o sede…</string>
+    <string name="ContentDescriptionSearchBtn">Bot\u00F3n de b\u00FAsqueda de usuario.</string>
+    <string name="choose_role_message">Se ha detectado m\u00E1s de un rol. Por favor, seleccione el rol con el que desea acceder:</string>
+    <string name="identifier">Identificador</string>
+    <string name="endDate">Revocaci\u00F3n</string>
+    <string name="status_key">Estado</string>
+    <string name="input_output_key">Enviada / Recibida </string>
+    <string name="empty_field_value">-</string>
+    <string name="type_key">Tipo</string>
+    <string name="name_key">Nombre</string>
+    <string name="start_date_key">Fecha inicio</string>
+    <string name="end_date_key">Fecha fin</string>
+    <string name="empty_user_list_msg">Sin resultados. No se ha encontrado ning\u00FAn usuario que coincida con el filtro introducido.</string>
+    <string name="error_user_list_msg">Se ha producido un error y no ha sido posible realizar la b\u00FAsqueda de usuarios.</string>
+    <string name="dialog_msg_info_date_auth">La fecha de inicio debe ser posterior a la de fin.</string>
+    <string name="header_title_list_apps">Aplicaciones</string>
+    <string name="user_name">Nombre de usuario</string>
+    <string name="user_data_header">Datos de usuario</string>
+    <string name="additional_params">Par\u00E1metros adicionales</string>
+    <string name="auth_type_in">Recibida</string>
+    <string name="auth_type_out">Enviada</string>
+    <string name="verified">Validada</string>
+    <string name="pending">Pendiente de validación</string>
+    <string name="rejected">Rechazada</string>
+
+    <string name="button_import_cert">Importar certificado</string>
+    <string name="button_login">Acceder</string>
+    <string name="button_choose_role_authorized">Acceder como autorizado</string>
+    <string name="button_choose_role_verifier">Acceder como validador</string>
+    <string name="button_choose_role_signer">Acceder como firmante</string>
+    <string name="button_back">Volver</string>
 
     <string name="approves_header_list">%1$s visto bueno</string>
     <string name="signatures_header_list">%1$s firma</string>
     <string name="signature_lines_header_list">Firma en %1$s</string>
-
 
     <string name="no_request_avaible">No hay peticiones en este listado</string>
     <string name="pagination_separator">%1$d/%2$d</string>
@@ -90,6 +124,7 @@
     <string name="img_cd_next_page">Next page</string>
     <string name="img_cd_first_page">First page</string>
     <string name="img_cd_last_page">End page</string>
+    <string name="no_user_available">No hay usuarios configurados</string>
 
     <string name="title_configure_filter">Filtrado de peticiones</string>
     <string name="label_order">Ordenaci\u00F3n</string>
@@ -100,6 +135,8 @@
     <string name="label_filters_by_app">Aplicaci\u00F3n</string>
     <string name="label_filters_by_date_start">Fecha inicio</string>
     <string name="label_filters_by_date_end">Fecha fin</string>
+    <string name="label_filters_show_verified_rq">Mostrar peticiones no validadas</string>
+    <string name="label_filters_enable_application">Habilitar validador en aplicaciones</string>
 
     <string name="filter_order_attribute_date">Fecha</string>
     <string name="filter_order_attribute_subject">Asunto</string>
@@ -122,12 +159,15 @@
     <string name="error_msg_procesing_requests">Ocurri\u00F3 un error al procesar alguna de las peticiones seleccionadas.</string>
     <string name="error_msg_procesing_request">Ocurri\u00F3 un error al procesar la petici\u00F3n.</string>
     <string name="error_msg_unsupported_device">Dispositivo no soportado.</string>
+    <string name="error_msg_get_users_by_rol">Error: No ha sido posible recuperar la lista de usuarios.</string>
+    <string name="error_msg_verifier_list_empty">No existen registros de validadores.</string>
 
     <string name="error_loading_keystore">Error al cargar el almacen de claves</string>
     <string name="error_loading_certificate_alias">Error extrayendo los alias de los certificados del almacen</string>
     <string name="error_loading_certificate">No se ha podido cargar el certificado seleccionado para firmar</string>
     <string name="error_no_certs">No se han encontrado certificados instalados en su dispositivo</string>
     <string name="error_title_keystore_empty">Almac\u00E9n vac\u00EDo</string>
+    <string name="error_input_params_creation_role">Los valores introducidos no son correctos</string>
 
     <string name="toast_msg_rejects_ok">Las peticiones se han rechazado correctamente</string>
     <string name="toast_msg_reject_ok">La petici\u00F3n se ha rechazado correctamente</string>
@@ -141,6 +181,12 @@
     <string name="toast_msg_gcm_connection_ok">Se han habilitado las notificaciones en el dispositivo.</string>
     <string name="toast_msg_gcm_connection_ko">Error al conectar con el servidor de notificaciones.</string>
     <string name="toast_msg_fire_comunication_ko">No se ha podido establecer la comunicaci\u00F3n con Cl@ve Firma.</string>
+    <string name="toast_msg_creation_auth_role_ok">Autorizaci\u00F3n creada correctamente</string>
+    <string name="toast_msg_creation_auth_role_ko">Error creando Autorizaci\u00F3n</string>
+    <string name="toast_msg_creation_verifier_role_ok">validador creado correctamente</string>
+    <string name="toast_msg_creation_verifier_role_ko">Error creando validador</string>
+    <string name="toast_error_access_denegated">No tiene permiso para acceder al recurso</string>
+    <string name="toast_msg_list_updated">Lista actualizada</string>
 
 
     <string name="title_activity_cert_chooser">Importar certificado</string>
@@ -157,6 +203,7 @@
     <string name="cancel">Cancelar</string>
     <string name="allow">Permitir</string>
     <string name="select">Seleccionar</string>
+    <string name="finish">Finalizar</string>
 
     <string name="dialog_msg_accessing_keystore">Accediendo al almac\u00E9n\u002E\u002E\u002E</string>
     <string name="dialog_msg_connecting">Estableciendo conexi\u00F3n\u2026</string>
@@ -169,6 +216,7 @@
     <string name="dialog_msg_rejecting_1">Rechazando petici\u00F3n\u002E\u002E\u002E</string>
     <string name="dialog_msg_loading_petitions">Cargando peticiones\u002E\u002E\u002E</string>
     <string name="dialog_msg_processing_requests">Procesando peticiones\u002E\u002E\u002E</string>
+    <string name="dialog_msg_verifying_1">Validando petici\u00F3n\u002E\u002E\u002E</string>
 
     <string name="dialog_msg_loading_configuration">Cargando su configuraci\u00F3n\u002E\u002E\u002E</string>
     <string name="dialog_msg_no_selected_requests">No se han seleccionado peticiones de firma.</string>
@@ -189,8 +237,11 @@
     <string name="dialog_msg_sign_petition_2">%1$d peticiones de firma.</string>
     <string name="dialog_msg_approve_petition_1">1 petici\u00F3n de visto bueno.</string>
     <string name="dialog_msg_approve_petition_2">%1$d peticiones de visto bueno.</string>
+    <string name="dialog_msg_verify_petition_1">1 petici\u00F3n de validaci\u00F3n.</string>
+    <string name="dialog_msg_verify_petition_2">%1$d peticiones de validaci\u00F3n.</string>
     <string name="dialog_msg_confirm_sign">Se va a proceder a firmar esta petici\u00F3n. \u00BFDesea continuar?</string>
     <string name="dialog_msg_confirm_approve">Se va a proceder a aprobar esta petici\u00F3n. \u00BFDesea continuar? </string>
+    <string name="dialog_msg_confirm_verify">Se va a proceder a validar esta petici\u00F3n. \u00BFDesea continuar? </string>
 
     <string name="dialog_server_new_button">Nuevo servidor</string>
     <string name="dialog_server_delete_button">Eliminar</string>
@@ -207,12 +258,18 @@
     <string name="security_code">C\u00F3digo de seguridad</string>
     <string name="security_code_hint">C\u00F3digo de seguridad. </string>
 
-    <string name="accesibility_icon_filetype">Icono del tipo de archivo</string>
-    <string name="accesibility_icon_sign_ko">Error en la firma</string>
-    <string name="accesibility_icon_sign_ok">Firma correcta</string>
-    <string name="accesibility_icon_priority">Prioridad de la petici\u00F3n</string>
-    <string name="accesibility_icon_type">Tipo de petici\u00F3n</string>
-    <string name="accesibility_icon_signline">Icono de usuario</string>
+    <string name="accessibility_icon_filetype">Icono del tipo de archivo</string>
+    <string name="accessibility_icon_sign_ko">Error en la firma</string>
+    <string name="accessibility_icon_sign_ok">Firma correcta</string>
+    <string name="accessibility_icon_priority">Prioridad de la petici\u00F3n</string>
+    <string name="accessibility_icon_type">Tipo de petici\u00F3n</string>
+    <string name="accessibility_icon_signline">Icono de usuario</string>
+    <string name="accessibility_icon_add_role">Bot\u00F3n para la craci\u00F3n de nuevos roles</string>
+    <string name="accessibility_icon_auth_status">Estado de la autorizaci\u00F3n</string>
+    <string name="accessibility_icon_auth_input_output">Define si la autorizaci\u00F3n es de entrada o de salida.</string>
+    <string name="accessibility_icon_init_date_btn">Bot\u00F3n para seleccionar fecha de inicio de la autorizaci\u00F3n</string>
+    <string name="accessibility_icon_init_time_btn">Bot\u00F3n para seleccionar hora de inicio de la autorizaci\u00F3n</string>
+    <string name="accessibility_icon_info_date_btn">Bot\u00F3n que muestra informaci\u00F3n adicional sobre los par\u00E1metros de fechas de la autorizaci\u00F3n.</string>
 
     <string name="bytes">bytes</string>
     <string name="kilobytes">KB</string>
@@ -244,6 +301,21 @@
     <string name="no_pdf_viewer_msg">No hay aplicaciones instaladas para visualizar pdf.</string>
     <string name="no_adobe_reader_msg">No tiene instalado adobe reader, por lo que la visualizaci\u00F3n del pdf puede no ser correcta.</string>
     <string name="title_activity_notifications">NotificationsActivity</string>
+    <string name="title_activity_user_configuration">Configuraci\u00F3n</string>
+    <string name="title_activity_create_role">Crear nueva autorizaci\u00F3n/validador</string>
+    <string name="title_activity_choose_role">activity_choose_role</string>
+    <string name="title_activity_auth_role_info">Informaci\u00F3n autorizaci\u00F3n</string>
+    <string name="title_activity_create_verifier_role">Alta nuevo validador</string>
+    <string name="title_activity_create_authorizer_role">Crear nueva autorizaci\u00F3n</string>
+
+    <!-- Strings used for fragments for navigation -->
+    <string name="first_fragment_label">First Fragment</string>
+    <string name="second_fragment_label">Second Fragment</string>
+    <string name="next">Next</string>
+    <string name="previous">Previous</string>
+
+    <string name="hello_first_fragment">Hello first fragment</string>
+    <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
 
     <!-- Dialogo con informacion de un certificado - Copyright (C) 2008 The Android Open Source Project -->
     <string name="trust_in_cert">"¿Confiar en este certificado?"</string>
@@ -259,5 +331,18 @@
     <string name="fingerprints">"Huellas digitales:"</string>
     <string name="sha256_fingerprint">"Huella digital SHA-256:"</string>
     <string name="sha1_fingerprint">"Huella digital SHA-1:"</string>
+    <string name="clean_filter_text">Limpiar</string>
+    <string name="subject_hint_filter">Filtrar por asunto de petici\u00F3n</string>
+
+    <string name="delegate_type">Delegado</string>
+    <string name="substitute_type">Sustituto</string>
+    <string name="observations_hint_text">Observaciones a añadir a la autorizaci\u00F3n…</string>
+    <string name="observations">Observaciones</string>
+    <string name="date_hint">dd/mm/aaaa</string>
+    <string name="time_hint">hh:mm</string>
+    <string name="initial_date_text">Fecha inicio</string>
+    <string name="end_date_text">Fecha fin</string>
+    <string name="authorization_type">Tipo de autorizaci\u00F3n</string>
+    <string name="accessibility_check_uncheck_apps">Marcar/desmarcar todas las aplicaciones</string>
 
 </resources>

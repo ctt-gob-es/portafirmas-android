@@ -11,15 +11,18 @@ import java.security.cert.X509Certificate;
 
 import es.gob.afirma.android.crypto.MobileKeyStoreManager.KeySelectedEvent;
 import es.gob.afirma.android.crypto.MobileKeyStoreManager.PrivateKeySelectionListener;
+import es.gob.afirma.android.signfolder.listeners.OperationRequestListener;
 import es.gob.afirma.android.signfolder.proxy.CommManager;
 import es.gob.afirma.android.signfolder.proxy.RequestResult;
 import es.gob.afirma.android.signfolder.proxy.SignRequest;
+import es.gob.afirma.android.signfolder.tasks.LoadSelectedPrivateKeyTask;
+import es.gob.afirma.android.signfolder.tasks.SignRequestTask;
 import es.gob.afirma.android.util.AOException;
 import es.gob.afirma.android.util.PfLog;
 
 /** Clase para la firma de peticiones. El resultado del proceso, se gestiona, a nivel individual para
  * cada petici&oacute;n desde un listener. */
-final class RequestSigner implements PrivateKeySelectionListener {
+public final class RequestSigner implements PrivateKeySelectionListener {
 
 	private final String certAlias;
 	private SignRequest[] requests;

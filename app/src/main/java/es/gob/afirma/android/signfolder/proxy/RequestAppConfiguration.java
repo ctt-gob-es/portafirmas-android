@@ -8,7 +8,7 @@ public final class RequestAppConfiguration {
 	private ArrayList<String> appIdsList;
 	private ArrayList<String> appNamesList;
 
-	RequestAppConfiguration() {
+	public RequestAppConfiguration() {
 		this.appIdsList = new ArrayList<>();
 		this.appNamesList = new ArrayList<>();
 	}
@@ -19,7 +19,7 @@ public final class RequestAppConfiguration {
 		return this.appIdsList;
 	}
 
-	void setAppIdsList(final ArrayList<String> appIdsList) {
+	public void setAppIdsList(final ArrayList<String> appIdsList) {
 		this.appIdsList = appIdsList;
 	}
 
@@ -29,7 +29,7 @@ public final class RequestAppConfiguration {
 		return this.appNamesList;
 	}
 
-	void setAppNamesList(final ArrayList<String> appNamesList) {
+	public void setAppNamesList(final ArrayList<String> appNamesList) {
 		this.appNamesList = appNamesList;
 	}
 }

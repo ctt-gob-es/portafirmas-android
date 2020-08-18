@@ -13,7 +13,7 @@
         android:paddingLeft="12dp"
         android:layout_centerVertical="true"
         android:src="@drawable/icon_signline"
-        android:contentDescription="@string/accesibility_icon_filetype"
+        android:contentDescription="@string/accessibility_icon_filetype"
         android:layout_marginTop="6dp" />
     
     <TextView

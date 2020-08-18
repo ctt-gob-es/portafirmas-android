@@ -17,7 +17,7 @@ import java.net.URL;
 import java.util.Collections;
 import java.util.List;
 
-final class LoginOptionsDialogBuilder {
+public final class LoginOptionsDialogBuilder {
 
 	private final LoginOptionsListener listener;
 
@@ -41,7 +41,7 @@ final class LoginOptionsDialogBuilder {
 		this.selectedServer = s;
 	}
 
-	LoginOptionsDialogBuilder(final Activity activity, final LoginOptionsListener listener) {
+	public LoginOptionsDialogBuilder(final Activity activity, final LoginOptionsListener listener) {
 
 		this.listener = listener;
 		this.builder = new AlertDialog.Builder(activity);

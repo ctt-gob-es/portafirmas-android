@@ -17,7 +17,7 @@ public final class RequestDetail extends SignRequest {
 
 	private String rejectReason = null;
 
-	RequestDetail(final String id) {
+	public RequestDetail(final String id) {
 		super(id);
 	}
 
@@ -90,7 +90,7 @@ public final class RequestDetail extends SignRequest {
 	}
 
 	/** Establece la referencia de la petici&oacute;n.
-	 * @param ref Referencia de la aplicaci&oacute;n. */
+	 * @param rejectReason Referencia de la aplicaci&oacute;n. */
 	public void setRejectReason(final String rejectReason) {
 		this.rejectReason = rejectReason;
 	}

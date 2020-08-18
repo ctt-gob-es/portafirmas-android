@@ -21,7 +21,7 @@ import es.gob.afirma.android.util.PfLog;
 
 /** Firmador trif&aacute;sico.
  * @author Tom&aacute;s Garc&iacute;a-Mer&aacute;s */
-final class TriSigner {
+public final class TriSigner {
 
 	/** Firma de forma trif&aacute;sica una petici&oacute;n de firma.
 	 * @param request Petici&oacute;n de firma.
@@ -32,7 +32,7 @@ final class TriSigner {
 	 * @throws CertificateEncodingException Cuando hay un error en la codificaci&oacute;n del certificado.
 	 * @throws IOException Cuando hay un error de lectura/escritura de datos.
 	 * @throws SAXException Cuando el XML est&aacute; mal formado. */
-	static RequestResult sign(final SignRequest request, final PrivateKey pk,
+	public static RequestResult sign(final SignRequest request, final PrivateKey pk,
 			final X509Certificate[] certificateChain, final CommManager commMgr)
 			throws CertificateException, IOException, SAXException {
 

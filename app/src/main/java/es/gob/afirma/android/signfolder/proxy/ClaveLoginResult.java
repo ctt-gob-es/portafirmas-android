@@ -51,7 +51,7 @@ public class ClaveLoginResult {
 	 * Establece el identificador de transacci&oacute;n.
 	 * @param transactionId Identificador de transacci&oacute;n.
 	 */
-	void setTransactionId(String transactionId) {
+	public void setTransactionId(String transactionId) {
 		this.transactionId = transactionId;
 	}
 
@@ -67,7 +67,7 @@ public class ClaveLoginResult {
 	 * Establece la URL de redirecci&oacute;n.
 	 * @param redirectionUrl URL de redireccion para la autenticaci&oacute;n.
 	 */
-	void setRedirectionUrl(String redirectionUrl) {
+	public void setRedirectionUrl(String redirectionUrl) {
 		this.redirectionUrl = redirectionUrl;
 	}
 

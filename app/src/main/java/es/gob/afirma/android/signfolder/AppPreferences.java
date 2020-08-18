@@ -103,7 +103,7 @@ public final class AppPreferences {
 	 * @param  cloudCertEnabled {@code true} para habilitar el uso de
 	 * certificados en la mube, {@code false} para usar certificados locales.
 	 */
-	void setCloudCertEnabled(boolean cloudCertEnabled) {
+	public void setCloudCertEnabled(boolean cloudCertEnabled) {
 		setPreferenceBool(CLOUD_CERT_ENABLED, cloudCertEnabled);
 	}
 
@@ -111,7 +111,7 @@ public final class AppPreferences {
 	 * Recupera si se ha habilitado la firma con Cl@ve Firma.
 	 * @return Certificado del usuario.
 	 */
-	boolean isCloudCertEnabled() {
+	public boolean isCloudCertEnabled() {
 		return getPreferenceBool(CLOUD_CERT_ENABLED, false);
 	}
 
@@ -119,7 +119,7 @@ public final class AppPreferences {
 	 * Define el ultimo certificado con el que se accedio.
 	 * @param  certEncoded Certificado del usuario.
 	 */
-	void setLastCertificate(String certEncoded) {
+	public void setLastCertificate(String certEncoded) {
 		setPreference(LAST_CERT, certEncoded);
 	}
 
@@ -157,7 +157,7 @@ public final class AppPreferences {
 
 	/** Recupera la URL del documento de ayuda de la aplicaci&oacute;n.
 	 * @return URL del documento. */
-	String getHelpUrl() {
+	public String getHelpUrl() {
 		return config.getProperty(KEY_HELP_URL);
 	}
 
@@ -305,7 +305,7 @@ public final class AppPreferences {
 	 * Establece los servidores proxy por defecto de la aplicaci&oacute;n. El del Portafirmas
 	 * General de la AGE y el de RedSara.
 	 */
-	void setDefaultServers() {
+	public void setDefaultServers() {
 		saveServer(DEFAULT_PROXY_GOB_ALIAS, DEFAULT_PROXY_GOB_URL);
 		saveServer(DEFAULT_PROXY_REDSARA_ALIAS, DEFAULT_PROXY_REDSARA_URL);
 

@@ -52,7 +52,7 @@ public final class TriphaseSignDocumentRequest {
 	 * @param messageDigestAlgorithm Algoritmo de huella digital utilizado en la operaci&oacute;n de firma.
 	 * @param params Propiedades de configuraci&oacute;n utilizadas en la prefirma codificadas en base 64.
 	 * @param partialResult Resultado parcial de la firma trifasica. */
-	TriphaseSignDocumentRequest(final String docId,
+	public TriphaseSignDocumentRequest(final String docId,
 								final String cryptoOperation,
 			                    final String signatureFormat,
 			                    final String messageDigestAlgorithm,

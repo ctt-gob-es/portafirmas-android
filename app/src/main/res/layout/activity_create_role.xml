@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:id="@+id/searchLinearLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="8dp"
+        android:background="@color/white">
+
+        <EditText
+            android:id="@+id/searchUserField"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="0.9"
+            android:autofillHints=""
+            android:paddingHorizontal="5sp"
+            android:hint="@string/searchUserInputField"
+            android:textSize="15sp"
+            android:inputType="textNoSuggestions"/>
+
+        <ImageButton
+            android:id="@+id/searchImgBtn"
+            style="@style/PFSecondaryButtonImg"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="2dp"
+            android:layout_weight="0.1"
+            android:contentDescription="@string/ContentDescriptionSearchBtn"
+            android:minWidth="15dp"
+            android:minHeight="25dp"
+            android:onClick="searchUser"
+            android:src="@android:drawable/ic_menu_search"
+            android:tint="@color/red" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/resultListId"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+
+        android:orientation="vertical"/>
+
+</LinearLayout>

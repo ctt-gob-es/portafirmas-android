@@ -1,5 +1,9 @@
 package es.gob.afirma.android.signfolder.proxy;
 
+import java.util.List;
+
+import es.gob.afirma.android.user.configuration.ConfigurationRole;
+
 /**
  * Resultado de una operaci&oacute;n particular sobre una petici&oacute;n.
  */
@@ -63,4 +67,5 @@ public class RequestResult {
 	public void setSsid(String ssid) {
 		this.ssid = ssid;
 	}
+
 }

@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/createAuthMainLayoutId"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_margin="2dp"
+    android:background="@color/white"
+    android:orientation="vertical">
+
+    <!-- Cabecera usuario -->
+    <RelativeLayout
+        android:id="@+id/userHeaderId"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/userHeaderTextId"
+            style="@style/Section_Header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/red"
+            android:filterTouchesWhenObscured="true"
+            android:text="@string/user_data_header"
+            android:textAppearance="?android:attr/textAppearanceMedium" />
+
+    </RelativeLayout>
+
+    <!-- Nombre de usuario -->
+    <RelativeLayout
+        android:id="@+id/userDetailsId"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/userHeaderId"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentLeft="true"
+        android:layout_marginBottom="30dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/nameFieldId"
+            style="@style/SignLine_Item_Mini"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginRight="10dp"
+            android:background="#EFEFEF"
+            android:text="@string/user_name"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:textIsSelectable="false" />
+
+        <TextView
+            android:id="@+id/nameFieldValueId"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/nameFieldId"
+            android:layout_marginStart="25dp"
+            android:layout_marginLeft="25dp"
+            android:layout_marginTop="5dp"
+            android:text="@string/empty_field_value"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:textIsSelectable="true" />
+
+    </RelativeLayout>
+
+    <!-- DNI -->
+    <RelativeLayout
+        android:id="@+id/userDetails2Id"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/userDetailsId"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentLeft="true"
+        android:layout_marginBottom="30dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/identifierFieldId"
+            style="@style/SignLine_Item_Mini"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:background="#EFEFEF"
+            android:text="@string/identifier"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:textIsSelectable="false" />
+
+        <TextView
+            android:id="@+id/identifierFieldValueId"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/identifierFieldId"
+            android:layout_marginStart="25dp"
+            android:layout_marginLeft="25dp"
+            android:layout_marginTop="5dp"
+            android:text="@string/empty_field_value"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:textIsSelectable="true" />
+
+    </RelativeLayout>
+
+    <!-- Cabecera aplicaciones -->
+    <RelativeLayout
+        android:id="@+id/applicationsHeaderId"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/userDetails2Id"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/applicationsHeaderTextId"
+            style="@style/Section_Header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/red"
+            android:filterTouchesWhenObscured="true"
+            android:text="@string/header_title_list_apps"
+            android:textAppearance="?android:attr/textAppearanceMedium" />
+
+    </RelativeLayout>
+
+    <!-- Checkbox habilitar aplicaciones -->
+    <RelativeLayout
+        android:id="@+id/cbEnableApplicationsId"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/applicationsHeaderId"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentLeft="true"
+        android:layout_marginBottom="15dp"
+        android:orientation="horizontal">
+
+        <CheckBox
+            android:id="@+id/cb_enable_applications"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="11dp"
+            android:layout_marginRight="11dp"
+            android:checked="false"
+            android:longClickable="false"
+            android:text="@string/label_filters_enable_application"
+            android:textAppearance="?android:attr/textAppearanceMedium" />
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/mainContentLayoutId"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/cbEnableApplicationsId"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:id="@+id/resultListId"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_above="@+id/buttonsId"
+            android:layout_marginBottom="5dp"
+            android:orientation="vertical">
+
+            <RelativeLayout
+                android:id="@+id/headerLayoutId"
+                style="@style/SignLine_Item_Mini"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:visibility="gone"
+                tools:ignore="UselessParent">
+
+                <android.support.v7.widget.AppCompatImageButton
+                    android:id="@+id/selectAllBtn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentStart="true"
+                    android:layout_alignParentLeft="true"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="@string/accessibility_check_uncheck_apps"
+                    android:onClick="onClickSelectAll"
+                    android:tint="@color/red"
+                    app:srcCompat="@drawable/checkall" />
+
+                <TextView
+                    android:id="@+id/headerListId"
+                    style="@style/Section_Header_slim_2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_toEndOf="@+id/selectAllBtn"
+                    android:layout_toRightOf="@+id/selectAllBtn"
+                    android:paddingLeft="15dp"
+                    android:paddingRight="15dp"
+                    android:text="@string/header_title_list_apps"
+                    android:textColor="@color/black" />
+
+
+            </RelativeLayout>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/buttonsId"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/finishButton"
+                style="@style/ButtonText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/ok" />
+
+        </LinearLayout>
+
+    </RelativeLayout>
+
+</RelativeLayout>

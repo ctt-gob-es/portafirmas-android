@@ -9,6 +9,8 @@ import android.support.v4.app.DialogFragment;
 import android.view.View;
 import android.widget.EditText;
 
+import es.gob.afirma.android.signfolder.listeners.DialogFragmentListener;
+
 /** Di&aacute;logo modal con el que mostrar al usuario un mensaje y un bot&oacute;n para ocultar el
  * di&aacute;logo y, opcionalmente, realizar una acci&oacute;n. */
 public final class CustomAlertDialog extends DialogFragment {
@@ -24,7 +26,7 @@ public final class CustomAlertDialog extends DialogFragment {
 	private static View vista = null;
 	static DialogFragmentListener fragmentListener = null;
 
-	static CustomAlertDialog newInstance(final int dialogId, final String title, final String message,
+    public static CustomAlertDialog newInstance(final int dialogId, final String title, final String message,
 			final String positiveButton, final String negativeButton, final DialogFragmentListener dFragmentListener) {
 
         if (dFragmentListener != null) {
@@ -52,7 +54,7 @@ public final class CustomAlertDialog extends DialogFragment {
         return frag;
     }
 
-    static CustomAlertDialog newInstance(final int dialogId, final String title, final View message,
+    public static CustomAlertDialog newInstance(final int dialogId, final String title, final View message,
     		final String positiveButton, final String negativeButton, final DialogFragmentListener dFragmentListener) {
 
         if (dFragmentListener != null) {

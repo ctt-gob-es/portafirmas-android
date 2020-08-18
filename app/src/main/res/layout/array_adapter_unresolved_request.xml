@@ -10,7 +10,7 @@
         android:layout_centerVertical="true"
         android:layout_marginLeft="2dp"
         android:layout_marginRight="2dp"
-        android:contentDescription="@string/accesibility_icon_priority"
+        android:contentDescription="@string/accessibility_icon_priority"
         android:src="@drawable/icon_priority_2" />
 
     <TextView
@@ -56,7 +56,7 @@
 	    android:layout_marginLeft="2dp"
 	    android:layout_marginRight="0dp"
 	    android:layout_toLeftOf="@id/check"
-	    android:contentDescription="@string/accesibility_icon_type"
+	    android:contentDescription="@string/accessibility_icon_type"
 	    android:src="@drawable/icon_sign" />
 	
 </RelativeLayout>

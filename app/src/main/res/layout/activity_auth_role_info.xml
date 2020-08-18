@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mainAuthInfoLayoutId"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_gravity="start"
+    android:orientation="vertical"
+    android:background="@color/white">
+
+    <TextView
+        android:id="@+id/NameKeyId"
+        style="@style/SignLine_Item_Mini"
+        android:background="#EFEFEF"
+        android:layout_marginStart="10dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginTop="20dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/name_key" />
+
+    <TextView
+        android:id="@+id/nameValueId"
+        style="@style/PFValueLabelText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:text="@string/empty_field_value" />
+
+    <TextView
+        android:id="@+id/statusKeyId"
+        style="@style/SignLine_Item_Mini"
+        android:background="#EFEFEF"
+        android:layout_marginStart="10dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginTop="20dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/status_key" />
+
+    <LinearLayout
+        android:id="@+id/layoutStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginStart="10dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp">
+
+        <TextView
+            android:id="@+id/statusValueId"
+            style="@style/PFValueLabelText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.9"
+            tools:text="@string/empty_field_value" />
+
+        <ImageView
+            android:id="@+id/statusIconId"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.1"
+            android:layout_gravity="center"
+            android:contentDescription="@string/accessibility_icon_auth_status"
+            app:srcCompat="@drawable/icon_check_16" />
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/inputOutputKeyId"
+        style="@style/SignLine_Item_Mini"
+        android:background="#EFEFEF"
+        android:layout_marginStart="10dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginTop="20dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/input_output_key" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginStart="10dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp">
+
+        <TextView
+            android:id="@+id/inputOutputValueId"
+            style="@style/PFValueLabelText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.9"
+            tools:text="@string/empty_field_value" />
+
+        <ImageView
+            android:id="@+id/inputOutputIconId"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.1"
+            android:layout_gravity="center"
+            android:contentDescription="@string/accessibility_icon_auth_status"
+            app:srcCompat="@drawable/icon_authorized_out_16" />
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/typeKeyId"
+        style="@style/SignLine_Item_Mini"
+        android:background="#EFEFEF"
+        android:layout_marginStart="10dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginTop="20dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/type_key" />
+
+    <TextView
+        android:id="@+id/TypeValueId"
+        style="@style/PFValueLabelText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:text="@string/empty_field_value" />
+
+    <TextView
+        android:id="@+id/startDateKeyId"
+        style="@style/SignLine_Item_Mini"
+        android:background="#EFEFEF"
+        android:layout_marginStart="10dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginTop="20dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/start_date_key" />
+
+    <TextView
+        android:id="@+id/startDateValueId"
+        style="@style/PFValueLabelText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:text="@string/empty_field_value" />
+
+    <TextView
+        android:id="@+id/endDateKeyId"
+        style="@style/SignLine_Item_Mini"
+        android:background="#EFEFEF"
+        android:layout_marginStart="10dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginTop="20dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/end_date_key" />
+
+    <TextView
+        android:id="@+id/endDateValueId"
+        style="@style/PFValueLabelText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:text="@string/empty_field_value" />
+
+</LinearLayout>

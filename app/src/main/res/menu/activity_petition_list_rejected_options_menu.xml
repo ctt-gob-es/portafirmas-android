@@ -5,6 +5,10 @@
     <item android:id="@+id/see_unresolveds" android:title="@string/see_unresolves"></item>
     <item android:id="@+id/see_signeds" android:title="@string/see_signeds"></item>
     <item android:id="@+id/notifications" android:title="@string/enable_notifications" android:visible="false"></item>
+    <item
+        android:id="@+id/setting"
+        android:alphabeticShortcut="S"
+        android:title="@string/settings" />
     <item android:id="@+id/help" android:alphabeticShortcut="H" android:title="@string/help"></item>
     <item android:id="@+id/logout" android:alphabeticShortcut="L" android:title="@string/logout"></item>
 </menu>
