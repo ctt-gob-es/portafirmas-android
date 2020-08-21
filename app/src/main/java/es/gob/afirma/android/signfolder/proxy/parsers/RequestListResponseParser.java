@@ -36,6 +36,8 @@ public final class RequestListResponseParser {
      * Constantes que representan nombres de nodos XML.
      */
     private static final String LIST_NODE = "list"; //$NON-NLS-1$
+    private static final String USER_RESPONSE_NODE = "rsgtsr"; //$NON-NLS-1$
+    private static final String ROLE_RESPONSE_NODE = "rsgtrl"; //$NON-NLS-1$
     private static final String ERROR_NODE = "err"; //$NON-NLS-1$
     private static final String NUM_REQUESTS_ATTRIBUTE = "n"; //$NON-NLS-1$
     private static final String CD_ATTRIBUTE = "cd"; //$NON-NLS-1$
@@ -112,14 +114,14 @@ public final class RequestListResponseParser {
 
         final Element docElement = doc.getDocumentElement();
 
-        if (ERROR_NODE.equalsIgnoreCase(docElement.getNodeName())) {
-            final String errorCode = docElement.getAttribute(CD_ATTRIBUTE);
-            throw new ServerControlledException(errorCode, XmlUtils.getTextContent(docElement));
+        if (!ROLE_RESPONSE_NODE.equalsIgnoreCase(docElement.getNodeName())) {
+            throw new IllegalArgumentException("El elemento raiz del XML debe ser '" + ROLE_RESPONSE_NODE + //$NON-NLS-1$
+                    "' y aparece: " + doc.getDocumentElement().getNodeName()); //$NON-NLS-1$
         }
 
-        if (!LIST_NODE.equalsIgnoreCase(docElement.getNodeName())) {
-            throw new IllegalArgumentException("El elemento raiz del XML debe ser '" + LIST_NODE + //$NON-NLS-1$
-                    "' y aparece: " + doc.getDocumentElement().getNodeName()); //$NON-NLS-1$
+        if (docElement.getElementsByTagName(ERROR_NODE).item(0) != null) {
+            final String errorCode = docElement.getElementsByTagName(ERROR_NODE).item(0).getTextContent();
+            throw new ServerControlledException(errorCode, XmlUtils.getTextContent(docElement));
         }
 
         final String numRequestAttrValue = docElement.getAttribute(NUM_REQUESTS_ATTRIBUTE);
@@ -158,14 +160,14 @@ public final class RequestListResponseParser {
 
         final Element docElement = doc.getDocumentElement();
 
-        if (ERROR_NODE.equalsIgnoreCase(docElement.getNodeName())) {
-            final String errorCode = docElement.getAttribute(CD_ATTRIBUTE);
-            throw new ServerControlledException(errorCode, XmlUtils.getTextContent(docElement));
+        if (!USER_RESPONSE_NODE.equalsIgnoreCase(docElement.getNodeName())) {
+            throw new IllegalArgumentException("El elemento raiz del XML debe ser '" + USER_RESPONSE_NODE + //$NON-NLS-1$
+                    "' y aparece: " + doc.getDocumentElement().getNodeName()); //$NON-NLS-1$
         }
 
-        if (!LIST_NODE.equalsIgnoreCase(docElement.getNodeName())) {
-            throw new IllegalArgumentException("El elemento raiz del XML debe ser '" + LIST_NODE + //$NON-NLS-1$
-                    "' y aparece: " + doc.getDocumentElement().getNodeName()); //$NON-NLS-1$
+        if (docElement.getElementsByTagName(ERROR_NODE).item(0) != null) {
+            final String errorCode = docElement.getElementsByTagName(ERROR_NODE).item(0).getTextContent();
+            throw new ServerControlledException(errorCode, XmlUtils.getTextContent(docElement));
         }
 
         final String numRequestAttrValue = docElement.getAttribute(NUM_REQUESTS_ATTRIBUTE);
@@ -363,8 +365,8 @@ public final class RequestListResponseParser {
         /**
          * Constantes que representan los nombres de las etiquetas XML.
          */
-        private static final String REQUEST_NODE = "rsgtrl"; //$NON-NLS-1$
-        private static final String ROL_NODE = "rol"; //$NON-NLS-1$
+        private static final String REQUEST_NODE = "roles"; //$NON-NLS-1$
+        private static final String ROL_NODE = "role"; //$NON-NLS-1$
         private static final String ID_REQUEST_ELEMENT = "idReq";
         private static final String NAME_ELEMENT = "name"; //$NON-NLS-1$
         private static final String SURNAME_ELEMENT = "surname"; //$NON-NLS-1$
@@ -514,18 +516,18 @@ public final class RequestListResponseParser {
             for (int i = 0; i < elementsNode.getLength(); i++) {
 
                 // Recuperamos el elemento 'rol'.
-                Node rolNode = elementsNode.item(i);
-                if (rolNode == null || !rolNode.getNodeName().equalsIgnoreCase(ROL_NODE)) {
+                Node roleNode = elementsNode.item(i);
+                if (roleNode == null || !roleNode.getNodeName().equalsIgnoreCase(ROL_NODE)) {
                     throw new IllegalArgumentException("No se ha encontrado el elemento '" //$NON-NLS-1$
                             + ROL_NODE + "' en la respuesta proxy."); //$NON-NLS-1$
                 }
-                if (!rolNode.hasChildNodes()) {
+                if (!roleNode.hasChildNodes()) {
                     throw new IllegalArgumentException("No se ha encontrado ningún elemento " + //$NON-NLS-1$
                             "hijo del nodo '" + ROL_NODE + "' en la respuesta proxy"); //$NON-NLS-1$ //$NON-NLS-2$
                 }
 
-                // Recorremos los elementos hijos del nodo 'rol'.
-                NodeList rolChildren = rolNode.getChildNodes();
+                // Recorremos los elementos hijos del nodo 'role'.
+                NodeList rolChildren = roleNode.getChildNodes();
                 for (int u = 0; u < rolChildren.getLength(); u++) {
                     Node node = rolChildren.item(u);
                     // Puesto que cabe la posibilidad de que los elementos vengan desordenados,

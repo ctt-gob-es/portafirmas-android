@@ -11,12 +11,19 @@ public class CreationRoleResponse {
     private boolean success;
 
     /**
-     * Constructor con 1 parámetro.
+     * Atributo que representa el mensaje de error de la operación.
+     */
+    private String errorMsg;
+
+    /**
+     * Constructor con 2 parámetro.
      *
      * @param operationResult Resultado de la operación.
+     * @param errorMsgParam Mensaje de error de la operación.
      */
-    public CreationRoleResponse(boolean operationResult) {
+    public CreationRoleResponse(boolean operationResult, String errorMsgParam) {
         this.success = operationResult;
+        this.errorMsg = errorMsgParam;
     }
 
     /**
@@ -35,5 +42,23 @@ public class CreationRoleResponse {
      */
     public void setSuccess(boolean success) {
         this.success = success;
+    }
+
+    /**
+     * Método get del atributo <i>errorMsg</i>.
+     *
+     * @return el valor del atributo.
+     */
+    public String getErrorMsg() {
+        return errorMsg;
+    }
+
+    /**
+     * Método set del atributo <i>errorMsg</i>.
+     *
+     * @param errorMsg nuevo valor del atributo.
+     */
+    public void setErrorMsg(String errorMsg) {
+        this.errorMsg = errorMsg;
     }
 }

@@ -4,19 +4,16 @@ import android.os.AsyncTask;
 
 import java.io.IOException;
 import java.security.KeyStore;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import es.gob.afirma.android.crypto.AOPkcs1Signer;
-import es.gob.afirma.android.signfolder.listeners.LoginListener;
 import es.gob.afirma.android.signfolder.SFConstants;
+import es.gob.afirma.android.signfolder.listeners.LoginListener;
 import es.gob.afirma.android.signfolder.proxy.CommManager;
 import es.gob.afirma.android.signfolder.proxy.OldProxyException;
 import es.gob.afirma.android.signfolder.proxy.RequestResult;
 import es.gob.afirma.android.signfolder.proxy.ValidationLoginResult;
-import es.gob.afirma.android.user.configuration.ConfigurationRole;
 import es.gob.afirma.android.util.Base64;
 import es.gob.afirma.android.util.PfLog;
 

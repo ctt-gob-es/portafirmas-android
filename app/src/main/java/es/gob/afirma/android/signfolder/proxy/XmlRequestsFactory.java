@@ -53,9 +53,9 @@ final class XmlRequestsFactory {
         final StringBuffer sb = new StringBuffer(XML_HEADER);
         sb.append("<rqtvl><cert>"); //$NON-NLS-1$
         sb.append(cert);
-        sb.append("</cert><pkcs1>");
+        sb.append("</cert><pkcs1>"); //$NON-NLS-1$
         sb.append(Base64.encode(pkcs1));
-        sb.append("</pkcs1></rqtvl>");
+        sb.append("</pkcs1></rqtvl>"); //$NON-NLS-1$
 
         return sb.toString();
     }
@@ -409,16 +409,16 @@ final class XmlRequestsFactory {
      */
     public static String createRequestListRoles(final ConfigurationRole role, final int numPage, final int pageSize) {
         final StringBuffer sb = new StringBuffer(XML_HEADER);
-        sb.append("<rqrolels>"); //$NON-NLS-1$
+        sb.append("<rqrolels"); //$NON-NLS-1$
+        sb.append(" pg=\""); //$NON-NLS-1$
+        sb.append(numPage);
+        sb.append("\""); //$NON-NLS-1$
+        sb.append(" sz=\""); //$NON-NLS-1$
+        sb.append(pageSize);
+        sb.append("\">"); //$NON-NLS-1$
         sb.append("<role>"); //$NON-NLS-1$
         sb.append(role.value);
         sb.append("</role>"); //$NON-NLS-1$
-        sb.append("<pg>"); //$NON-NLS-1$
-        sb.append(numPage);
-        sb.append("</pg>"); //$NON-NLS-1$
-        sb.append("<sz>"); //$NON-NLS-1$
-        sb.append(pageSize);
-        sb.append("</sz>"); //$NON-NLS-1$
         sb.append("</rqrolels>"); //$NON-NLS-1$
         return sb.toString();
     }
@@ -433,13 +433,13 @@ final class XmlRequestsFactory {
      */
     public static String createRequestListUsers(final int numPage, final int pageSize, String filter) {
         final StringBuffer sb = new StringBuffer(XML_HEADER);
-        sb.append("<rquserls>"); //$NON-NLS-1$
-        sb.append("<pg>"); //$NON-NLS-1$
+        sb.append("<rquserls"); //$NON-NLS-1$
+        sb.append(" pg=\""); //$NON-NLS-1$
         sb.append(numPage);
-        sb.append("</pg>"); //$NON-NLS-1$
-        sb.append("<sz>"); //$NON-NLS-1$
+        sb.append("\""); //$NON-NLS-1$
+        sb.append(" sz=\""); //$NON-NLS-1$
         sb.append(pageSize);
-        sb.append("</sz>"); //$NON-NLS-1$
+        sb.append("\">"); //$NON-NLS-1$
         sb.append("<filter>"); //$NON-NLS-1$
         sb.append(filter);
         sb.append("</filter>"); //$NON-NLS-1$

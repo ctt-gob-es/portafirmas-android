@@ -542,7 +542,7 @@ public final class CommManager extends CommManagerOldVersion {
      * @param requestIds Conjunto de identificadores de peticiones a validar.
      * @return Resultado de la operación.
      */
-    public RequestResult[] verifyRequests(final String[] requestIds) throws IOException, SAXException {
+    public RequestVerifyResult[] verifyRequests(final String[] requestIds) throws IOException, SAXException {
         String xml = oldProxy ?
                 XmlRequestsFactoryOldVersion.createVerifyRequest(requestIds, this.certb64) :
                 XmlRequestsFactory.createVerifyRequest(requestIds);
@@ -738,7 +738,11 @@ public final class CommManager extends CommManagerOldVersion {
         String xml = XmlRequestsFactory.createRequestCreateRole(user, role, authUser, appIds);
         String url = this.signFolderProxyUrl + createUrlParams(OPERATION_CREATE_ROLE, xml);
         result = CreateRoleResponseParser.parseResponse(getRemoteDocument(url));
-        return result.isSuccess();
+        if (result == null) {
+            return false;
+        } else {
+            return result.isSuccess();
+        }
     }
 
 

@@ -128,7 +128,7 @@ public final class UserConfigurationActivity extends Activity {
             setContentView(R.layout.activity_user_configuration);
 
             // Creamos la estructura de pestañas.
-            @SuppressLint("InflateParams") View authTab = getLayoutInflater().inflate(R.layout.authorized_tab_view, null);
+            @SuppressLint("InflateParams") View authTab = getLayoutInflater().inflate(R.layout.roles_tab_view, null);
             ((ScrollView) this.findViewById(R.id.tabContentViewId)).addView(authTab);
 
             setTabHost((TabHost) findViewById(android.R.id.tabhost));
@@ -293,7 +293,7 @@ public final class UserConfigurationActivity extends Activity {
      */
     @SuppressWarnings("unchecked")
     private void loadRoles(ConfigurationRole role) {
-
+        this.currentRoleSelected = role;
         // Recuperamos la lista de usuarios con dicho rol.
         List<?> userList;
         try {
@@ -301,14 +301,12 @@ public final class UserConfigurationActivity extends Activity {
             // Si el rol es de tipo autorizados...
             if (userList.size() > 0 && ConfigurationRole.AUTHORIZED.equals(role)) {
                 List<AuthorizedUser> authList = (List<AuthorizedUser>) userList;
-                this.currentRoleSelected = ConfigurationRole.AUTHORIZED;
                 // Mostramos la lista de autorizados.
                 showAuthorized(authList);
             }
             // Si el rol es de tipo validadores...
             else if (userList.size() > 0 && ConfigurationRole.VERIFIER.equals(role)) {
                 List<VerifierUser> verifierList = (List<VerifierUser>) userList;
-                this.currentRoleSelected = ConfigurationRole.VERIFIER;
                 // Mostramos la lista de validadores.
                 showVerifiers(verifierList);
             }
@@ -490,7 +488,12 @@ public final class UserConfigurationActivity extends Activity {
      */
     public void setViewErrorGettingUsers() {
         // recuperamos el elemento  a actualizar.
-        View viewById = findViewById(R.id.authData);
+        View viewById;
+        if(this.currentRoleSelected.equals(ConfigurationRole.AUTHORIZED)) {
+            viewById = findViewById(R.id.authData);
+        } else {
+            viewById = findViewById(R.id.verifierData);
+        }
         LinearLayout dataView = (LinearLayout) viewById;
 
         // Eliminados el contenido que pueda tener.
