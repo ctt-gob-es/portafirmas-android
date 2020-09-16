@@ -149,15 +149,11 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
     private final static String PADES_EXTENSION = "pdf";  //$NON-NLS-1$
     private final static String CADES_EXTENSION = "csig";  //$NON-NLS-1$
     private final static String XADES_EXTENSION = "xsig";  //$NON-NLS-1$
-    private String dni = null;
     private String certAlias = null;
     private RequestDetail reqDetails = null;
     private String requestState = null;
     private List<File> tempDocuments = null;
-    /**
-     * Informacion trifasica que se obtiene en la prefirma y reutiliza en la postfirma.
-     */
-    private FireLoadDataResult firePreSignResult = null;
+
     /**
      * Attributo que representa el rol seleccionado durante la autenticación del usuario.
      */
@@ -283,7 +279,6 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
                 getIntent().getStringExtra(EXTRA_RESOURCE_REQUEST_ID) != null &&
                 (getIntent().getStringExtra(EXTRA_RESOURCE_DNI) != null ||
                         getIntent().getStringExtra(EXTRA_RESOURCE_CERT_ALIAS) != null)) {
-            this.dni = getIntent().getStringExtra(EXTRA_RESOURCE_DNI);
             this.certAlias = getIntent().getStringExtra(EXTRA_RESOURCE_CERT_ALIAS);
 
             if (this.reqDetails != null) {
@@ -1081,9 +1076,11 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
     public void fireLoadDataSuccess(FireLoadDataResult firePreSignResult) {
 
         // Almacenamos la informacion trifasica para reutilizarla al solicitar las postfirmas
-        this.firePreSignResult = firePreSignResult;
+        /**
+         * Informacion trifasica que se obtiene en la prefirma y reutiliza en la postfirma.
+         */
 
-        PfLog.w(SFConstants.LOG_TAG, "Recibido del PreSignTask:\n" + this.firePreSignResult.toString());
+        PfLog.w(SFConstants.LOG_TAG, "Recibido del PreSignTask:\n" + firePreSignResult.toString());
 
         // Abrimos una actividad con un WebView en la que se muestre la URL recibida
         openWebViewActivity(
@@ -1139,7 +1136,7 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
 
         // Deshabilitamos la opción de acceder a la configuración de roles
         // si el rol con el que se ha accedido a la plataforma no es el de firmante.
-        if (this.selectedRole != null) {
+        if (this.selectedRole != null &&  menu.findItem(R.id.setting) != null) {
             menu.findItem(R.id.setting).setEnabled(false);
             menu.findItem(R.id.setting).setVisible(false);
         }

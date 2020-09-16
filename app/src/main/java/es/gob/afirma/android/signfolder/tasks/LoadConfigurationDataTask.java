@@ -8,7 +8,6 @@ import es.gob.afirma.android.signfolder.SFConstants;
 import es.gob.afirma.android.signfolder.proxy.CommManager;
 import es.gob.afirma.android.signfolder.proxy.RequestAppConfiguration;
 import es.gob.afirma.android.signfolder.proxy.ValidationLoginResult;
-import es.gob.afirma.android.user.configuration.ConfigurationRole;
 import es.gob.afirma.android.util.PfLog;
 
 /** Carga los datos remotos necesarios para la configuraci&oacute;n de la aplicaci&oacute;n. */
@@ -19,7 +18,6 @@ public final class LoadConfigurationDataTask extends AsyncTask<Void, Void, Reque
 	private final Context context;
 	private final LoadConfigurationListener listener;
 	private Throwable t = null;
-	private ConfigurationRole selectedRole = null;
 
 	/**
 	 * Crea la tarea para la carga de la configuraci&oacute;n de la aplicaci&oacute;n
@@ -31,13 +29,11 @@ public final class LoadConfigurationDataTask extends AsyncTask<Void, Void, Reque
 	 */
 	public LoadConfigurationDataTask(final ValidationLoginResult loginResult,
 							  final CommManager commManager, final Context context,
-							  final LoadConfigurationListener listener,
-							  final ConfigurationRole role) {
+							  final LoadConfigurationListener listener) {
 		this.loginResult = loginResult;
 		this.commManager = commManager;
 		this.context = context;
 		this.listener = listener;
-		this.selectedRole = role;
 	}
 
 	@Override

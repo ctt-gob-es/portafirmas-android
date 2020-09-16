@@ -5,14 +5,10 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import es.gob.afirma.android.signfolder.SFConstants;
 import es.gob.afirma.android.signfolder.proxy.TriphaseRequest;
 import es.gob.afirma.android.signfolder.proxy.ValidationLoginResult;
 import es.gob.afirma.android.signfolder.proxy.XmlUtils;
-import es.gob.afirma.android.user.configuration.ConfigurationRole;
 import es.gob.afirma.android.util.PfLog;
 
 /**
@@ -65,7 +61,6 @@ public class LoginValidationResponseParser {
         private static final String OK_ATTRIBUTE = "ok"; //$NON-NLS-1$
         private static final String ERROR_ATTRIBUTE = "er"; //$NON-NLS-1$
         private static final String DNI_ATTRIBUTE = "dni"; //$NON-NLS-1$
-        private static final String ROLES_ATTRIBUTE = "roles"; //$NON-NLS-1$
 
         static ValidationLoginResult parse(final Node requestNode) {
 
@@ -78,7 +73,6 @@ public class LoginValidationResponseParser {
             String errorMessage = "";
             boolean statusOk = true;
             String dni = "";
-			List<ConfigurationRole> roleLs = new ArrayList<>();
 
             // Cargamos los atributos
             final NamedNodeMap attributes = requestNode.getAttributes();
@@ -105,24 +99,7 @@ public class LoginValidationResponseParser {
                 dni = attributeNode.getNodeValue();
             }
 
-            // Cargamos la lista de roles.
-            StringBuilder roleSb = new StringBuilder();
-            attributeNode = attributes.getNamedItem(ROLES_ATTRIBUTE);
-            if (attributeNode != null) {
-                String[] values = attributeNode.getNodeValue().split(","); //$NON-NLS-1$
-                for (String value : values) {
-                    ConfigurationRole role = ConfigurationRole.valueOf(value);
-                    if (role != null) {
-                        if (!roleSb.toString().equals("")) { //$NON-NLS-1$
-                            roleSb.append(", "); //$NON-NLS-1$
-                        }
-                        roleSb.append(role.value);
-                        roleLs.add(role);
-                    }
-                }
-            }
-
-            PfLog.i(SFConstants.LOG_TAG, "Ok=" + statusOk + "; Dni=" + dni + "; Roles=" + roleSb.toString() +"; Error=" + errorMessage); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+            PfLog.i(SFConstants.LOG_TAG, "Ok=" + statusOk + "; Dni=" + dni + "; Roles=" + "; Error=" + errorMessage); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
             final ValidationLoginResult result = new ValidationLoginResult(statusOk);
             if (dni != null) {
@@ -131,9 +108,6 @@ public class LoginValidationResponseParser {
             if (errorMessage != null) {
                 result.setErrorMsg(errorMessage);
             }
-            if(!roleLs.isEmpty()){
-            	result.setRoleLs(roleLs);
-			}
 
             return result;
         }

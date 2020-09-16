@@ -40,19 +40,19 @@ import es.gob.afirma.android.fcm.NotificationUtilities;
 import es.gob.afirma.android.signfolder.AppPreferences;
 import es.gob.afirma.android.signfolder.ConfigureFilterDialogBuilder;
 import es.gob.afirma.android.signfolder.ErrorManager;
-import es.gob.afirma.android.signfolder.listeners.LoginListener;
 import es.gob.afirma.android.signfolder.LoginOptionsDialogBuilder;
+import es.gob.afirma.android.signfolder.LoginOptionsDialogBuilder.LoginOptionsListener;
 import es.gob.afirma.android.signfolder.MessageDialog;
 import es.gob.afirma.android.signfolder.R;
 import es.gob.afirma.android.signfolder.SFConstants;
-import es.gob.afirma.android.signfolder.tasks.LoadConfigurationDataTask;
-import es.gob.afirma.android.signfolder.tasks.LoadConfigurationDataTask.LoadConfigurationListener;
-import es.gob.afirma.android.signfolder.LoginOptionsDialogBuilder.LoginOptionsListener;
+import es.gob.afirma.android.signfolder.listeners.LoginListener;
 import es.gob.afirma.android.signfolder.proxy.ClaveLoginResult;
 import es.gob.afirma.android.signfolder.proxy.CommManager;
 import es.gob.afirma.android.signfolder.proxy.RequestAppConfiguration;
 import es.gob.afirma.android.signfolder.proxy.ValidationLoginResult;
 import es.gob.afirma.android.signfolder.tasks.ClaveLoginTask;
+import es.gob.afirma.android.signfolder.tasks.LoadConfigurationDataTask;
+import es.gob.afirma.android.signfolder.tasks.LoadConfigurationDataTask.LoadConfigurationListener;
 import es.gob.afirma.android.signfolder.tasks.LoginRequestValidationTask;
 import es.gob.afirma.android.signfolder.tasks.OpenHelpDocumentTask;
 import es.gob.afirma.android.user.configuration.ConfigurationConstants;
@@ -321,7 +321,7 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
             loginResult.setCertificateB64(Base64.encode(certEncoded));
             loginResult.setCertAlias(alias);
             final LoadConfigurationDataTask lcdt = new LoadConfigurationDataTask(loginResult,
-                    CommManager.getInstance(), this, this, null);
+                    CommManager.getInstance(), this, this);
             lcdt.execute();
         } catch (Exception e) {
             // Error al conectar con el servidor
@@ -581,7 +581,7 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
         dismissProgressDialog();
 
         final Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-        intent.setClass(this, PetitionListActivity.class);
+
         if (loginResult != null && loginResult.getDni() != null) {
             intent.putExtra(PetitionListActivity.EXTRA_RESOURCE_DNI, loginResult.getDni());
         }
@@ -593,6 +593,15 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
 
         // Almacenamos la lista de aplicaciones, con su correspondiente numero asociado al picker
         ConfigureFilterDialogBuilder.updateApps(appConfig.getAppNamesList());
+
+        // Si el usuario tiene roles disponibles, llamamos primero a la actividad encargada de
+        // gestionar la selección de roles.
+        if (appConfig.getRoles() != null && !appConfig.getRoles().isEmpty()) {
+            intent.putStringArrayListExtra(ConfigurationConstants.VALIDATION_RESULT_ROLES, appConfig.getRoles());
+            intent.setClass(this, LoginWithRoleActivity.class);
+        } else {
+            intent.setClass(this, PetitionListActivity.class);
+        }
 
         startActivity(intent);
     }
@@ -653,28 +662,12 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
     public void loginResult(ValidationLoginResult result) {
 
         if (result.isStatusOk()) {
-            if (result.getRoleLs() != null && !result.getRoleLs().isEmpty()) {
-                String[] rolesAsArrayString = new String[2];
-                for (int i = 0; i < result.getRoleLs().size(); i++) {
-                    rolesAsArrayString[i] = result.getRoleLs().get(i).value;
-                }
-                Intent intent = new Intent(this, LoginWithRoleActivity.class);
-                intent.putExtra(ConfigurationConstants.VALIDATION_RESULT_CERT_ALIAS, result.getCertAlias());
-                intent.putExtra(ConfigurationConstants.VALIDATION_RESULT_CERT_B64, result.getCertificateB64());
-                intent.putExtra(ConfigurationConstants.VALIDATION_RESULT_DNI, result.getDni());
-                intent.putExtra(ConfigurationConstants.VALIDATION_RESULT_ERROR_MSG, result.getErrorMsg());
-                intent.putExtra(ConfigurationConstants.VALIDATION_STATUS_OK, result.isStatusOk());
-                intent.putExtra(ConfigurationConstants.VALIDATION_RESULT_ROLES, rolesAsArrayString);
-                dismissProgressDialog();
-                startActivity(intent);
-            } else {
-                final LoadConfigurationDataTask lcdt = new LoadConfigurationDataTask(
-                        result,
-                        CommManager.getInstance(),
-                        this,
-                        this, null);
-                lcdt.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-            }
+            final LoadConfigurationDataTask lcdt = new LoadConfigurationDataTask(
+                    result,
+                    CommManager.getInstance(),
+                    this,
+                    this);
+            lcdt.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
         } else {
             String errMsg = result.getErrorMsg();
             if (errMsg == null || errMsg.isEmpty()) {
@@ -703,7 +696,7 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
                 loginResult,
                 CommManager.getInstance(),
                 this,
-                this, null);
+                this);
         lcdt.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
 }

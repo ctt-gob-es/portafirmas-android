@@ -7,6 +7,7 @@ public final class RequestAppConfiguration {
 
 	private ArrayList<String> appIdsList;
 	private ArrayList<String> appNamesList;
+	private ArrayList<String> roles;
 
 	public RequestAppConfiguration() {
 		this.appIdsList = new ArrayList<>();
@@ -31,5 +32,21 @@ public final class RequestAppConfiguration {
 
 	public void setAppNamesList(final ArrayList<String> appNamesList) {
 		this.appNamesList = appNamesList;
+	}
+
+	/**
+	 * Método get del atributo <i>roles</i>.
+	 * @return el valor del atributo.
+	 */
+	public ArrayList<String> getRoles() {
+		return roles;
+	}
+
+	/**
+	 * Método set del atributo <i>roles</i>.
+	 * @param roles nuevo valor del atributo.
+	 */
+	public void setRoles(ArrayList<String> roles) {
+		this.roles = roles;
 	}
 }

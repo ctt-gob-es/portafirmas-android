@@ -9,61 +9,81 @@ import es.gob.afirma.android.signfolder.proxy.RequestAppConfiguration;
 import es.gob.afirma.android.signfolder.proxy.XmlUtils;
 
 
-/** Analizador de XML para la obtenci&oacute;n de la lista de aplicaciones activas. */
+/**
+ * Analizador de XML para la obtenci&oacute;n de la lista de aplicaciones activas.
+ */
 public final class ApplicationListResponseParser {
 
-	private static final String APP_LIST_NODE = "appConf"; //$NON-NLS-1$
-	private static final String APP_ID_ATTR = "id"; //$NON-NLS-1$
+    private static final String APP_LIST_NODE = "appConf"; //$NON-NLS-1$
+    private static final String APP_ID_ATTR = "id"; //$NON-NLS-1$
+    private static final String ROLE_NODE = "roles"; //$NON-NLS-1$
 
 
-	/** Analiza un documento XML y, en caso de tener el formato correcto, obtiene la lista de aplicaciones
-	 * que pueden enviar peticiones de firma.
-	 * @param doc Documento XML.
-	 * @return Objeto con los datos del XML.
-	 * @throws IllegalArgumentException Cuando el XML no tiene el formato esperado.
-	 */
-	public static RequestAppConfiguration parse(final Document doc) {
+    /**
+     * Analiza un documento XML y, en caso de tener el formato correcto, obtiene la lista de aplicaciones
+     * que pueden enviar peticiones de firma.
+     *
+     * @param doc Documento XML.
+     * @return Objeto con los datos del XML.
+     * @throws IllegalArgumentException Cuando el XML no tiene el formato esperado.
+     */
+    public static RequestAppConfiguration parse(final Document doc) {
 
-		if (doc == null) {
-			throw new IllegalArgumentException("El documento proporcionado no puede ser nulo");  //$NON-NLS-1$
-		}
+        if (doc == null) {
+            throw new IllegalArgumentException("El documento proporcionado no puede ser nulo");  //$NON-NLS-1$
+        }
 
-		if (!APP_LIST_NODE.equalsIgnoreCase(doc.getDocumentElement().getNodeName())) {
-			throw new IllegalArgumentException("El elemento raiz del XML debe ser '" + APP_LIST_NODE + //$NON-NLS-1$
-					"' y aparece: " + doc.getDocumentElement().getNodeName()); //$NON-NLS-1$
-		}
+        if (!APP_LIST_NODE.equalsIgnoreCase(doc.getDocumentElement().getNodeName())) {
+            throw new IllegalArgumentException("El elemento raiz del XML debe ser '" + APP_LIST_NODE + //$NON-NLS-1$
+                    "' y aparece: " + doc.getDocumentElement().getNodeName()); //$NON-NLS-1$
+        }
 
-		final ArrayList<String> appIds = new ArrayList<>();
-		final ArrayList<String> appNames = new ArrayList<>();
-		final NodeList appNodes = doc.getDocumentElement().getChildNodes();
-		for (int i = 0; i < appNodes.getLength(); i++) {
-			// Nos aseguramos de procesar solo nodos de tipo Element
-			i = XmlUtils.nextNodeElementIndex(appNodes, i);
-			if (i == -1) {
-				break;
-			}
-			try {
-				appIds.add(appNodes.item(i).getAttributes().getNamedItem(APP_ID_ATTR).getNodeValue());
-				final String appName = XmlUtils.getTextContent(appNodes.item(i));
-				appNames.add(normalizeValue(appName));
-			} catch (final Exception e) {
-				throw new IllegalArgumentException("Se encontro un nodo de aplicacion no valido: " + e, e); //$NON-NLS-1$
-			}
-		}
+        final ArrayList<String> appIds = new ArrayList<>();
+        final ArrayList<String> appNames = new ArrayList<>();
+        final ArrayList<String> roles = new ArrayList<>();
+        final NodeList appNodes = doc.getDocumentElement().getChildNodes();
+        for (int i = 0; i < appNodes.getLength(); i++) {
+            // Nos aseguramos de procesar solo nodos de tipo Element
+            i = XmlUtils.nextNodeElementIndex(appNodes, i);
+            if (i == -1) {
+                break;
+            }
+            try {
+                if (ROLE_NODE.equalsIgnoreCase(appNodes.item(i).getNodeName())) {
+                    final NodeList rolesNode = appNodes.item(i).getChildNodes();
+                    for (int e = 0; e < rolesNode.getLength(); e++) {
+                        e = XmlUtils.nextNodeElementIndex(rolesNode, e);
+                        if (e == -1) {
+                            break;
+                        }
+                        String role = XmlUtils.getTextContent(rolesNode.item(e));
+                        roles.add(normalizeValue(role));
+                    }
+                } else {
+                    appIds.add(appNodes.item(i).getAttributes().getNamedItem(APP_ID_ATTR).getNodeValue());
+                    final String appName = XmlUtils.getTextContent(appNodes.item(i));
+                    appNames.add(normalizeValue(appName));
+                }
+            } catch (final Exception e) {
+                throw new IllegalArgumentException("Se encontro un nodo de aplicacion no valido: " + e, e); //$NON-NLS-1$
+            }
+        }
 
-		final RequestAppConfiguration config = new RequestAppConfiguration();
-		config.setAppIdsList(appIds);
-		config.setAppNamesList(appNames);
+        final RequestAppConfiguration config = new RequestAppConfiguration();
+        config.setAppIdsList(appIds);
+        config.setAppNamesList(appNames);
+        config.setRoles(roles);
 
-		return config;
-	}
+        return config;
+    }
 
-	/**
-	 * Deshace los cambios que hizo el proxy para asegurar que el XML est&aacute;ba bien formado.
-	 * @param value Valor que normalizar.
-	 * @return Valor normalizado.
-	 */
-	private static String normalizeValue(final String value) {
-		return value.trim().replace("&_lt;", "<").replace("&_gt;", ">"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-	}
+    /**
+     * Deshace los cambios que hizo el proxy para asegurar que el XML est&aacute;ba bien formado.
+     *
+     * @param value Valor que normalizar.
+     * @return Valor normalizado.
+     */
+    private static String normalizeValue(final String value) {
+        return value.trim().replace("&_lt;", "<").replace("&_gt;", ">"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+    }
 }

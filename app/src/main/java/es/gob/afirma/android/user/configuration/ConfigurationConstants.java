@@ -66,34 +66,6 @@ public interface ConfigurationConstants {
     String EXTRA_RESOURCE_ROLE_SELECTED = "ROLE_SELECTED";
 
     /**
-     * Constante que representa la clave para almacenar el alias del certificado utilizado en la
-     * validación del login.
-     */
-    String VALIDATION_RESULT_CERT_ALIAS = "vr_certAlias";
-
-    /**
-     * Constante que representa la clave para almacenar el certificado utilizado en la validación
-     * del login, en Base64.
-     */
-    String VALIDATION_RESULT_CERT_B64 = "vr_certB64";
-
-    /**
-     * Constante que representa la clave para almacenar en DNI del usuario utilizado en la
-     * validación del login.
-     */
-    String VALIDATION_RESULT_DNI = "vr_DNI";
-
-    /**
-     * Constante que representa el mensaje de error durante el proceso de login.
-     */
-    String VALIDATION_RESULT_ERROR_MSG = "vr_errorMsg";
-
-    /**
-     * Constante usada para indicar si la validación del login ha sido correcta o no.
-     */
-    String VALIDATION_STATUS_OK = "vr_statusOK";
-
-    /**
      * Constante que representa la clave almacenar la lista de roles durante el login.
      */
     String VALIDATION_RESULT_ROLES = "vr_roles";
