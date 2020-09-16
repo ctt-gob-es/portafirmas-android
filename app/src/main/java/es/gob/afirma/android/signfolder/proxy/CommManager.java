@@ -86,6 +86,7 @@ public final class CommManager extends CommManagerOldVersion {
     private static final String OPERATION_GET_USERS = "19"; //$NON-NLS-1$
     private static final String OPERATION_VERIFY = "20"; //$NON-NLS-1$
     private static final String OPERATION_CREATE_ROLE = "21"; //$NON-NLS-1$
+    private static final String OPERATION_APP_LIST_NEW = "22"; //$NON-NLS-1$
 
     private static final int BUFFER_SIZE = 1024;
 
@@ -395,7 +396,12 @@ public final class CommManager extends CommManagerOldVersion {
 
         // Preparamos la peticion. En caso de usarse el proxy nuevo, no se necesita el certificado
         String xml = XmlRequestsFactory.createAppListRequest(this.oldProxy ? certB64 : null);
-        String url = this.signFolderProxyUrl + createUrlParams(OPERATION_APP_LIST, xml);
+        String url;
+        if (this.oldProxy) {
+            url = this.signFolderProxyUrl + createUrlParams(OPERATION_APP_LIST, xml);
+        } else {
+            url = this.signFolderProxyUrl + createUrlParams(OPERATION_APP_LIST_NEW, xml);
+        }
         return ApplicationListResponseParser.parse(getRemoteDocument(url));
     }
 
