@@ -81,6 +81,8 @@ import es.gob.afirma.android.signfolder.tasks.RejectRequestsTask;
 import es.gob.afirma.android.signfolder.tasks.VerifyRequestsTask;
 import es.gob.afirma.android.user.configuration.ConfigurationConstants;
 import es.gob.afirma.android.user.configuration.ConfigurationRole;
+import es.gob.afirma.android.user.configuration.RoleInfo;
+import es.gob.afirma.android.user.configuration.UserConfig;
 import es.gob.afirma.android.util.PfLog;
 
 /**
@@ -105,6 +107,13 @@ public final class PetitionListActivity extends WebViewParentActivity implements
     public final static String EXTRA_RESOURCE_APP_NAMES = "es.gob.afirma.signfolder.apps.names"; //$NON-NLS-1$
     public static final String KEY_COUNT = "notificationCount";
     /**
+     * Clave para comprobaci&oacute;n del estado de las solicitudes de firma que
+     * se muestran actualmente.
+     */
+    public static final String SIGN_REQUEST_STATE_KEY = "SignRequestState"; //$NON-NLS-1$
+    // Funciones para implementar el registro de notificaciones GCM
+    public static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
+    /**
      * Clave usada internamente para guardar el estado de la propiedad
      * "needReload"
      */
@@ -114,63 +123,44 @@ public final class PetitionListActivity extends WebViewParentActivity implements
      * "loadingRequests"
      */
     private static final String KEY_SAVEINSTANCE_LOADING = "saveinstance_loading"; //$NON-NLS-1$
-    /**
-     * Clave para comprobaci&oacute;n del estado de las solicitudes de firma que
-     * se muestran actualmente.
-     */
-    public static final String SIGN_REQUEST_STATE_KEY = "SignRequestState"; //$NON-NLS-1$
     private static final String KEY_DAYS_TO_EXPIRE = "caducidad";
-
     private static final int DEFAULT_DAYS_TO_EXPIRE = 3;
-
     private final static int PAGE_SIZE = 50;
-
     /**
      * Di&aacute;logo para la configuraci&oacute;n de los filtros.
      */
     private final static int DIALOG_FILTER = 11;
-
     /**
      * Di&aacute;logo para confirmar el cierre de la sesi&oacute;n.
      */
     private final static int DIALOG_CONFIRM_EXIT = 12;
-
     /**
      * Di&aacute;logo para confirmar el rechazo de peticiones.
      */
     private final static int DIALOG_CONFIRM_REJECT = 13;
-
     /**
      * Di&aacute;logo de advertencia de que no se han seleccionado peticiones.
      */
     private final static int DIALOG_NO_SELECTED_REQUEST = 14;
-
     /**
      * Di&aacute;logo para confirmar la firma de peticiones.
      */
     private final static int DIALOG_CONFIRM_SIGN = 15;
-
     /**
      * Di&aacute;logo para mostrar el resultado devuelto por la pantalla de detalle.
      */
     private final static int DIALOG_RESULT_SIMPLE_REQUEST = 16;
-
     private final static int PERMISSION_TO_OPEN_HELP = 22;
-
     /**
      * Di&aacute;logo de notificaci&oacute;n de error al procesar las
      * peticiones.
      */
     private final static int DIALOG_ERROR_PROCESSING = 16;
-
     /**
      * Tag para la presentaci&oacute;n de di&aacute;logos
      */
     private final static String DIALOG_TAG = "dialog"; //$NON-NLS-1$
-
     private static final int FIRST_PAGE = 1;
-    // Funciones para implementar el registro de notificaciones GCM
-    public static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
     // Numero de peticiones solicitadas y procesadas
     int numRequestToSignPending;
     int numRequestToApprovePending;
@@ -205,9 +195,17 @@ public final class PetitionListActivity extends WebViewParentActivity implements
     private int numPages = -1;
     private ProgressDialog progressDialog = null;
     /**
-     * Rol seleccionado durante la autenticación.
+     * Rol seleccionado durante la autenticaci&oacute;n.
      */
     private ConfigurationRole roleSelected;
+    /**
+     * Informaci&oacute;n del rol seleccionado.
+     */
+    private RoleInfo roleSelectedInfo;
+    /**
+     * Configuraci&oacute;n de usuario.
+     */
+    private UserConfig userConfig;
     private ConfigureFilterDialogBuilder filterDialogBuilder;
     private BroadcastReceiver bReceiver = new BroadcastReceiver() {
 
@@ -246,7 +244,11 @@ public final class PetitionListActivity extends WebViewParentActivity implements
     public void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.currentState = getIntent().getStringExtra(SIGN_REQUEST_STATE_KEY);
-        this.roleSelected = ConfigurationRole.getValue(getIntent().getStringExtra(ConfigurationConstants.EXTRA_RESOURCE_ROLE_SELECTED));
+        roleSelectedInfo = (RoleInfo) getIntent().getSerializableExtra(ConfigurationConstants.EXTRA_RESOURCE_ROLE_SELECTED);
+        userConfig = (UserConfig) getIntent().getSerializableExtra(ConfigurationConstants.EXTRA_RESOURCE_USER_CONFIG);
+        if (roleSelectedInfo != null) {
+            this.roleSelected = ConfigurationRole.getValue(roleSelectedInfo.getRoleId());
+        }
         if (this.currentState == null) {
             this.currentState = SignRequest.STATE_UNRESOLVED;
         }
@@ -289,7 +291,8 @@ public final class PetitionListActivity extends WebViewParentActivity implements
             checkChangesOnNotificationToken();
         }
 
-        // Almacenamos como filtros de la petición en DNI del usuario y el rol.
+        // Almacenamos como filtros de la petición el DNI del usuario,
+        // el DNI del propietario de las peticiones y el rol.
         storeUserIdAndRole();
     }
 
@@ -300,17 +303,22 @@ public final class PetitionListActivity extends WebViewParentActivity implements
     private void storeUserIdAndRole() {
         String userId = "";
         String userRole = "";
+        String ownerId = "";
         if (this.dni != null) {
             userId = this.dni;
         }
         if (this.roleSelected != null) {
             userRole = this.roleSelected.value;
         }
+        if (this.roleSelectedInfo != null) {
+            ownerId = this.roleSelectedInfo.getOwnerDni();
+        }
         if (this.filterConfig == null) {
             this.filterConfig = new FilterConfig();
         }
         this.filterConfig.setUserId(userId);
         this.filterConfig.setUserRole(userRole);
+        this.filterConfig.setOwnerId(ownerId);
     }
 
     /**
@@ -670,9 +678,15 @@ public final class PetitionListActivity extends WebViewParentActivity implements
 
         // Si el rol con el que se ha accedido a la plataforma no es el de firmante,
         // se deshabilita la opción de acceder a la configuración de roles.
-        if (this.roleSelected != null) {
+        if (this.roleSelected != null && menu.findItem(R.id.setting) != null) {
             menu.findItem(R.id.setting).setEnabled(false);
             menu.findItem(R.id.setting).setVisible(false);
+        }
+
+        // Si solo existe el rol de firmante, no mostramos la opción de cambiar de rol.
+        if (this.userConfig.getRoles().size() < 1) {
+            menu.findItem(R.id.changeRole).setEnabled(false);
+            menu.findItem(R.id.changeRole).setVisible(false);
         }
 
         // En el proxy antiguo no permite notificaciones
@@ -749,10 +763,32 @@ public final class PetitionListActivity extends WebViewParentActivity implements
         // Configuración de usuario
         else if (item.getItemId() == R.id.setting) {
             Intent intent = new Intent(this, UserConfigurationActivity.class);
-            intent.putExtra(ConfigurationConstants.EXTRA_RESOURCE_ROLE_SELECTED, roleSelected != null ? roleSelected.name() : null);
+            intent.putExtra(ConfigurationConstants.EXTRA_RESOURCE_ROLE_SELECTED, roleSelected);
             intent.putStringArrayListExtra(EXTRA_RESOURCE_APP_IDS, new ArrayList<>(appIds));
             intent.putStringArrayListExtra(EXTRA_RESOURCE_APP_NAMES, new ArrayList<>(appNames));
+            intent.putExtra(ConfigurationConstants.EXTRA_RESOURCE_USER_CONFIG, userConfig);
+            intent.putExtra(SIGN_REQUEST_STATE_KEY, currentState);
+            intent.putExtra(EXTRA_RESOURCE_DNI, dni);
+            intent.putExtra(EXTRA_RESOURCE_CERT_B64, certB64);
+            intent.putExtra(EXTRA_RESOURCE_CERT_ALIAS, certAlias);
             startActivityForResult(intent, ConfigurationConstants.ACTIVITY_REQUEST_CODE_ROLE_VIEW);
+        }
+        // Cambiar de rol.
+        else if (item.getItemId() == R.id.changeRole) {
+            Intent intent = new Intent(this, LoginWithRoleActivity.class);
+            intent.putExtra(ConfigurationConstants.EXTRA_RESOURCE_USER_CONFIG, this.userConfig);
+            intent.putExtra(PetitionListActivity.EXTRA_RESOURCE_DNI, this.dni);
+            intent.putExtra(PetitionListActivity.EXTRA_RESOURCE_CERT_B64, this.certB64);
+            intent.putExtra(PetitionListActivity.EXTRA_RESOURCE_CERT_ALIAS, this.certAlias);
+            intent.putStringArrayListExtra(PetitionListActivity.EXTRA_RESOURCE_APP_IDS, new ArrayList<>(this.appIds));
+            intent.putStringArrayListExtra(PetitionListActivity.EXTRA_RESOURCE_APP_NAMES, new ArrayList<>(this.appNames));
+
+            // Vaciamos la pila de actividades...
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            // Iniciamos la nueva actividad.
+            startActivity(intent);
+            // Finalizamos la actividad actual.
+            finish();
         }
         // Abrir ayuda
         else if (item.getItemId() == R.id.help) {
@@ -868,6 +904,9 @@ public final class PetitionListActivity extends WebViewParentActivity implements
     }
 
     final void closeActivity() {
+        Intent intent = new Intent(this, LoginActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
         finish();
     }
 
@@ -1124,8 +1163,12 @@ public final class PetitionListActivity extends WebViewParentActivity implements
         changeActivityIntent.putExtra(PetitionDetailsActivity.EXTRA_RESOURCE_REQUEST_STATE, getCurrentState());
         changeActivityIntent.putExtra(PetitionDetailsActivity.EXTRA_RESOURCE_REQUEST_ID, requestId);
         changeActivityIntent.putExtra(PetitionDetailsActivity.EXTRA_RESOURCE_DNI, this.dni);
+        changeActivityIntent.putExtra(EXTRA_RESOURCE_CERT_B64, this.certB64);
         changeActivityIntent.putExtra(PetitionDetailsActivity.EXTRA_RESOURCE_CERT_ALIAS, this.certAlias);
-        changeActivityIntent.putExtra(ConfigurationConstants.EXTRA_RESOURCE_ROLE_SELECTED, this.roleSelected != null ? this.roleSelected.value : null);
+        changeActivityIntent.putExtra(ConfigurationConstants.EXTRA_RESOURCE_ROLE_SELECTED, this.roleSelectedInfo);
+        changeActivityIntent.putExtra(ConfigurationConstants.EXTRA_RESOURCE_USER_CONFIG, this.userConfig);
+        changeActivityIntent.putStringArrayListExtra(EXTRA_RESOURCE_APP_IDS, new ArrayList<>(appIds));
+        changeActivityIntent.putStringArrayListExtra(EXTRA_RESOURCE_APP_NAMES, new ArrayList<>(appNames));
 
         startActivityForResult(changeActivityIntent, PetitionDetailsActivity.REQUEST_CODE);
     }
@@ -1664,7 +1707,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
             } else {
                 PfLog.w(SFConstants.LOG_TAG, "Dispositivo no soportado.");
                 Toast.makeText(this, R.string.error_msg_unsupported_device, Toast.LENGTH_SHORT).show();
-                finish();
+                closeActivity();
             }
             return false;
         }

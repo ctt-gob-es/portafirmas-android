@@ -4,8 +4,8 @@ package es.gob.afirma.android.user.configuration;
  * Enumerado que define los tipos de roles disponibles.
  */
 public enum ConfigurationRole {
-    AUTHORIZED("Authorized"),
-    VERIFIER("Verifier");
+    AUTHORIZED("AUTORIZADO"),
+    VERIFIER("VALIDADOR");
 
     /**
      * Atributo que representa el valor del enumerado.
@@ -32,9 +32,9 @@ public enum ConfigurationRole {
             return null;
         }
         switch (value.toUpperCase()) {
-            case "AUTHORIZED":
+            case "AUTORIZADO":
                 return ConfigurationRole.AUTHORIZED;
-            case "VERIFIER":
+            case "VALIDADOR":
                 return ConfigurationRole.VERIFIER;
             default:
                 return null;

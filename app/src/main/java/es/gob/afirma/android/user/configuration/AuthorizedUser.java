@@ -5,7 +5,7 @@ import java.util.Date;
 /**
  * Clase que representa el objeto de autorización.
  */
-public class AuthorizedUser extends UserConfiguration {
+public class AuthorizedUser extends UserInfo {
 
     /**
      * Atributo que representa el estado de la autorización.

@@ -66,9 +66,9 @@ public interface ConfigurationConstants {
     String EXTRA_RESOURCE_ROLE_SELECTED = "ROLE_SELECTED";
 
     /**
-     * Constante que representa la clave almacenar la lista de roles durante el login.
+     * Constante que representa la clave para almacenar la configuración de usuario durante el login.
      */
-    String VALIDATION_RESULT_ROLES = "vr_roles";
+    String EXTRA_RESOURCE_USER_CONFIG = "userConfig";
 
     /**
      * Constante que representa la clave usada para almacenar el mensaje de error entre actividades.

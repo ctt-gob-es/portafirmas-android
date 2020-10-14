@@ -1,13 +1,10 @@
 package es.gob.afirma.android.signfolder.activities;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
-import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.util.Log;
 import android.view.View;
 import android.widget.DatePicker;
 import android.widget.EditText;
@@ -15,7 +12,6 @@ import android.widget.ImageButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.TimePicker;
-import android.widget.Toast;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -23,12 +19,10 @@ import java.util.Date;
 import java.util.Locale;
 
 import es.gob.afirma.android.signfolder.R;
-import es.gob.afirma.android.signfolder.proxy.CommManager;
 import es.gob.afirma.android.user.configuration.AuthorizedType;
 import es.gob.afirma.android.user.configuration.AuthorizedUser;
 import es.gob.afirma.android.user.configuration.ConfigurationConstants;
-import es.gob.afirma.android.user.configuration.ConfigurationRole;
-import es.gob.afirma.android.user.configuration.UserConfiguration;
+import es.gob.afirma.android.user.configuration.UserInfo;
 
 /**
  * Clase que gestiona la actividad asociada a la creación de nuevas autorizaciones.
@@ -44,11 +38,6 @@ public class CreateNewAuthorizedActivity extends Activity {
      * Atributo que representa la fecha final seleccionada.
      */
     private final Calendar endDateTime = Calendar.getInstance();
-
-    /**
-     * Atributo que representa el usuario seleccionado para la creación del rol.
-     */
-    private UserConfiguration user;
 
     /**
      * Atributo que representa el texto mostrado para la fecha (dia, mes y año) inicial.
@@ -76,7 +65,7 @@ public class CreateNewAuthorizedActivity extends Activity {
      * @param user Usuario a mostrar.
      * @return la representación del usuario: nombre + apellidos.
      */
-    public static String buildUserRepresentation(UserConfiguration user) {
+    public static String buildUserRepresentation(UserInfo user) {
         String name = user.getName();
         String surname = user.getSurname();
         String secondSurname = user.getSecondSurname();
@@ -109,7 +98,9 @@ public class CreateNewAuthorizedActivity extends Activity {
         if (userParams == null || userParams.length != 4) {
             throw new IllegalArgumentException("No ha sido posible recuperar el usuario seleccionado previamente.");
         }
-        user = new UserConfiguration();
+
+        // Atributo que representa el usuario seleccionado para la creación del rol.
+        UserInfo user = new UserInfo();
         user.setID(userParams[0]);
         user.setName(userParams[1]);
         user.setSurname(userParams[2]);
@@ -237,50 +228,54 @@ public class CreateNewAuthorizedActivity extends Activity {
      * Método que configura el comportamiento de los botones de la vista.
      */
     private void setupButtons() {
-        this.findViewById(R.id.finishButton).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (checkValues()) {
-                    boolean opResult;
-                    try {
-                        AuthorizedUser authUser = getAuthorizationFieldsValues();
-                        opResult = CommManager.getInstance().createNewRole(user, ConfigurationRole.AUTHORIZED, authUser,  null);
-                    } catch (Exception e) {
-                        Log.e("CreateRoleError", "Se ha producido un error durante la creación de la autorización", e);
-                        opResult = false;
-                    }
-                    if (opResult) {
-                        setResult(ConfigurationConstants.ACTIVITY_RESULT_CODE_AUTH_ROLE_OK);
-                    } else {
-                        setResult(ConfigurationConstants.ACTIVITY_RESULT_CODE_AUTH_ROLE_KO);
-                    }
-                    finish();
-                } else {
-                    Toast.makeText(CreateNewAuthorizedActivity.this,
-                            R.string.error_input_params_creation_role, Toast.LENGTH_LONG)
-                            .show();
-                }
-            }
-        });
+        //TODO: Servicio deshabilitado. Pendiente de la implementación de la parte servidora. Eliminar las 2 siguientes lineas y descomentar las lineas comentadas.
+        this.findViewById(R.id.finishButton).setEnabled(false);
+        this.findViewById(R.id.infoDetailsDateId).setEnabled(false);
 
-        // Configuramos el listener del botón de información.
-        this.findViewById(R.id.infoDetailsDateId).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                final AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(CreateNewAuthorizedActivity.this);
-                alertDialogBuilder.setTitle(null);
-
-                alertDialogBuilder.setTitle(R.string.dialog_msg_info_date_auth);
-                alertDialogBuilder.setPositiveButton(CreateNewAuthorizedActivity.this.getString(R.string.close), new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(final DialogInterface dialog, final int id) {
-                        dialog.dismiss();
-                    }
-                });
-                alertDialogBuilder.create();
-                alertDialogBuilder.show();
-            }
-        });
+//        this.findViewById(R.id.finishButton).setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                if (checkValues()) {
+//                    boolean opResult;
+//                    try {
+//                        AuthorizedUser authUser = getAuthorizationFieldsValues();
+//                        opResult = CommManager.getInstance().createNewRole(user, ConfigurationRole.AUTHORIZED, authUser,  null);
+//                    } catch (Exception e) {
+//                        Log.e("CreateRoleError", "Se ha producido un error durante la creación de la autorización", e);
+//                        opResult = false;
+//                    }
+//                    if (opResult) {
+//                        setResult(ConfigurationConstants.ACTIVITY_RESULT_CODE_AUTH_ROLE_OK);
+//                    } else {
+//                        setResult(ConfigurationConstants.ACTIVITY_RESULT_CODE_AUTH_ROLE_KO);
+//                    }
+//                    finish();
+//                } else {
+//                    Toast.makeText(CreateNewAuthorizedActivity.this,
+//                            R.string.error_input_params_creation_role, Toast.LENGTH_LONG)
+//                            .show();
+//                }
+//            }
+//        });
+//
+//        // Configuramos el listener del botón de información.
+//        this.findViewById(R.id.infoDetailsDateId).setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                final AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(CreateNewAuthorizedActivity.this);
+//                alertDialogBuilder.setTitle(null);
+//
+//                alertDialogBuilder.setTitle(R.string.dialog_msg_info_date_auth);
+//                alertDialogBuilder.setPositiveButton(CreateNewAuthorizedActivity.this.getString(R.string.close), new DialogInterface.OnClickListener() {
+//                    @Override
+//                    public void onClick(final DialogInterface dialog, final int id) {
+//                        dialog.dismiss();
+//                    }
+//                });
+//                alertDialogBuilder.create();
+//                alertDialogBuilder.show();
+//            }
+//        });
     }
 
     /**

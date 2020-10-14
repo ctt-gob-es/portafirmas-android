@@ -86,7 +86,7 @@ public class AuthorizerAdapter extends RecyclerView.Adapter<AuthorizerAdapter.Au
         }
 
         // Nombre remitente
-        ((TextView) holder.linearLayout.findViewById(R.id.authNameId)).setText(user.getSenderReceiver());
+        ((TextView) holder.linearLayout.findViewById(R.id.roleNameId)).setText(user.getSenderReceiver());
 
         // Fecha de finalización.
         String dateAsString = "-";
@@ -96,7 +96,7 @@ public class AuthorizerAdapter extends RecyclerView.Adapter<AuthorizerAdapter.Au
             dateAsString = sdf.format(date);
         }
 
-        ((TextView) holder.linearLayout.findViewById(R.id.authEndDateId)).setText(dateAsString);
+        ((TextView) holder.linearLayout.findViewById(R.id.dniId)).setText(dateAsString);
 
         holder.linearLayout.setOnClickListener(new View.OnClickListener() {
             @Override

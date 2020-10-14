@@ -5,7 +5,7 @@ import java.util.List;
 
 import es.gob.afirma.android.user.configuration.AuthorizedUser;
 import es.gob.afirma.android.user.configuration.ConfigurationRole;
-import es.gob.afirma.android.user.configuration.UserConfiguration;
+import es.gob.afirma.android.user.configuration.UserInfo;
 import es.gob.afirma.android.util.Base64;
 import es.gob.afirma.android.util.PfLog;
 
@@ -274,7 +274,7 @@ final class XmlRequestsFactory {
         return sb.toString();
     }
 
-    static String createDetailRequest(final String requestId) {
+    static String createDetailRequest(final String requestId, String ownerId) {
         if (requestId == null || requestId.trim().length() == 0) {
             throw new IllegalArgumentException("El identificador de la solicitud de firma no puede ser nulo"); //$NON-NLS-1$
         }
@@ -282,6 +282,10 @@ final class XmlRequestsFactory {
         final StringBuffer sb = new StringBuffer(XML_HEADER);
         sb.append("<rqtdtl id=\""); //$NON-NLS-1$
         sb.append(requestId);
+        if (ownerId != null && ownerId.trim().length() != 0) {
+            sb.append("\" ownerId=\""); //$NON-NLS-1$
+            sb.append(ownerId);
+        }
         sb.append("\">"); //$NON-NLS-1$
         //sb.append(XML_CERT_OPEN);
         //sb.append(certEncodedB64);
@@ -455,7 +459,7 @@ final class XmlRequestsFactory {
      * @param appIds Lista de identificadores de aplicación.
      * @return la petición construida.
      */
-    public static String createRequestCreateRole(final UserConfiguration user, final ConfigurationRole role, final AuthorizedUser authUser, final List<String> appIds) {
+    public static String createRequestCreateRole(final UserInfo user, final ConfigurationRole role, final AuthorizedUser authUser, final List<String> appIds) {
         final StringBuffer sb = new StringBuffer(XML_HEADER);
         sb.append("<rqCrtRole>"); //$NON-NLS-1$
         sb.append("<userId>"); //$NON-NLS-1$
@@ -498,6 +502,17 @@ final class XmlRequestsFactory {
             sb.append("</authParams>"); //$NON-NLS-1$
         }
         sb.append("</rqCrtRole>"); //$NON-NLS-1$
+        return sb.toString();
+    }
+
+    /**
+     * Método que crea una petición de consulta de la configuración de usuario.
+     *
+     * @return la configuración de usuario.
+     */
+    public static String createRequestGetUserConfig() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("<rqsrcnfg />");
         return sb.toString();
     }
 }

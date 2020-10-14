@@ -3,8 +3,7 @@ package es.gob.afirma.android.signfolder.proxy;
 import java.util.ArrayList;
 import java.util.List;
 
-import es.gob.afirma.android.user.configuration.UserConfiguration;
-import es.gob.afirma.android.user.configuration.VerifierUser;
+import es.gob.afirma.android.user.configuration.UserInfo;
 
 /**
  * Clase que representa el resultado parcial del servicio "GetUsers".
@@ -53,12 +52,12 @@ public class PartialResponseUserList {
      * Método que construye una lista de usuarios a partir de la lista recibida del proxy.
      * @return una lista de usuarios.
      */
-    public List<UserConfiguration> getUsersList() {
-        List<UserConfiguration> res = new ArrayList<>();
+    public List<UserInfo> getUsersList() {
+        List<UserInfo> res = new ArrayList<>();
         for (GetUserRequest req : this.currentGetUserRequest) {
             if (req != null) {
                 // Attributos de usuario.
-                UserConfiguration user = new UserConfiguration();
+                UserInfo user = new UserInfo();
                 user.setName(req.getName());
                 user.setSurname(req.getSurname());
                 user.setSecondSurname(req.getSecondSurname());

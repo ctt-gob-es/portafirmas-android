@@ -19,7 +19,7 @@ import es.gob.afirma.android.signfolder.activities.PetitionListActivity;
 import es.gob.afirma.android.signfolder.proxy.RequestAppConfiguration;
 import es.gob.afirma.android.user.configuration.ConfigurationConstants;
 import es.gob.afirma.android.user.configuration.ConfigurationRole;
-import es.gob.afirma.android.user.configuration.UserConfiguration;
+import es.gob.afirma.android.user.configuration.UserInfo;
 
 /**
  * Clase que implementa el adaptador para la lista de usuarios.
@@ -29,7 +29,7 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
     /**
      * Conjunto de datos a mostrar.
      */
-    private List<UserConfiguration> dataSet;
+    private List<UserInfo> dataSet;
 
     /**
      * Rol seleccionado.
@@ -48,7 +48,7 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
      * @param selectedRoleParam Rol seleccionado.
      * @param appsParam Lista de aplicaciones.
      */
-    public UserAdapter(List<UserConfiguration> dataSetParam, ConfigurationRole selectedRoleParam, RequestAppConfiguration appsParam) {
+    public UserAdapter(List<UserInfo> dataSetParam, ConfigurationRole selectedRoleParam, RequestAppConfiguration appsParam) {
         dataSet = dataSetParam;
         selectedRole = selectedRoleParam;
         apps = appsParam;
@@ -64,11 +64,11 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
 
     @Override
     public void onBindViewHolder(@NonNull final UserAdapter.UserViewHolder userViewHolder, int i) {
-        UserConfiguration user = dataSet.get(i);
-        ((TextView) userViewHolder.linearLayout.findViewById(R.id.idView)).setText(user.getID());
-        ((TextView) userViewHolder.linearLayout.findViewById(R.id.nameView)).setText(generateFullName(user));
+        UserInfo user = dataSet.get(i);
+        ((TextView) userViewHolder.layout.findViewById(R.id.idView)).setText(user.getID());
+        ((TextView) userViewHolder.layout.findViewById(R.id.nameView)).setText(generateFullName(user));
 
-        userViewHolder.linearLayout.setOnClickListener(new View.OnClickListener() {
+        userViewHolder.layout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (ConfigurationRole.AUTHORIZED.equals(selectedRole)) {
@@ -99,7 +99,7 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
      * @param user Objeto que representa el usuario.
      * @return el nombre completo del usuario o "-" en caso de no poder generarlo.
      */
-    private String generateFullName(UserConfiguration user) {
+    private String generateFullName(UserInfo user) {
         if (user == null ||
                 user.getName() == null && user.getSurname() == null && user.getSecondSurname() == null) {
             return "-";
@@ -128,7 +128,7 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
      * @param user Objeto a parsear.
      * @return un array de string con los siguientes elementos: [ID, name, surname, secondSurname].
      */
-    private String[] fromUserToArrayString(UserConfiguration user) {
+    private String[] fromUserToArrayString(UserInfo user) {
         String[] res = new String[4];
 
         res[0] = user.getID();
@@ -143,7 +143,7 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
      * Clase que representa el view holder de la lista de usuarios.
      */
     public static class UserViewHolder extends RecyclerView.ViewHolder {
-        public RelativeLayout linearLayout;
+        public RelativeLayout layout;
 
         /**
          * Constructor con 1 parámetro.
@@ -152,7 +152,7 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
          */
         public UserViewHolder(RelativeLayout inputItem) {
             super(inputItem);
-            linearLayout = inputItem;
+            layout = inputItem;
         }
     }
 }

@@ -7,7 +7,6 @@ import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -18,12 +17,11 @@ import java.util.List;
 
 import es.gob.afirma.android.signfolder.R;
 import es.gob.afirma.android.signfolder.adapter.UserAdapter;
-import es.gob.afirma.android.signfolder.proxy.CommManager;
 import es.gob.afirma.android.signfolder.proxy.RequestAppConfiguration;
 import es.gob.afirma.android.signfolder.proxy.ServerControlledException;
 import es.gob.afirma.android.user.configuration.ConfigurationConstants;
 import es.gob.afirma.android.user.configuration.ConfigurationRole;
-import es.gob.afirma.android.user.configuration.UserConfiguration;
+import es.gob.afirma.android.user.configuration.UserInfo;
 
 /**
  * Clase que gestiona la actividad encargada de crear nuevos roles.
@@ -95,22 +93,24 @@ public final class CreateNewRoleActivity extends Activity {
      * @param view Vista actual.
      */
     public void searchUser(View view) throws ServerControlledException, SAXException, IOException {
-        // Recuperamos la vista donde se mostrará la lista de usuarios.
-        LinearLayout listUserLayout = this.findViewById(R.id.resultListId);
-        // Eliminamos los posibles elementos que pudiese tener de búsquedas previas.
-        listUserLayout.removeAllViewsInLayout();
-        // Obtenemos la lista de usuarios de protafirmas proxy.
-        EditText filter = this.findViewById(R.id.searchUserField);
-        List<UserConfiguration> users = CommManager.getInstance().getListUser(1, 10, filter.getText().toString());
-        if (users != null) {
-            if (!users.isEmpty()) {
-                buildListItems(listUserLayout, users);
-            } else {
-                showEmptyList(false);
-            }
-        } else {
-            showEmptyList(true);
-        }
+        //TODO: Servicio deshabilitado. Pendiente de implementación de parte servidora. Descomentar el código.
+
+//        // Recuperamos la vista donde se mostrará la lista de usuarios.
+//        LinearLayout listUserLayout = this.findViewById(R.id.resultListId);
+//        // Eliminamos los posibles elementos que pudiese tener de búsquedas previas.
+//        listUserLayout.removeAllViewsInLayout();
+//        // Obtenemos la lista de usuarios de protafirmas proxy.
+//        EditText filter = this.findViewById(R.id.searchUserField);
+//        List<UserConfiguration> users = CommManager.getInstance().getListUser(1, 10, filter.getText().toString());
+//        if (users != null) {
+//            if (!users.isEmpty()) {
+//                buildListItems(listUserLayout, users);
+//            } else {
+//                showEmptyList(false);
+//            }
+//        } else {
+//            showEmptyList(true);
+//        }
     }
 
     /**
@@ -119,7 +119,7 @@ public final class CreateNewRoleActivity extends Activity {
      * @param parentLayout Layout padre sobre el que aplicar los cambios.
      * @param userList     Lista de usuarios.
      */
-    private void buildListItems(LinearLayout parentLayout, List<UserConfiguration> userList) {
+    private void buildListItems(LinearLayout parentLayout, List<UserInfo> userList) {
         RecyclerView recyclerView = new RecyclerView(this);
         recyclerView.setVerticalScrollBarEnabled(true);
         recyclerView.setHasFixedSize(true);

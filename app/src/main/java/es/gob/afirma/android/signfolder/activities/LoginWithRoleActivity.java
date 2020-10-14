@@ -3,125 +3,108 @@ package es.gob.afirma.android.signfolder.activities;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
-import android.widget.Button;
+import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.view.ViewGroup;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import es.gob.afirma.android.signfolder.R;
+import es.gob.afirma.android.signfolder.adapter.RoleAdapter;
 import es.gob.afirma.android.user.configuration.ConfigurationConstants;
-import es.gob.afirma.android.user.configuration.ConfigurationRole;
+import es.gob.afirma.android.user.configuration.RoleInfo;
+import es.gob.afirma.android.user.configuration.UserConfig;
 
 /**
  * Clase que gestiona la actividad asociada al logeado con roles.
  */
 public class LoginWithRoleActivity extends Activity {
 
-    private Intent intent;
-
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         // Recuperamos los parámetros de la validación de login.
-        intent = getIntent();
+        Intent intent = getIntent();
 
-        // Comprobamos los roles a mostrar.
-        List<String> roles = intent.getStringArrayListExtra(ConfigurationConstants.VALIDATION_RESULT_ROLES);
-        List<ConfigurationRole> roleLs = new ArrayList<>();
+        // Cargamos la vista a mostrar.
+        setContentView(R.layout.activity_choose_role);
 
-        for (String role : roles) {
-            ConfigurationRole r = ConfigurationRole.getValue(role);
-            if (r != null) {
-                roleLs.add(r);
+        // Cargamos la configuración de usuario.
+        UserConfig userConfig = (UserConfig) intent.getSerializableExtra(ConfigurationConstants.EXTRA_RESOURCE_USER_CONFIG);
+
+        // Mostramos la lista de roles.
+        RecyclerView recyclerView = new RecyclerView(this);
+        recyclerView.setVerticalScrollBarEnabled(true);
+        recyclerView.setHasFixedSize(true);
+        RecyclerView.LayoutParams lp = new RecyclerView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        recyclerView.setLayoutParams(lp);
+        RecyclerView.LayoutManager layoutManager = new GridLayoutManager(this, 1);
+        recyclerView.setLayoutManager(layoutManager);
+        orderRoles(userConfig);
+        addSignerRole(userConfig);
+        RoleAdapter adapter = new RoleAdapter(userConfig, intent);
+        recyclerView.setAdapter(adapter);
+        ((LinearLayout) findViewById(R.id.rolesView)).addView(recyclerView);
+    }
+
+    /**
+     * Método que agrupa los roles de la lista de roles según su tipo (validador o autorizado).
+     *
+     * @param userConfig Configuración de usuario con la lista de roles a actualizar.
+     */
+    private void orderRoles(UserConfig userConfig) {
+        List<RoleInfo> verifiers = new ArrayList<>();
+        List<RoleInfo> authorized = new ArrayList<>();
+
+        for (RoleInfo role : userConfig.getRoles()) {
+            if (role != null && role.getRoleId().equalsIgnoreCase("VALIDADOR")) {
+                verifiers.add(role);
+            } else if (role != null && role.getRoleId().equalsIgnoreCase("AUTORIZADO")) {
+                authorized.add(role);
             }
         }
 
-        // Cargamos la vista.
-        setContentView(R.layout.activity_choose_role);
+        List<RoleInfo> res = new ArrayList<>();
+        res.addAll(verifiers);
+        res.addAll(authorized);
 
-        // Recuperamos los elementos de la vista a modificar.
-        ProgressBar pb = findViewById(R.id.progressBarId);
-        pb.setVisibility(View.INVISIBLE);
-        Button verifierBtn = findViewById(R.id.button_access_verifier);
-        Button authBtn = findViewById(R.id.button_access_auth);
-        LinearLayout btnLayout = findViewById(R.id.ChooseRoleButtonsId);
+        userConfig.setRoles(res);
+    }
 
-        // Si no existe un determinado role, eliminamos el botón asociado.
-        if (!roleLs.contains(ConfigurationRole.VERIFIER)) {
-            btnLayout.removeView(verifierBtn);
+    /**
+     * Método encargado de comprobar si existe ya el rol de firmante en la lista de roles y lo añade si es necesario.
+     *
+     * @param userConfig Configuración de usuario actual.
+     */
+    private void addSignerRole(UserConfig userConfig) {
+        boolean found = false;
+        for (RoleInfo role : userConfig.getRoles()) {
+            if (role.getRoleId().equalsIgnoreCase("FIRMANTE")) {
+                found = true;
+                break;
+            }
         }
-        if (!roleLs.contains(ConfigurationRole.AUTHORIZED)) {
-            btnLayout.removeView(authBtn);
+        if (!found) {
+            RoleInfo signer = new RoleInfo("FIRMANTE", "FIRMANTE", null, null);
+            userConfig.getRoles().add(0, signer);
         }
     }
 
     /**
-     * Accede a la aplicación con el rol de autorizado.
-     *
-     * @param view vista actual.
+     * Método encargado de cerrar la actividad.
      */
-    public void accessAsAuthorized(final View view) {
-        showProgressBar();
-        startListPetitionsActivity(ConfigurationRole.AUTHORIZED);
-    }
-
-    /**
-     * Accede a la aplicación con el rol de validador.
-     *
-     * @param view vista actual.
-     */
-    public void accessAsVerifier(final View view) {
-        showProgressBar();
-        startListPetitionsActivity(ConfigurationRole.VERIFIER);
-    }
-
-    /**
-     * Accede a la aplicación con el rol de firmante.
-     *
-     * @param view vista actual.
-     */
-    public void accessAsSigner(final View view) {
-        showProgressBar();
-        startListPetitionsActivity(null);
-    }
-
-    /**
-     * Método que inicia la actividad principal de lista de peticiones con el rol seleccionado.
-     *
-     * @param role Rol seleccionado.
-     */
-    private void startListPetitionsActivity(ConfigurationRole role) {
-        intent.putExtra(ConfigurationConstants.EXTRA_RESOURCE_ROLE_SELECTED, role != null ? role.value : null);
-        intent.setClass(this, PetitionListActivity.class);
+    private void closeActivity() {
+        Intent intent = new Intent(this, LoginActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();
     }
 
-    /**
-     * Método encargado de mostrar la barra de progreso.
-     */
-    private void showProgressBar() {
-        // Recuperamos todos los elementos a procesar.
-        ProgressBar pb = findViewById(R.id.progressBarId);
-        Button verifierBtn = findViewById(R.id.button_access_verifier);
-        Button authBtn = findViewById(R.id.button_access_auth);
-        Button signerBtn = findViewById(R.id.button_access_signer);
-
-        // deshabilitamos los botones.
-        if (verifierBtn != null) {
-            verifierBtn.setEnabled(false);
-        }
-        if (authBtn != null) {
-            authBtn.setEnabled(false);
-        }
-        signerBtn.setEnabled(false);
-
-        // Mostramos la barra de progreso.
-        pb.setVisibility(View.VISIBLE);
+    @Override
+    public void onBackPressed() {
+        closeActivity();
     }
-
 }

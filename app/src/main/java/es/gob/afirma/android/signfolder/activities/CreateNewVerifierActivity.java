@@ -6,7 +6,6 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
@@ -19,11 +18,9 @@ import java.util.List;
 
 import es.gob.afirma.android.signfolder.R;
 import es.gob.afirma.android.signfolder.adapter.AppAdapter;
-import es.gob.afirma.android.signfolder.proxy.CommManager;
 import es.gob.afirma.android.signfolder.proxy.RequestAppConfiguration;
 import es.gob.afirma.android.user.configuration.ConfigurationConstants;
-import es.gob.afirma.android.user.configuration.ConfigurationRole;
-import es.gob.afirma.android.user.configuration.UserConfiguration;
+import es.gob.afirma.android.user.configuration.UserInfo;
 
 /**
  * Clase que gestiona la actividad de creación de nuevos validadores.
@@ -33,7 +30,7 @@ public class CreateNewVerifierActivity extends Activity {
     /**
      * Atributo que representa el usuario seleccionado para la creación del rol.
      */
-    private UserConfiguration user;
+    private UserInfo user;
 
     /**
      * Atributo que representa la lista de aplicaciones.
@@ -63,7 +60,7 @@ public class CreateNewVerifierActivity extends Activity {
         if (userParams == null || userParams.length != 4) {
             throw new IllegalArgumentException("No ha sido posible recuperar el usuario seleccionado previamente.");
         }
-        user = new UserConfiguration();
+        user = new UserInfo();
         user.setID(userParams[0]);
         user.setName(userParams[1]);
         user.setSurname(userParams[2]);
@@ -89,7 +86,7 @@ public class CreateNewVerifierActivity extends Activity {
         // Mostramos el usuario seleccionado.
         String userRepresentation = CreateNewAuthorizedActivity.buildUserRepresentation(user);
         ((TextView) findViewById(R.id.nameFieldValueId)).setText(userRepresentation);
-        if(user.getID() != null){
+        if (user.getID() != null) {
             ((TextView) findViewById(R.id.identifierFieldValueId)).setText(user.getID());
         } else {
             ((TextView) findViewById(R.id.identifierFieldValueId)).setText(R.string.empty_field_value);
@@ -106,24 +103,28 @@ public class CreateNewVerifierActivity extends Activity {
      * Método que configura el comportamiento de los botones de la vista.
      */
     private void setupButtons() {
-        this.findViewById(R.id.finishButton).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                boolean opResult;
-                try {
-                    opResult = CommManager.getInstance().createNewRole(user, ConfigurationRole.VERIFIER, null, appsSelected);
-                } catch (Exception e) {
-                    Log.e("CreateRoleError", "Se ha producido un error durante la creación del validador", e);
-                    opResult = false;
-                }
-                if (opResult) {
-                    setResult(ConfigurationConstants.ACTIVITY_RESULT_CODE_VERIFIER_ROLE_OK);
-                } else {
-                    setResult(ConfigurationConstants.ACTIVITY_RESULT_CODE_VERIFIER_ROLE_KO);
-                }
-                finish();
-            }
-        });
+        //TODO: Servicio deshabilitado. Pendiente de implementación de parte servidora.
+        // Eliminar siguiente linea de código y descomentar las lineas comentadas.
+        this.findViewById(R.id.finishButton).setEnabled(false);
+
+//        this.findViewById(R.id.finishButton).setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                boolean opResult;
+//                try {
+//                    opResult = CommManager.getInstance().createNewRole(user, ConfigurationRole.VERIFIER, null, appsSelected);
+//                } catch (Exception e) {
+//                    Log.e("CreateRoleError", "Se ha producido un error durante la creación del validador", e);
+//                    opResult = false;
+//                }
+//                if (opResult) {
+//                    setResult(ConfigurationConstants.ACTIVITY_RESULT_CODE_VERIFIER_ROLE_OK);
+//                } else {
+//                    setResult(ConfigurationConstants.ACTIVITY_RESULT_CODE_VERIFIER_ROLE_KO);
+//                }
+//                finish();
+//            }
+//        });
     }
 
     /**

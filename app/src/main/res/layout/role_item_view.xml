@@ -5,26 +5,14 @@
     android:background="@color/white">
 
     <ImageView
-        android:id="@+id/statusIconId"
+        android:id="@+id/roleTypeIconId"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerVertical="true"
         android:layout_marginLeft="5dp"
         android:layout_marginRight="5dp"
         android:contentDescription="@string/accessibility_icon_auth_status"
-        android:src="@drawable/icon_check_16" />
-
-    <ImageView
-        android:id="@+id/inputOutputIconId"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerVertical="true"
-        android:layout_marginLeft="5dp"
-        android:layout_marginRight="5dp"
-        android:layout_toEndOf="@+id/statusIconId"
-        android:layout_toRightOf="@+id/statusIconId"
-        android:contentDescription="@string/accessibility_icon_auth_status"
-        android:src="@drawable/icon_authorized_out_16" />
+        android:src="@drawable/icon_signline_firma" />
 
     <TextView
         android:id="@+id/roleNameId"
@@ -34,9 +22,8 @@
         android:layout_marginStart="10dp"
         android:layout_marginLeft="10dp"
         android:layout_marginTop="5dp"
-        android:layout_toEndOf="@+id/inputOutputIconId"
-        android:layout_toRightOf="@+id/inputOutputIconId"
-        android:singleLine="true"
+        android:layout_toEndOf="@+id/roleTypeIconId"
+        android:layout_toRightOf="@+id/roleTypeIconId"
         android:text="@string/user_name"
         android:textAppearance="?android:attr/textAppearanceMedium"
         android:textIsSelectable="false" />
@@ -51,7 +38,7 @@
         android:layout_alignEnd="@id/roleNameId"
         android:layout_alignRight="@id/roleNameId"
         android:singleLine="true"
-        android:text="@string/date"
+        android:text="@string/dni"
         android:textIsSelectable="false" />
 
     <View

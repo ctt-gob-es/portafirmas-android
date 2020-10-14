@@ -4,6 +4,10 @@
         android:alphabeticShortcut="H"
         android:title="@string/help" />
     <item
+        android:id="@+id/changeRole"
+        android:alphabeticShortcut="R"
+        android:title="@string/change_role" />
+    <item
         android:id="@+id/logout"
         android:alphabeticShortcut="L"
         android:title="@string/logout" />

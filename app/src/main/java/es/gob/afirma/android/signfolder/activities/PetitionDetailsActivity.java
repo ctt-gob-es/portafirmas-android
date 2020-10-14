@@ -82,6 +82,8 @@ import es.gob.afirma.android.signfolder.tasks.SignRequestTask;
 import es.gob.afirma.android.signfolder.tasks.VerifyRequestsTask;
 import es.gob.afirma.android.user.configuration.ConfigurationConstants;
 import es.gob.afirma.android.user.configuration.ConfigurationRole;
+import es.gob.afirma.android.user.configuration.RoleInfo;
+import es.gob.afirma.android.user.configuration.UserConfig;
 import es.gob.afirma.android.util.PfLog;
 
 /**
@@ -158,11 +160,18 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
      * Attributo que representa el rol seleccionado durante la autenticación del usuario.
      */
     private ConfigurationRole selectedRole;
+    private RoleInfo roleInfo;
     private ProgressDialog progressDialog = null;
     private TabHost th;
     private CustomAlertDialog dialog;
     private DocItem selectedDocItem = null;
     private boolean writePerm = false;
+    private String dni;
+    private String certB64;
+    private ArrayList<String> appIds;
+    private ArrayList<String> appNames;
+    private UserConfig userConfig;
+
 
     //metodo para crear la pestana del tab customizada
     private static View createTabView(final Context context, final String text) {
@@ -219,7 +228,17 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
         super.onCreate(savedInstanceState);
 
         // recuperamos el rol con el que se ha autenticado el usuario.
-        this.selectedRole = ConfigurationRole.getValue(getIntent().getStringExtra(ConfigurationConstants.EXTRA_RESOURCE_ROLE_SELECTED));
+        this.roleInfo = (RoleInfo) getIntent().getSerializableExtra(ConfigurationConstants.EXTRA_RESOURCE_ROLE_SELECTED);
+        if (roleInfo != null) {
+            this.selectedRole = ConfigurationRole.getValue(roleInfo.getRoleId());
+        }
+
+        // Recuperamos aquellos parámetros necesarios para el cambio de rol.
+        this.dni = (String) getIntent().getStringExtra(PetitionListActivity.EXTRA_RESOURCE_DNI);
+        this.certB64 = (String) getIntent().getStringExtra(PetitionListActivity.EXTRA_RESOURCE_CERT_B64);
+        this.appIds = getIntent().getStringArrayListExtra(PetitionListActivity.EXTRA_RESOURCE_APP_IDS);
+        this.appNames = getIntent().getStringArrayListExtra(PetitionListActivity.EXTRA_RESOURCE_APP_NAMES);
+        this.userConfig = (UserConfig) getIntent().getSerializableExtra(ConfigurationConstants.EXTRA_RESOURCE_USER_CONFIG);
 
 
         int layout;
@@ -286,6 +305,7 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
             } else {
                 final LoadPetitionDetailsTask lpdt = new LoadPetitionDetailsTask(
                         getIntent().getStringExtra(EXTRA_RESOURCE_REQUEST_ID),
+                        this.roleInfo != null ? this.roleInfo.getOwnerDni() : this.dni,
                         CommManager.getInstance(),
                         this);
                 showProgressDialog(getString(R.string.dialog_msg_loading), lpdt);
@@ -1136,10 +1156,17 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
 
         // Deshabilitamos la opción de acceder a la configuración de roles
         // si el rol con el que se ha accedido a la plataforma no es el de firmante.
-        if (this.selectedRole != null &&  menu.findItem(R.id.setting) != null) {
+        if (this.selectedRole != null && menu.findItem(R.id.setting) != null) {
             menu.findItem(R.id.setting).setEnabled(false);
             menu.findItem(R.id.setting).setVisible(false);
         }
+
+        // Si solo existe el rol de firmante, no mostramos la opción de cambiar de rol.
+        if (this.userConfig.getRoles().size() < 1) {
+            menu.findItem(R.id.changeRole).setEnabled(false);
+            menu.findItem(R.id.changeRole).setVisible(false);
+        }
+
         return true;
     }
 
@@ -1165,7 +1192,24 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
                         new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
                         PERMISSION_TO_OPEN_HELP);
             }
+
+        } else if (item.getItemId() == R.id.changeRole) {
+            Intent intent = new Intent(this, LoginWithRoleActivity.class);
+            intent.putExtra(ConfigurationConstants.EXTRA_RESOURCE_USER_CONFIG, this.userConfig);
+            intent.putExtra(PetitionListActivity.EXTRA_RESOURCE_DNI, this.dni);
+            intent.putExtra(PetitionListActivity.EXTRA_RESOURCE_CERT_B64, this.certB64);
+            intent.putExtra(PetitionListActivity.EXTRA_RESOURCE_CERT_ALIAS, this.certAlias);
+            intent.putStringArrayListExtra(PetitionListActivity.EXTRA_RESOURCE_APP_IDS, this.appIds);
+            intent.putStringArrayListExtra(PetitionListActivity.EXTRA_RESOURCE_APP_NAMES, this.appNames);
+
+            // Vaciamos la pila de actividades...
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            // Iniciamos la nueva actividad.
+            startActivity(intent);
+            // Finalizamos la actividad actual.
+            finish();
         }
+
         // Cerrar sesion
         else if (item.getItemId() == R.id.logout) {
             showConfirmExitDialog();

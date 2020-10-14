@@ -27,7 +27,6 @@ import es.gob.afirma.android.signfolder.SFConstants;
 import es.gob.afirma.android.signfolder.proxy.parsers.ApplicationListResponseParser;
 import es.gob.afirma.android.signfolder.proxy.parsers.ApproveResponseParser;
 import es.gob.afirma.android.signfolder.proxy.parsers.ClaveLoginRequestResponseParser;
-import es.gob.afirma.android.signfolder.proxy.parsers.CreateRoleResponseParser;
 import es.gob.afirma.android.signfolder.proxy.parsers.FireLoadDataResponseParser;
 import es.gob.afirma.android.signfolder.proxy.parsers.FireSignResponseParser;
 import es.gob.afirma.android.signfolder.proxy.parsers.LoginTokenResponseParser;
@@ -39,10 +38,15 @@ import es.gob.afirma.android.signfolder.proxy.parsers.RegisterOnNotificationPars
 import es.gob.afirma.android.signfolder.proxy.parsers.RejectsResponseParser;
 import es.gob.afirma.android.signfolder.proxy.parsers.RequestDetailResponseParser;
 import es.gob.afirma.android.signfolder.proxy.parsers.RequestListResponseParser;
+import es.gob.afirma.android.signfolder.proxy.parsers.UserConfigurationResponseParser;
 import es.gob.afirma.android.signfolder.proxy.parsers.VerifyResponseParser;
-import es.gob.afirma.android.user.configuration.AuthorizedUser;
+import es.gob.afirma.android.user.configuration.ApplicationFilter;
 import es.gob.afirma.android.user.configuration.ConfigurationRole;
-import es.gob.afirma.android.user.configuration.UserConfiguration;
+import es.gob.afirma.android.user.configuration.GenericFilter;
+import es.gob.afirma.android.user.configuration.RoleInfo;
+import es.gob.afirma.android.user.configuration.TagFilter;
+import es.gob.afirma.android.user.configuration.UserConfig;
+import es.gob.afirma.android.user.configuration.UserFilters;
 import es.gob.afirma.android.util.AOUtil;
 import es.gob.afirma.android.util.Base64;
 import es.gob.afirma.android.util.PfLog;
@@ -82,11 +86,15 @@ public final class CommManager extends CommManagerOldVersion {
     private static final String OPERATION_CLAVE_LOGIN_REQUEST = "14"; //$NON-NLS-1$
     private static final String OPERATION_PRESIGN_CLAVE_FIRMA = "16"; //$NON-NLS-1$
     private static final String OPERATION_POSTSIGN_CLAVE_FIRMA = "17"; //$NON-NLS-1$
-    private static final String OPERATION_GET_USERS_BY_ROLE = "18"; //$NON-NLS-1$
-    private static final String OPERATION_GET_USERS = "19"; //$NON-NLS-1$
+    private static final String OPERATION_GET_USER_CONFIG = "18"; //$NON-NLS-1$
+
+    // TODO: Identificador de servicio no habilitado aún. Servicio de busqueda de usuario.
+//    private static final String OPERATION_GET_USERS = "19"; //$NON-NLS-1$
+
     private static final String OPERATION_VERIFY = "20"; //$NON-NLS-1$
-    private static final String OPERATION_CREATE_ROLE = "21"; //$NON-NLS-1$
-    private static final String OPERATION_APP_LIST_NEW = "22"; //$NON-NLS-1$
+
+    //TODO: Identificador de servicio no habilitado aún. Servicio de creación de role.
+//    private static final String OPERATION_CREATE_ROLE = "21"; //$NON-NLS-1$
 
     private static final int BUFFER_SIZE = 1024;
 
@@ -365,14 +373,15 @@ public final class CommManager extends CommManagerOldVersion {
      * Obtiene los datos de un documento.
      *
      * @param requestId Identificador de la petici&oacute;n.
+     * @param ownerId DNI del usuario propietario de la petici&oacute;n.
      * @return Datos del documento.
      * @throws SAXException Cuando se encuentra un XML mal formado.
      * @throws IOException  Cuando existe alg&uacute;n problema en la lectura/escritura
      *                      de XML o al recuperar la respuesta del servidor.
      */
-    public RequestDetail getRequestDetail(final String requestId) throws SAXException, IOException {
+    public RequestDetail getRequestDetail(final String requestId, final String ownerId) throws SAXException, IOException {
         if (!oldProxy) {
-            String xml = XmlRequestsFactory.createDetailRequest(requestId);
+            String xml = XmlRequestsFactory.createDetailRequest(requestId, ownerId);
             String url = this.signFolderProxyUrl + createUrlParams(OPERATION_DETAIL, xml);
             return RequestDetailResponseParser.parse(getRemoteDocument(url));
         } else {
@@ -397,11 +406,7 @@ public final class CommManager extends CommManagerOldVersion {
         // Preparamos la peticion. En caso de usarse el proxy nuevo, no se necesita el certificado
         String xml = XmlRequestsFactory.createAppListRequest(this.oldProxy ? certB64 : null);
         String url;
-        if (this.oldProxy) {
-            url = this.signFolderProxyUrl + createUrlParams(OPERATION_APP_LIST, xml);
-        } else {
-            url = this.signFolderProxyUrl + createUrlParams(OPERATION_APP_LIST_NEW, xml);
-        }
+        url = this.signFolderProxyUrl + createUrlParams(OPERATION_APP_LIST, xml);
         return ApplicationListResponseParser.parse(getRemoteDocument(url));
     }
 
@@ -690,7 +695,7 @@ public final class CommManager extends CommManagerOldVersion {
 
         PartialResponseRolesList partialResult;
         String xml = XmlRequestsFactory.createRequestListRoles(role, numPage, pageSize);
-        String url = this.signFolderProxyUrl + createUrlParams(OPERATION_GET_USERS_BY_ROLE, xml);
+        String url = this.signFolderProxyUrl + createUrlParams(OPERATION_GET_USER_CONFIG, xml);
 
         partialResult = RequestListResponseParser.parseRolesReq(getRemoteDocument(url));
         if (role.equals(ConfigurationRole.AUTHORIZED)) {
@@ -701,55 +706,63 @@ public final class CommManager extends CommManagerOldVersion {
         return new ArrayList<Object>();
     }
 
-    /**
-     * Método que obtiene la lista de usuarios del portafirmas-proxy.
-     *
-     * @param numPage  Número de página.
-     * @param pageSize Tamaño de página.
-     * @param filter   Filtro de usuario.
-     * @return una lista de usuarios.
-     * @throws IOException               Si el proceso falla.
-     * @throws SAXException              Si el proceso falla.
-     * @throws ServerControlledException Si hay algún problema de conexión con el proxy.
-     */
-    public List<UserConfiguration> getListUser(final int numPage, final int pageSize, String filter)
-            throws IOException, SAXException, ServerControlledException {
-
-        PartialResponseUserList partialResult;
-        String xml = XmlRequestsFactory.createRequestListUsers(numPage, pageSize, filter);
-        String url = this.signFolderProxyUrl + createUrlParams(OPERATION_GET_USERS, xml);
-        partialResult = RequestListResponseParser.parseUsersReq(getRemoteDocument(url));
-        return partialResult.getUsersList();
+    public UserConfig getUserConfig() throws IOException, SAXException, ServerControlledException {
+        String xml = XmlRequestsFactory.createRequestGetUserConfig();
+        String url = this.signFolderProxyUrl + createUrlParams(OPERATION_GET_USER_CONFIG, xml);
+        return UserConfigurationResponseParser.parseUserConfigReq(getRemoteDocument(url));
     }
 
-    /**
-     * Método que lanza una petición al portafirmas-proxy para crear un nuevo rol.
-     *
-     * @param user     Usuario que genera la petición de creación.
-     * @param role     Rol a crear.
-     * @param appIds   Lista con los identificadores de las de aplicaciones a las que tendrá acceso
-     *                 el validador (solo aplicable a creación de rol de tipo validador).
-     * @param authUser Objeto que contiene los valores de los campos asociados a
-     *                 la creación de una nueva autorización.
-     * @return <i>True</i> si la rol se ha creado correctamente y <i>False</i> en caso contrario.
-     * @throws IOException               si algo falla.
-     * @throws SAXException              si algo falla.
-     * @throws ServerControlledException si algo falla.
-     */
-    public boolean createNewRole(UserConfiguration user, ConfigurationRole role,
-                                 AuthorizedUser authUser, List<String> appIds)
-            throws IOException, SAXException, ServerControlledException {
+    //TODO: Método deshabilitado. Pendiente de la implementación de la parte servidora. Servicio de creación de nuevo rol.
+//    /**
+//     * Método que obtiene la lista de usuarios del portafirmas-proxy.
+//     *
+//     * @param numPage  Número de página.
+//     * @param pageSize Tamaño de página.
+//     * @param filter   Filtro de usuario.
+//     * @return una lista de usuarios.
+//     * @throws IOException               Si el proceso falla.
+//     * @throws SAXException              Si el proceso falla.
+//     * @throws ServerControlledException Si hay algún problema de conexión con el proxy.
+//     */
+//    public List<UserConfiguration> getListUser(final int numPage, final int pageSize, String filter)
+//            throws IOException, SAXException, ServerControlledException {
+//
+//        PartialResponseUserList partialResult;
+//        String xml = XmlRequestsFactory.createRequestListUsers(numPage, pageSize, filter);
+//        String url = this.signFolderProxyUrl + createUrlParams(OPERATION_GET_USERS, xml);
+//        partialResult = RequestListResponseParser.parseUsersReq(getRemoteDocument(url));
+//        return partialResult.getUsersList();
+//    }
 
-        CreationRoleResponse result;
-        String xml = XmlRequestsFactory.createRequestCreateRole(user, role, authUser, appIds);
-        String url = this.signFolderProxyUrl + createUrlParams(OPERATION_CREATE_ROLE, xml);
-        result = CreateRoleResponseParser.parseResponse(getRemoteDocument(url));
-        if (result == null) {
-            return false;
-        } else {
-            return result.isSuccess();
-        }
-    }
+    //TODO: Método deshabilitado. Pendiente de la implementación de la parte servidora. Servicio de creación de nuevo rol.
+//    /**
+//     * Método que lanza una petición al portafirmas-proxy para crear un nuevo rol.
+//     *
+//     * @param user     Usuario que genera la petición de creación.
+//     * @param role     Rol a crear.
+//     * @param appIds   Lista con los identificadores de las de aplicaciones a las que tendrá acceso
+//     *                 el validador (solo aplicable a creación de rol de tipo validador).
+//     * @param authUser Objeto que contiene los valores de los campos asociados a
+//     *                 la creación de una nueva autorización.
+//     * @return <i>True</i> si la rol se ha creado correctamente y <i>False</i> en caso contrario.
+//     * @throws IOException               si algo falla.
+//     * @throws SAXException              si algo falla.
+//     * @throws ServerControlledException si algo falla.
+//     */
+//    public boolean createNewRole(UserConfiguration user, ConfigurationRole role,
+//                                 AuthorizedUser authUser, List<String> appIds)
+//            throws IOException, SAXException, ServerControlledException {
+//
+//        CreationRoleResponse result;
+//        String xml = XmlRequestsFactory.createRequestCreateRole(user, role, authUser, appIds);
+//        String url = this.signFolderProxyUrl + createUrlParams(OPERATION_CREATE_ROLE, xml);
+//        result = CreateRoleResponseParser.parseResponse(getRemoteDocument(url));
+//        if (result == null) {
+//            return false;
+//        } else {
+//            return result.isSuccess();
+//        }
+//}
 
 
 //	private static void printText(String text) {

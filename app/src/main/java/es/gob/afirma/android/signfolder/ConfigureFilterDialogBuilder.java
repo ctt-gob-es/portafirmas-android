@@ -44,7 +44,8 @@ public final class ConfigureFilterDialogBuilder {
     static final String FILTERS_DATE_END = "filters_date_end"; //$NON-NLS-1$
     static final String FILTERS_SHOW_UNVERIFIED = "filters_show_unverified"; //$NON-NLS-1$
     static final String FILTERS_USER_ID = "filters_user_ID"; //$NON-NLS-1$
-    static final String FILTERS_USER_ROLE = "folters_user_role"; //$NON-NLS-1$
+    static final String FILTERS_USER_ROLE = "filters_user_role"; //$NON-NLS-1$
+    static final String FILTERS_OWNER_ID = "filter_owner_id"; //$NON-NLS-1$
 
     private static final String KEY_ORDER = "orderAscDesc="; //$NON-NLS-1$
     private static final String VALUE_ORDER_DESC = "desc"; //$NON-NLS-1$
@@ -64,6 +65,7 @@ public final class ConfigureFilterDialogBuilder {
     private static final String KEY_FILTER_SHOW_UNVERIFIED = "showUnverified="; //$NON-NLS-1$
     private static final String KEY_FILTER_USER_ID = "userId="; //$NON-NLS-1$
     private static final String KEY_FILTER_USER_ROLE = "userRole="; //$NON-NLS-1$
+    private static final String KEY_FILTER_OWNER_ID = "ownerId="; //$NON-NLS-1$
 
     /**
      * Static attribute that represents the set of applications showed in the filter spiner of applications.
@@ -171,14 +173,19 @@ public final class ConfigureFilterDialogBuilder {
         } else {
             String userId = "";
             String userRole = "";
+            String ownerId = "";
             if (config.getUserId() != null) {
                 userId = config.userId;
             }
             if (config.getUserRole() != null) {
                 userRole = config.userRole;
             }
+            if(config.getOwnerId() != null){
+                ownerId = config.ownerId;
+            }
             filters.add(KEY_FILTER_USER_ID + userId);
             filters.add(KEY_FILTER_USER_ROLE + userRole);
+            filters.add(KEY_FILTER_OWNER_ID + ownerId);
             if (config.getOrderAttribute() == null) {
                 filters.add(KEY_ORDER_ATTR + VALUE_ORDER_ATTR_DATE);
                 filters.add(KEY_ORDER + VALUE_ORDER_DESC);
@@ -399,6 +406,7 @@ public final class ConfigureFilterDialogBuilder {
         private boolean showUnverified;
         private String userId;
         private String userRole;
+        private String ownerId;
 
         public FilterConfig() {
             reset();
@@ -498,6 +506,14 @@ public final class ConfigureFilterDialogBuilder {
             this.userRole = userRole;
         }
 
+        public String getOwnerId() {
+            return ownerId;
+        }
+
+        public void setOwnerId(String ownerId) {
+            this.ownerId = ownerId;
+        }
+
         public FilterConfig reset() {
             this.enabled = false;
             this.orderAttribute = null;
@@ -532,6 +548,7 @@ public final class ConfigureFilterDialogBuilder {
             newBundle.putBoolean(ConfigureFilterDialogBuilder.FILTERS_SHOW_UNVERIFIED, this.showUnverified);
             newBundle.putString(ConfigureFilterDialogBuilder.FILTERS_USER_ID, this.userId);
             newBundle.putString(ConfigureFilterDialogBuilder.FILTERS_USER_ROLE, this.userRole);
+            newBundle.putString(ConfigureFilterDialogBuilder.FILTERS_OWNER_ID, this.ownerId);
 
             return newBundle;
         }

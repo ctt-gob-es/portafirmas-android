@@ -5,10 +5,16 @@
     <item android:id="@+id/see_unresolveds" android:title="@string/see_unresolves" />
     <item android:id="@+id/see_rejects" android:title="@string/see_rejects" />
     <item android:id="@+id/notifications" android:title="@string/enable_notifications" android:visible="false"></item>
+    <!-- TODO: descomentar cuando el servicio de creación roles y busqueda de usuarios este disponible en portafirmas-web.
     <item
         android:id="@+id/setting"
         android:alphabeticShortcut="S"
         android:title="@string/settings" />
+        -->
+    <item
+        android:id="@+id/changeRole"
+        android:alphabeticShortcut="R"
+        android:title="@string/change_role" />
     <item android:id="@+id/help" android:alphabeticShortcut="H" android:title="@string/help"></item>
     <item android:id="@+id/logout" android:alphabeticShortcut="L" android:title="@string/logout"></item>
 </menu>

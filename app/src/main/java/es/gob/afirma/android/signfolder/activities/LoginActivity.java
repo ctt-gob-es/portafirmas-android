@@ -56,6 +56,7 @@ import es.gob.afirma.android.signfolder.tasks.LoadConfigurationDataTask.LoadConf
 import es.gob.afirma.android.signfolder.tasks.LoginRequestValidationTask;
 import es.gob.afirma.android.signfolder.tasks.OpenHelpDocumentTask;
 import es.gob.afirma.android.user.configuration.ConfigurationConstants;
+import es.gob.afirma.android.user.configuration.UserConfig;
 import es.gob.afirma.android.util.Base64;
 import es.gob.afirma.android.util.PfLog;
 
@@ -466,7 +467,7 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
     /**
      * Muestra un di&aacute;logo de espera con un mensaje.
      */
-    private void showProgressDialog(final String message, final Context ctx, final AsyncTask... tasks) {
+    private void showProgressDialog(final String message, final Context ctx, final AsyncTask<?, ?, ?>... tasks) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -483,7 +484,7 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
                     public boolean onKey(final DialogInterface dialog, final int keyCode, final KeyEvent event) {
                         if (keyCode == KeyEvent.KEYCODE_BACK) {
                             if (tasks != null) {
-                                for (AsyncTask task : tasks) {
+                                for (AsyncTask<?, ?, ?> task : tasks) {
                                     if (task != null) {
                                         task.cancel(true);
                                     }
@@ -578,8 +579,6 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
 
     @Override
     public void configurationLoadSuccess(final RequestAppConfiguration appConfig, final ValidationLoginResult loginResult) {
-        dismissProgressDialog();
-
         final Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
 
         if (loginResult != null && loginResult.getDni() != null) {
@@ -594,10 +593,22 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
         // Almacenamos la lista de aplicaciones, con su correspondiente numero asociado al picker
         ConfigureFilterDialogBuilder.updateApps(appConfig.getAppNamesList());
 
+        // Solicitamos la configuración de usuario y la añadimos en la llamada de la siguiente actividad.
+        UserConfig userConfig = null;
+        try {
+            userConfig = CommManager.getInstance().getUserConfig();
+        } catch (Exception e) {
+            PfLog.e(SFConstants.LOG_TAG, "No ha sido posible cargar la configuración de usuario: " + e.getMessage());
+            showErrorDialog("No ha sido posible cargar la configuración de usuario.");
+            this.recreate();
+        }
+        intent.putExtra(ConfigurationConstants.EXTRA_RESOURCE_USER_CONFIG, userConfig);
+
+        dismissProgressDialog();
+
         // Si el usuario tiene roles disponibles, llamamos primero a la actividad encargada de
         // gestionar la selección de roles.
-        if (appConfig.getRoles() != null && !appConfig.getRoles().isEmpty()) {
-            intent.putStringArrayListExtra(ConfigurationConstants.VALIDATION_RESULT_ROLES, appConfig.getRoles());
+        if (userConfig != null && userConfig.getRoles() != null && !userConfig.getRoles().isEmpty()) {
             intent.setClass(this, LoginWithRoleActivity.class);
         } else {
             intent.setClass(this, PetitionListActivity.class);

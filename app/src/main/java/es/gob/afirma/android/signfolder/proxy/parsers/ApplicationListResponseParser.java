@@ -16,7 +16,6 @@ public final class ApplicationListResponseParser {
 
     private static final String APP_LIST_NODE = "appConf"; //$NON-NLS-1$
     private static final String APP_ID_ATTR = "id"; //$NON-NLS-1$
-    private static final String ROLE_NODE = "roles"; //$NON-NLS-1$
 
 
     /**
@@ -40,7 +39,6 @@ public final class ApplicationListResponseParser {
 
         final ArrayList<String> appIds = new ArrayList<>();
         final ArrayList<String> appNames = new ArrayList<>();
-        final ArrayList<String> roles = new ArrayList<>();
         final NodeList appNodes = doc.getDocumentElement().getChildNodes();
         for (int i = 0; i < appNodes.getLength(); i++) {
             // Nos aseguramos de procesar solo nodos de tipo Element
@@ -49,21 +47,9 @@ public final class ApplicationListResponseParser {
                 break;
             }
             try {
-                if (ROLE_NODE.equalsIgnoreCase(appNodes.item(i).getNodeName())) {
-                    final NodeList rolesNode = appNodes.item(i).getChildNodes();
-                    for (int e = 0; e < rolesNode.getLength(); e++) {
-                        e = XmlUtils.nextNodeElementIndex(rolesNode, e);
-                        if (e == -1) {
-                            break;
-                        }
-                        String role = XmlUtils.getTextContent(rolesNode.item(e));
-                        roles.add(normalizeValue(role));
-                    }
-                } else {
-                    appIds.add(appNodes.item(i).getAttributes().getNamedItem(APP_ID_ATTR).getNodeValue());
-                    final String appName = XmlUtils.getTextContent(appNodes.item(i));
-                    appNames.add(normalizeValue(appName));
-                }
+                appIds.add(appNodes.item(i).getAttributes().getNamedItem(APP_ID_ATTR).getNodeValue());
+                final String appName = XmlUtils.getTextContent(appNodes.item(i));
+                appNames.add(normalizeValue(appName));
             } catch (final Exception e) {
                 throw new IllegalArgumentException("Se encontro un nodo de aplicacion no valido: " + e, e); //$NON-NLS-1$
             }
@@ -72,7 +58,6 @@ public final class ApplicationListResponseParser {
         final RequestAppConfiguration config = new RequestAppConfiguration();
         config.setAppIdsList(appIds);
         config.setAppNamesList(appNames);
-        config.setRoles(roles);
 
         return config;
     }

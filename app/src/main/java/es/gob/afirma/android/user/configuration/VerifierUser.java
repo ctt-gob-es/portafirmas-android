@@ -3,7 +3,7 @@ package es.gob.afirma.android.user.configuration;
 /**
  * Clase que representa el objeto Validador.
  */
-public class VerifierUser extends UserConfiguration {
+public class VerifierUser extends UserInfo {
 
     /**
      * Atributo que representa el identificador del validador.

@@ -44,6 +44,8 @@ import es.gob.afirma.android.signfolder.tasks.OpenHelpDocumentTask;
 import es.gob.afirma.android.user.configuration.AuthorizedUser;
 import es.gob.afirma.android.user.configuration.ConfigurationConstants;
 import es.gob.afirma.android.user.configuration.ConfigurationRole;
+import es.gob.afirma.android.user.configuration.RoleInfo;
+import es.gob.afirma.android.user.configuration.UserConfig;
 import es.gob.afirma.android.user.configuration.VerifierUser;
 import es.gob.afirma.android.util.PfLog;
 
@@ -58,9 +60,23 @@ public final class UserConfigurationActivity extends Activity {
     RequestAppConfiguration apps = new RequestAppConfiguration();
 
     /**
-     * Atributo que representa el actual rol seleccionado en la vista de configuración.
+     * Atributo que representa el actual rol seleccionado en la vista de configuraci&oacute;n.
      */
     private ConfigurationRole currentRoleSelected = ConfigurationRole.AUTHORIZED;
+
+    /**
+     * Atributo que representa la configuraci&oacute;n de usuario.
+     */
+    private UserConfig userConfig;
+
+    /**
+     * Atributos necesarios para el cambio de rol en caso de que solicite.
+     */
+    private String dni;
+    private String certB64;
+    private String certAlias;
+    private ArrayList<String> appIds;
+    private ArrayList<String> appNames;
 
     /**
      * Atributo que representa las pestañas principales de selección de roles.
@@ -110,9 +126,20 @@ public final class UserConfigurationActivity extends Activity {
         setResult(ConfigurationConstants.ACTIVITY_RESULT_CODE_NONE);
 
         // Recuperamos el rol seleccionado por el usuario durante la autenticación.
-        String selectedRoleAsString = intent.
-                getStringExtra(ConfigurationConstants.EXTRA_RESOURCE_ROLE_SELECTED);
-        if (selectedRoleAsString != null) {
+        RoleInfo roleInfo = (RoleInfo) intent.
+                getSerializableExtra(ConfigurationConstants.EXTRA_RESOURCE_ROLE_SELECTED);
+
+        // Recuperamos la configuración de usuario.
+        this.userConfig = (UserConfig) intent.getSerializableExtra(ConfigurationConstants.EXTRA_RESOURCE_USER_CONFIG);
+
+        // Recuperamos aquellos parámetros necesarios para el cambio de rol.
+        this.dni = (String) intent.getStringExtra(PetitionListActivity.EXTRA_RESOURCE_DNI);
+        this.certB64 = (String) intent.getStringExtra(PetitionListActivity.EXTRA_RESOURCE_CERT_B64);
+        this.certAlias = (String) intent.getStringExtra(PetitionListActivity.EXTRA_RESOURCE_CERT_ALIAS);
+        this.appIds = intent.getStringArrayListExtra(PetitionListActivity.EXTRA_RESOURCE_APP_IDS);
+        this.appNames = intent.getStringArrayListExtra(PetitionListActivity.EXTRA_RESOURCE_APP_NAMES);
+
+        if (roleInfo != null) {
             setResult(ConfigurationConstants.ACTIVITY_RESULT_CODE_ACCESS_DENEGATED);
             finish();
         } else {
@@ -149,6 +176,12 @@ public final class UserConfigurationActivity extends Activity {
         getMenuInflater().inflate(
                 R.menu.activity_configuration_options_menu, menu);
 
+        // Si solo existe el rol de firmante, no mostramos la opción de cambiar de rol.
+        if (this.userConfig.getRoles().size() < 1) {
+            menu.findItem(R.id.changeRole).setEnabled(false);
+            menu.findItem(R.id.changeRole).setVisible(false);
+        }
+
         return true;
     }
 
@@ -175,6 +208,22 @@ public final class UserConfigurationActivity extends Activity {
                         new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
                         PetitionDetailsActivity.PERMISSION_TO_OPEN_HELP);
             }
+            // Cambiar de rol.
+        } else if (item.getItemId() == R.id.changeRole) {
+            Intent intent = new Intent(this, LoginWithRoleActivity.class);
+            intent.putExtra(ConfigurationConstants.EXTRA_RESOURCE_USER_CONFIG, this.userConfig);
+            intent.putExtra(PetitionListActivity.EXTRA_RESOURCE_DNI, this.dni);
+            intent.putExtra(PetitionListActivity.EXTRA_RESOURCE_CERT_B64, this.certB64);
+            intent.putExtra(PetitionListActivity.EXTRA_RESOURCE_CERT_ALIAS, this.certAlias);
+            intent.putStringArrayListExtra(PetitionListActivity.EXTRA_RESOURCE_APP_IDS, this.appIds);
+            intent.putStringArrayListExtra(PetitionListActivity.EXTRA_RESOURCE_APP_NAMES, this.appNames);
+
+            // Vaciamos la pila de actividades...
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            // Iniciamos la nueva actividad.
+            startActivity(intent);
+            // Finalizamos la actividad actual.
+            finish();
         }
         // Cerrar sesion
         else if (item.getItemId() == R.id.logout) {
@@ -489,7 +538,7 @@ public final class UserConfigurationActivity extends Activity {
     public void setViewErrorGettingUsers() {
         // recuperamos el elemento  a actualizar.
         View viewById;
-        if(this.currentRoleSelected.equals(ConfigurationRole.AUTHORIZED)) {
+        if (this.currentRoleSelected.equals(ConfigurationRole.AUTHORIZED)) {
             viewById = findViewById(R.id.authData);
         } else {
             viewById = findViewById(R.id.verifierData);

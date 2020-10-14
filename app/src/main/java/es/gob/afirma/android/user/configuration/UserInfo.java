@@ -4,9 +4,9 @@ import java.io.Serializable;
 import java.util.List;
 
 /**
- * Clase que representa la información de configuración.
+ * Clase que representa la información de usuario.
  */
-public class UserConfiguration implements Serializable {
+public class UserInfo implements Serializable {
 
     /**
      * Atributo que representa el nombre de usuario.

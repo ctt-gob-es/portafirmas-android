@@ -84,7 +84,7 @@
     <string name="addRoleBtn">Añadir nuevo</string>
     <string name="searchUserInputField">Buscar usuario por DNI, nombre o sede…</string>
     <string name="ContentDescriptionSearchBtn">Bot\u00F3n de b\u00FAsqueda de usuario.</string>
-    <string name="choose_role_message">Se ha detectado m\u00E1s de un rol. Por favor, seleccione el rol con el que desea acceder:</string>
+    <string name="choose_role_message">Por favor, seleccione el rol con el que desea acceder:</string>
     <string name="identifier">Identificador</string>
     <string name="endDate">Revocaci\u00F3n</string>
     <string name="status_key">Estado</string>
@@ -106,6 +106,8 @@
     <string name="verified">Validada</string>
     <string name="pending">Pendiente de validación</string>
     <string name="rejected">Rechazada</string>
+    <string name="dni">DNI</string>
+    <string name="change_role">Cambiar rol</string>
 
     <string name="button_import_cert">Importar certificado</string>
     <string name="button_login">Acceder</string>
