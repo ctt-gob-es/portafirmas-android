@@ -17,6 +17,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Base64;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -287,7 +288,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
 
         getListView().setOnItemClickListener(this);
 
-        if (!CommManager.getInstance().isOldProxy()) {
+        if (!CommManager.getInstance().isOldProxy() && userConfig.isSimConfig()) {
             checkChangesOnNotificationToken();
         }
 
@@ -696,11 +697,33 @@ public final class PetitionListActivity extends WebViewParentActivity implements
                     AppPreferences.PREFERENCES_KEY_PREFIX_NOTIFICATION_ACTIVE + userProxyId,
                     false);
 
+
+            // Comprobamos el estado de las notificaciones recibido en la configuración de usuario.
+            boolean isPushNotActived = this.userConfig.isPushStatus();
+
+            // Comprobamos si al usuario se le está permitido habilitar las notificaciones push.
+            boolean isPushActivationEnabled = this.userConfig.isSimConfig();
+
             // Si el usuario no esta registrado en el sistema de notificaciones, le mostramos
             // la opcion para que lo pueda hacer
-            if (!registered) {
+            if (!registered && isPushActivationEnabled) {
                 menu.findItem(R.id.notifications).setVisible(true);
+            } else {
+
+                // Si el usuario ya está registrado, comprobamos si se debe mostrar
+                // la opción de actualizar el estado de las notificaciones push.
+                if (isPushActivationEnabled && isPushNotActived) {
+                    // Mostramos la opción de deshabilitar las notificaciones.
+                    menu.findItem(R.id.notifications).setTitle(R.string.disable_notifications);
+                    menu.findItem(R.id.notifications).setVisible(true);
+                } else if (isPushActivationEnabled && !isPushNotActived) {
+                    // Mostramos la opción de habilitar las notificaciones.
+                    menu.findItem(R.id.notifications).setTitle(R.string.enable_notifications);
+                    menu.findItem(R.id.notifications).setVisible(true);
+                }
+
             }
+
         }
 
         return true;
@@ -758,6 +781,31 @@ public final class PetitionListActivity extends WebViewParentActivity implements
             if (checkPlayServices()) {
                 // Start IntentService to register this application with FireBase.
                 registerReceiver();
+            }
+            String result = null;
+            // Si se ha solicitado activarlas...
+            if (item.getTitle().equals(getString(R.string.enable_notifications))) {
+                // Comprobamos que el token está actualizado.
+                checkChangesOnNotificationToken();
+                // y activamos las notificaciones.
+                try {
+                    result = CommManager.getInstance().updatePushNotifications(true);
+                } catch (Exception e) {
+                    Log.e("es.gob.afirma", "No ha sido posible actualizar el estado de las notificaciones push: " + e.getMessage()); //$NON-NLS-1$ //$NON-NLS-2$
+                    Toast.makeText(this, R.string.toast_msg_update_push_nots_error, Toast.LENGTH_LONG).show();
+                }
+            }
+            // Si se ha solicitado desdctivarlas...
+            else if (item.getTitle().equals(getString(R.string.disable_notifications))) {
+                try {
+                    result = CommManager.getInstance().updatePushNotifications(false);
+                } catch (Exception e) {
+                    Log.e("es.gob.afirma", "No ha sido posible actualizar el estado de las notificaciones push: " + e.getMessage()); //$NON-NLS-1$ //$NON-NLS-2$
+                    Toast.makeText(this, R.string.toast_msg_update_push_nots_error, Toast.LENGTH_LONG).show();
+                }
+            }
+            if (result != null) {
+                Toast.makeText(this, "Notificaciones actualizadas: " + result, Toast.LENGTH_LONG).show(); //$NON-NLS-1$
             }
         }
         // Configuración de usuario

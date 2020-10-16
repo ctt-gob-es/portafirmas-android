@@ -515,4 +515,17 @@ final class XmlRequestsFactory {
         sb.append("<rqsrcnfg />");
         return sb.toString();
     }
+
+    /**
+     * Método encargado de crear una petición de actualización del estado de las notificaciones push.
+     * @param activePushNots boolean que indica si se quieren activar o desactivar las notificaciones push.
+     * @return La petición de actualización creada.
+     */
+    public static String createUpdatePushNotsRequest(boolean activePushNots){
+        StringBuilder sb = new StringBuilder();
+        sb.append("<pdtpshsttsrq>");
+        sb.append(activePushNots);
+        sb.append("</pdtpshsttsrq>");
+        return sb.toString();
+    }
 }

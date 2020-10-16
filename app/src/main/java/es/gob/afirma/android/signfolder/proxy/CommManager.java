@@ -38,15 +38,11 @@ import es.gob.afirma.android.signfolder.proxy.parsers.RegisterOnNotificationPars
 import es.gob.afirma.android.signfolder.proxy.parsers.RejectsResponseParser;
 import es.gob.afirma.android.signfolder.proxy.parsers.RequestDetailResponseParser;
 import es.gob.afirma.android.signfolder.proxy.parsers.RequestListResponseParser;
+import es.gob.afirma.android.signfolder.proxy.parsers.UpdatePushNotsResponseParser;
 import es.gob.afirma.android.signfolder.proxy.parsers.UserConfigurationResponseParser;
 import es.gob.afirma.android.signfolder.proxy.parsers.VerifyResponseParser;
-import es.gob.afirma.android.user.configuration.ApplicationFilter;
 import es.gob.afirma.android.user.configuration.ConfigurationRole;
-import es.gob.afirma.android.user.configuration.GenericFilter;
-import es.gob.afirma.android.user.configuration.RoleInfo;
-import es.gob.afirma.android.user.configuration.TagFilter;
 import es.gob.afirma.android.user.configuration.UserConfig;
-import es.gob.afirma.android.user.configuration.UserFilters;
 import es.gob.afirma.android.util.AOUtil;
 import es.gob.afirma.android.util.Base64;
 import es.gob.afirma.android.util.PfLog;
@@ -95,6 +91,8 @@ public final class CommManager extends CommManagerOldVersion {
 
     //TODO: Identificador de servicio no habilitado aún. Servicio de creación de role.
 //    private static final String OPERATION_CREATE_ROLE = "21"; //$NON-NLS-1$
+
+    private static final String OPERATION_UPDATE_PUSH_NOTIFICATIONS = "23";
 
     private static final int BUFFER_SIZE = 1024;
 
@@ -373,7 +371,7 @@ public final class CommManager extends CommManagerOldVersion {
      * Obtiene los datos de un documento.
      *
      * @param requestId Identificador de la petici&oacute;n.
-     * @param ownerId DNI del usuario propietario de la petici&oacute;n.
+     * @param ownerId   DNI del usuario propietario de la petici&oacute;n.
      * @return Datos del documento.
      * @throws SAXException Cuando se encuentra un XML mal formado.
      * @throws IOException  Cuando existe alg&uacute;n problema en la lectura/escritura
@@ -710,6 +708,20 @@ public final class CommManager extends CommManagerOldVersion {
         String xml = XmlRequestsFactory.createRequestGetUserConfig();
         String url = this.signFolderProxyUrl + createUrlParams(OPERATION_GET_USER_CONFIG, xml);
         return UserConfigurationResponseParser.parseUserConfigReq(getRemoteDocument(url));
+    }
+
+    /**
+     * Método que actualiza el estado de las notificaciones push.
+     *
+     * @param activePushNots Nuevo estado de las notificaciones.
+     * @return la respuesta generada por portafrimas-web.
+     * @throws IOException  Si algo falla en el proceso.
+     * @throws SAXException Si algo falla en el proceso.
+     */
+    public String updatePushNotifications(boolean activePushNots) throws IOException, SAXException {
+        String xml = XmlRequestsFactory.createUpdatePushNotsRequest(activePushNots);
+        String url = this.signFolderProxyUrl + createUrlParams(OPERATION_UPDATE_PUSH_NOTIFICATIONS, xml);
+        return UpdatePushNotsResponseParser.parse(getRemoteDocument(url));
     }
 
     //TODO: Método deshabilitado. Pendiente de la implementación de la parte servidora. Servicio de creación de nuevo rol.
