@@ -139,10 +139,9 @@
     <string name="label_filters_by_date_end">Fecha fin</string>
     <string name="label_filters_show_verified_rq">Mostrar peticiones no validadas</string>
     <string name="label_filters_enable_application">Habilitar validador en aplicaciones</string>
-
-    <string name="filter_order_attribute_date">Fecha</string>
-    <string name="filter_order_attribute_subject">Asunto</string>
-    <string name="filter_order_attribute_app">Aplicaci\u00F3n</string>
+    <string name="label_filters_by_type">Tipo de petici\u00F3n</string>
+    <string name="label_filters_month">Intervalo</string>
+    <string name="label_filters_year">A\u00F1o</string>
 
     <string name="nopermtobrowsekeystore">Es necesario conceder permisos para cargar un almac\u00E9n de certificados del dispositivo</string>
     <string name="nopermtopreviewdocs">Es necesario conceder permisos para guardar temporalmente los documentos en local</string>
@@ -199,6 +198,30 @@
     <string name="file_chooser_directorio_padre">Directorio padre</string>
     <string name="file_chooser_tamano_del_fichero">Tama\u00F1o: %s</string>
     <string name="file_chooser_read_error">Error: No ha sido posible leer el fichero</string>
+    <string name="filter_order_attribute_date">Fecha</string>
+    <string name="filter_order_attribute_subject">Asunto</string>
+    <string name="filter_order_attribute_app">Aplicaci\u00F3n</string>
+    <string name="filter_app_type_view_all">Todos los tipos</string>
+    <string name="filter_app_type_view_sign">Ver peticiones firmadas</string>
+    <string name="filter_app_type_view_pass">Ver peticiones de visto bueno</string>
+    <string name="filter_app_type_view_validate">Ver validadas</string>
+    <string name="filter_app_type_view_no_validate">Ver no validadas</string>
+    <string name="filter_month_all">Todas</string>
+    <string name="filter_month_last_hours">\u00DAltimas 24 horas</string>
+    <string name="filter_month_last_week">\u00DAltima semana</string>
+    <string name="filter_month_last_month">\u00DAltimo mes</string>
+    <string name="filter_month_1">Enero</string>
+    <string name="filter_month_2">Febrero</string>
+    <string name="filter_month_3">Marzo</string>
+    <string name="filter_month_4">Abril</string>
+    <string name="filter_month_5">Mayo</string>
+    <string name="filter_month_6">Junio</string>
+    <string name="filter_month_7">Julio</string>
+    <string name="filter_month_8">Agosto</string>
+    <string name="filter_month_9">Septiembre</string>
+    <string name="filter_month_10">Octubre</string>
+    <string name="filter_month_11">Noviembre</string>
+    <string name="filter_month_12">Diciembre</string>
 
     <string name="title_fire_webview">Autorizaci\u00F3n de firma</string>
 

@@ -1438,8 +1438,9 @@ public final class PetitionListActivity extends WebViewParentActivity implements
             this.filterConfig.setEnabled(this.oldFilterConfig.isEnabled());
             this.filterConfig.setSubject(this.oldFilterConfig.getSubject());
             this.filterConfig.setApp(this.oldFilterConfig.getApp());
-            this.filterConfig.setDateStart(this.oldFilterConfig.getDateStart());
-            this.filterConfig.setDateEnd(this.oldFilterConfig.getDateEnd());
+            this.filterConfig.setAppType(this.oldFilterConfig.getAppType());
+            this.filterConfig.setMonth(this.oldFilterConfig.getMonth());
+            this.filterConfig.setYear(this.oldFilterConfig.getYear());
             this.filterConfig.setShowUnverified(this.oldFilterConfig.isShowUnverified());
             this.filterDialogBuilder.resetLayout(this.filterConfig);
         } else {
@@ -1457,8 +1458,9 @@ public final class PetitionListActivity extends WebViewParentActivity implements
             this.oldFilterConfig.setEnabled(this.filterConfig.isEnabled());
             this.oldFilterConfig.setSubject(this.filterConfig.getSubject());
             this.oldFilterConfig.setApp(this.filterConfig.getApp());
-            this.oldFilterConfig.setDateStart(this.filterConfig.getDateStart());
-            this.oldFilterConfig.setDateEnd(this.filterConfig.getDateEnd());
+            this.oldFilterConfig.setAppType(this.filterConfig.getAppType());
+            this.oldFilterConfig.setMonth(this.filterConfig.getMonth());
+            this.oldFilterConfig.setYear(this.filterConfig.getYear());
             this.oldFilterConfig.setShowUnverified(this.filterConfig.isShowUnverified());
         }
     }
