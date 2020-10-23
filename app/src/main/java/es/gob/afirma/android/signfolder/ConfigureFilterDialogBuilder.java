@@ -160,22 +160,22 @@ public final class ConfigureFilterDialogBuilder {
         mAppsTypes.put(VALUE_APP_TYPE_VIEW_VALIDATE, 3);
         mAppsTypes.put(VALUE_APP_TYPE_VIEW_NO_VALIDATE, 4);
 
-        mMonths.put(activity.getString(R.string.filter_month_all), 0);
-        mMonths.put(activity.getString(R.string.filter_month_last_hours), 1);
-        mMonths.put(activity.getString(R.string.filter_month_last_week), 2);
-        mMonths.put(activity.getString(R.string.filter_month_last_month), 3);
-        mMonths.put(activity.getString(R.string.filter_month_1), 4);
-        mMonths.put(activity.getString(R.string.filter_month_2), 5);
-        mMonths.put(activity.getString(R.string.filter_month_3), 6);
-        mMonths.put(activity.getString(R.string.filter_month_4), 7);
-        mMonths.put(activity.getString(R.string.filter_month_5), 8);
-        mMonths.put(activity.getString(R.string.filter_month_6), 9);
-        mMonths.put(activity.getString(R.string.filter_month_7), 10);
-        mMonths.put(activity.getString(R.string.filter_month_8), 11);
-        mMonths.put(activity.getString(R.string.filter_month_9), 12);
-        mMonths.put(activity.getString(R.string.filter_month_10), 13);
-        mMonths.put(activity.getString(R.string.filter_month_11), 14);
-        mMonths.put(activity.getString(R.string.filter_month_12), 15);
+        mMonths.put(VALUE_MONTH_ALL, 0);
+        mMonths.put(VALUE_MONTH_LAST_24_HOURS, 1);
+        mMonths.put(VALUE_MONTH_LAST_WEEK, 2);
+        mMonths.put(VALUE_MONTH_LAST_MONTH, 3);
+        mMonths.put(VALUE_MONTH_1, 4);
+        mMonths.put(VALUE_MONTH_2, 5);
+        mMonths.put(VALUE_MONTH_3, 6);
+        mMonths.put(VALUE_MONTH_4, 7);
+        mMonths.put(VALUE_MONTH_5, 8);
+        mMonths.put(VALUE_MONTH_6, 9);
+        mMonths.put(VALUE_MONTH_7, 10);
+        mMonths.put(VALUE_MONTH_8, 11);
+        mMonths.put(VALUE_MONTH_9, 12);
+        mMonths.put(VALUE_MONTH_10, 13);
+        mMonths.put(VALUE_MONTH_11, 14);
+        mMonths.put(VALUE_MONTH_12, 15);
 
         // Si el usuario tiene el rol de validador, ocultamos el checkbox de mostrar peticiones no validadas
         // y recuperamos el dni del validador.
