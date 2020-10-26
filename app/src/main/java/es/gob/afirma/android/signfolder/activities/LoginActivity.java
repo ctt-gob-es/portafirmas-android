@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -55,6 +56,7 @@ import es.gob.afirma.android.signfolder.tasks.LoadConfigurationDataTask;
 import es.gob.afirma.android.signfolder.tasks.LoadConfigurationDataTask.LoadConfigurationListener;
 import es.gob.afirma.android.signfolder.tasks.LoginRequestValidationTask;
 import es.gob.afirma.android.signfolder.tasks.OpenHelpDocumentTask;
+import es.gob.afirma.android.user.configuration.ApplicationFilter;
 import es.gob.afirma.android.user.configuration.ConfigurationConstants;
 import es.gob.afirma.android.user.configuration.UserConfig;
 import es.gob.afirma.android.util.Base64;
@@ -593,27 +595,6 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
         // Almacenamos la lista de aplicaciones, con su correspondiente numero asociado al picker
         ConfigureFilterDialogBuilder.updateApps(appConfig.getAppNamesList());
 
-        // Solicitamos la configuración de usuario y la añadimos en la llamada de la siguiente actividad.
-        UserConfig userConfig = null;
-        try {
-            userConfig = CommManager.getInstance().getUserConfig();
-        } catch (Exception e) {
-            PfLog.e(SFConstants.LOG_TAG, "No ha sido posible cargar la configuración de usuario: " + e.getMessage());
-            showErrorDialog("No ha sido posible cargar la configuración de usuario.");
-            this.recreate();
-        }
-        intent.putExtra(ConfigurationConstants.EXTRA_RESOURCE_USER_CONFIG, userConfig);
-
-        dismissProgressDialog();
-
-        // Si el usuario tiene roles disponibles, llamamos primero a la actividad encargada de
-        // gestionar la selección de roles.
-        if (userConfig != null && userConfig.getRoles() != null && !userConfig.getRoles().isEmpty()) {
-            intent.setClass(this, LoginWithRoleActivity.class);
-        } else {
-            intent.setClass(this, PetitionListActivity.class);
-        }
-
         startActivity(intent);
     }
 
@@ -673,12 +654,21 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
     public void loginResult(ValidationLoginResult result) {
 
         if (result.isStatusOk()) {
-            final LoadConfigurationDataTask lcdt = new LoadConfigurationDataTask(
-                    result,
-                    CommManager.getInstance(),
-                    this,
-                    this);
-            lcdt.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+            // Intentamos recuperar la configuración de usuario mediante el nuevo servicio.
+            // En caso de que falle, intentamos seguir con el servicio antiguo de carga de configuración.
+            try {
+                UserConfig userConfig = CommManager.getInstance().getUserConfig();
+                if (userConfig != null) {
+                    accessWithUserConfig(userConfig, result);
+                }
+            } catch (Exception e) {
+                final LoadConfigurationDataTask lcdt = new LoadConfigurationDataTask(
+                        result,
+                        CommManager.getInstance(),
+                        this,
+                        this);
+                lcdt.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+            }
         } else {
             String errMsg = result.getErrorMsg();
             if (errMsg == null || errMsg.isEmpty()) {
@@ -690,6 +680,59 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
                 errMsg = getString(R.string.error_loading_app_configuration);
             }
             showErrorDialog(errMsg);
+        }
+    }
+
+    /**
+     * Método encargado de acceder a la aplicación tras haber recuperado la configuración de usuario mediante el servicio con ID 18.
+     *
+     * @param userConfig Configuración de usuario recibida.
+     * @param result     Resultado del proceso de login.
+     */
+    private void accessWithUserConfig(UserConfig userConfig, ValidationLoginResult result) {
+        final Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+
+        if (result != null && result.getDni() != null) {
+            intent.putExtra(PetitionListActivity.EXTRA_RESOURCE_DNI, result.getDni());
+        }
+        if (result != null && result.getCertAlias() != null) {
+            intent.putExtra(PetitionListActivity.EXTRA_RESOURCE_CERT_ALIAS, result.getCertAlias());
+        }
+
+        intent.putExtra(ConfigurationConstants.EXTRA_RESOURCE_USER_CONFIG, userConfig);
+
+        // Extraemos la lista de aplicaciones y lo pasamos como un extra adicional.
+        ArrayList<String> appIds = new ArrayList<>();
+        ArrayList<String> appNames = new ArrayList<>();
+        getIdsAndNameFromApps(userConfig.getUserFilers().getApplicationFilters(), appIds, appNames);
+        intent.putStringArrayListExtra(PetitionListActivity.EXTRA_RESOURCE_APP_IDS, appIds);
+        intent.putStringArrayListExtra(PetitionListActivity.EXTRA_RESOURCE_APP_NAMES, appNames);
+
+        dismissProgressDialog();
+
+        // Si el usuario tiene roles disponibles, llamamos primero a la actividad encargada de
+        // gestionar la selección de roles.
+        if (userConfig != null && userConfig.getRoles() != null && !userConfig.getRoles().isEmpty()) {
+            intent.setClass(this, LoginWithRoleActivity.class);
+        } else {
+            intent.setClass(this, PetitionListActivity.class);
+        }
+
+        startActivity(intent);
+    }
+
+    /**
+     * Método auxiliar encargado de extraer los IDs y los nombres de las aplicaciones en 2 listas separadas.
+     * @param src Lista de aplicaciones del tipo ApplicationFilter.
+     * @param appIds Lista de IDs a completar.
+     * @param appNames Lista de nombres a completar.
+     */
+    private void getIdsAndNameFromApps(List<ApplicationFilter> src, ArrayList<String> appIds, ArrayList<String> appNames) {
+        if (src != null) {
+            for (ApplicationFilter app : src) {
+                appIds.add(app.getId());
+                appNames.add(app.getName());
+            }
         }
     }
 
