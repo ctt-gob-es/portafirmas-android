@@ -54,6 +54,7 @@ import es.gob.afirma.android.signfolder.proxy.ValidationLoginResult;
 import es.gob.afirma.android.signfolder.tasks.ClaveLoginTask;
 import es.gob.afirma.android.signfolder.tasks.LoadConfigurationDataTask;
 import es.gob.afirma.android.signfolder.tasks.LoadConfigurationDataTask.LoadConfigurationListener;
+import es.gob.afirma.android.signfolder.tasks.LoadUserConfigTask;
 import es.gob.afirma.android.signfolder.tasks.LoginRequestValidationTask;
 import es.gob.afirma.android.signfolder.tasks.OpenHelpDocumentTask;
 import es.gob.afirma.android.user.configuration.ApplicationFilter;
@@ -70,7 +71,8 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
         LoginOptionsListener,
         LoadConfigurationListener,
         ClaveLoginTask.ClaveLoginRequestListener,
-        LoginListener {
+        LoginListener,
+        LoadUserConfigTask.LoadUserConfigListener {
 
     private final static String EXTRA_RESOURCE_TITLE = "es.gob.afirma.signfolder.title"; //$NON-NLS-1$
     private final static String EXTRA_RESOURCE_EXT = "es.gob.afirma.signfolder.exts"; //$NON-NLS-1$
@@ -595,6 +597,7 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
         // Almacenamos la lista de aplicaciones, con su correspondiente numero asociado al picker
         ConfigureFilterDialogBuilder.updateApps(appConfig.getAppNamesList());
 
+        intent.setClass(this, PetitionListActivity.class);
         startActivity(intent);
     }
 
@@ -656,19 +659,9 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
         if (result.isStatusOk()) {
             // Intentamos recuperar la configuración de usuario mediante el nuevo servicio.
             // En caso de que falle, intentamos seguir con el servicio antiguo de carga de configuración.
-            try {
-                UserConfig userConfig = CommManager.getInstance().getUserConfig();
-                if (userConfig != null) {
-                    accessWithUserConfig(userConfig, result);
-                }
-            } catch (Exception e) {
-                final LoadConfigurationDataTask lcdt = new LoadConfigurationDataTask(
-                        result,
-                        CommManager.getInstance(),
-                        this,
-                        this);
-                lcdt.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-            }
+            final LoadUserConfigTask luct = new LoadUserConfigTask(result, this);
+            luct.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+
         } else {
             String errMsg = result.getErrorMsg();
             if (errMsg == null || errMsg.isEmpty()) {
@@ -683,20 +676,15 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
         }
     }
 
-    /**
-     * Método encargado de acceder a la aplicación tras haber recuperado la configuración de usuario mediante el servicio con ID 18.
-     *
-     * @param userConfig Configuración de usuario recibida.
-     * @param result     Resultado del proceso de login.
-     */
-    private void accessWithUserConfig(UserConfig userConfig, ValidationLoginResult result) {
+    @Override
+    public void userConfigLoadSuccess(UserConfig userConfig, ValidationLoginResult loginResult) {
         final Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
 
-        if (result != null && result.getDni() != null) {
-            intent.putExtra(PetitionListActivity.EXTRA_RESOURCE_DNI, result.getDni());
+        if (loginResult != null && loginResult.getDni() != null) {
+            intent.putExtra(PetitionListActivity.EXTRA_RESOURCE_DNI, loginResult.getDni());
         }
-        if (result != null && result.getCertAlias() != null) {
-            intent.putExtra(PetitionListActivity.EXTRA_RESOURCE_CERT_ALIAS, result.getCertAlias());
+        if (loginResult != null && loginResult.getCertAlias() != null) {
+            intent.putExtra(PetitionListActivity.EXTRA_RESOURCE_CERT_ALIAS, loginResult.getCertAlias());
         }
 
         intent.putExtra(ConfigurationConstants.EXTRA_RESOURCE_USER_CONFIG, userConfig);
@@ -719,6 +707,16 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
         }
 
         startActivity(intent);
+    }
+
+    @Override
+    public void userConfigLoadError(ValidationLoginResult loginResult, Throwable t) {
+        final LoadConfigurationDataTask lcdt = new LoadConfigurationDataTask(
+                loginResult,
+                CommManager.getInstance(),
+                this,
+                this);
+        lcdt.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
 
     /**
