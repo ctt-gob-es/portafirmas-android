@@ -202,7 +202,7 @@
     <string name="filter_order_attribute_subject">Asunto</string>
     <string name="filter_order_attribute_app">Aplicaci\u00F3n</string>
     <string name="filter_app_type_view_all">Todos los tipos</string>
-    <string name="filter_app_type_view_sign">Ver peticiones firmadas</string>
+    <string name="filter_app_type_view_sign">Ver peticiones de firma</string>
     <string name="filter_app_type_view_pass">Ver peticiones de visto bueno</string>
     <string name="filter_app_type_view_validate">Ver validadas</string>
     <string name="filter_app_type_view_no_validate">Ver no validadas</string>

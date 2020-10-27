@@ -295,6 +295,9 @@ public final class PetitionListActivity extends WebViewParentActivity implements
         // Almacenamos como filtros de la petición el DNI del usuario,
         // el DNI del propietario de las peticiones y el rol.
         storeUserIdAndRole();
+
+        // Comprobamos que los filtros tienen valores correctos.
+        checkFiltersValues();
     }
 
     /**
@@ -320,6 +323,21 @@ public final class PetitionListActivity extends WebViewParentActivity implements
         this.filterConfig.setUserId(userId);
         this.filterConfig.setUserRole(userRole);
         this.filterConfig.setOwnerId(ownerId);
+    }
+
+    /**
+     * Método encargado de comprobar que los filtros tienen unos valores correctos.
+     */
+    private void checkFiltersValues() {
+        if (this.filterConfig == null) {
+            storeUserIdAndRole();
+        }
+        if (this.filterConfig.getMonth() == null) {
+            this.filterConfig.setMonth(ConfigureFilterDialogBuilder.VALUE_MONTH_ALL);
+        }
+        if (this.filterConfig.getAppType() == null) {
+            this.filterConfig.setAppType(ConfigureFilterDialogBuilder.VALUE_APP_TYPE_VIEW_ALL);
+        }
     }
 
     /**
@@ -746,7 +764,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
             this.allSelected = false;
         }
         // Actualizar listado actual
-        else if (item.getItemId() == R.id.update) {
+        else if (item.getItemId() == R.id.refresh) {
             updateCurrentList(FIRST_PAGE);
         }
         // Cambiar al listado de peticiones firmadas

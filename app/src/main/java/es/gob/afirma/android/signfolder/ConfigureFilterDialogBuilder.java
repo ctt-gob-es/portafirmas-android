@@ -56,14 +56,14 @@ public final class ConfigureFilterDialogBuilder {
     private static final String DEFAULT_VALUE_ORDER_ATTR = VALUE_ORDER_ATTR_DATE;
 
     private static final String KEY_FILTER_APP_FILTER = "tipoFilter="; //$NON-NLS-1$
-    private static final String VALUE_APP_TYPE_VIEW_ALL = "view_all"; //$NON-NLS-1$
+    public static final String VALUE_APP_TYPE_VIEW_ALL = "view_all"; //$NON-NLS-1$
     private static final String VALUE_APP_TYPE_VIEW_SIGN = "view_sign"; //$NON-NLS-1$
     private static final String VALUE_APP_TYPE_VIEW_PASS = "view_pass"; //$NON-NLS-1$
     private static final String VALUE_APP_TYPE_VIEW_VALIDATE = "view_validate"; //$NON-NLS-1$
     private static final String VALUE_APP_TYPE_VIEW_NO_VALIDATE = "view_no_validate"; //$NON-NLS-1$
 
     private static final String KEY_FILTER_MONTH = "mesFilter="; //$NON-NLS-1$
-    private static final String VALUE_MONTH_ALL = "all"; //$NON-NLS-1$
+    public static final String VALUE_MONTH_ALL = "all"; //$NON-NLS-1$
     private static final String VALUE_MONTH_LAST_24_HOURS = "last24Hours"; //$NON-NLS-1$
     private static final String VALUE_MONTH_LAST_WEEK = "lastWeek"; //$NON-NLS-1$
     private static final String VALUE_MONTH_LAST_MONTH = "lastMonth"; //$NON-NLS-1$
@@ -499,8 +499,8 @@ public final class ConfigureFilterDialogBuilder {
                     !config.enabled &&
                             (config.orderAttribute == null || DEFAULT_VALUE_ORDER_ATTR.equals(config.orderAttribute)) &&
                             (config.subject == null || config.subject.length() == 0) &&
-                            config.app == null && config.appType == null &&
-                            config.month == null && config.year == null &&
+                            config.app == null && config.appType == VALUE_APP_TYPE_VIEW_ALL &&
+                            config.month == VALUE_MONTH_ALL  && config.year == null &&
                             !config.showUnverified;
         }
 
