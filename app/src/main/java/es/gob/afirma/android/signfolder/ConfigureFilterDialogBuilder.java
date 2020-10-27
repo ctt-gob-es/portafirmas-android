@@ -299,8 +299,12 @@ public final class ConfigureFilterDialogBuilder {
                 ownerId = config.ownerId;
             }
             filters.add(KEY_FILTER_USER_ID + userId);
-            filters.add(KEY_FILTER_USER_ROLE + userRole);
-            filters.add(KEY_FILTER_VERIFIER_DNI + ownerId);
+            if (!userRole.isEmpty()) {
+                filters.add(KEY_FILTER_USER_ROLE + userRole);
+            }
+            if (!ownerId.isEmpty()) {
+                filters.add(KEY_FILTER_VERIFIER_DNI + ownerId);
+            }
             if (config.getOrderAttribute() == null) {
                 filters.add(KEY_ORDER_ATTR + VALUE_ORDER_ATTR_DATE);
                 filters.add(KEY_ORDER + VALUE_ORDER_DESC);
@@ -309,18 +313,18 @@ public final class ConfigureFilterDialogBuilder {
                 filters.add(KEY_ORDER_ATTR + orderAttr);
                 filters.add(KEY_ORDER + (VALUE_ORDER_ATTR_DATE.equals(orderAttr) ? VALUE_ORDER_DESC : VALUE_ORDER_ASC));
             }
+            if (config.getAppType() != null && config.getAppType().length() > 0) {
+                filters.add(KEY_FILTER_APP_FILTER + config.getAppType());
+            }
+            if (config.getMonth() != null && config.getMonth().length() > 0) {
+                filters.add(KEY_FILTER_MONTH + config.getMonth());
+            }
             if (config.isEnabled()) {
                 if (config.getSubject() != null) {
                     filters.add(KEY_FILTER_TEXT + config.getSubject());
                 }
                 if (config.getApp() != null && config.getApp().length() > 0) {
                     filters.add(KEY_FILTER_APP + config.getApp());
-                }
-                if (config.getAppType() != null && config.getAppType().length() > 0) {
-                    filters.add(KEY_FILTER_APP_FILTER + config.getAppType());
-                }
-                if (config.getMonth() != null && config.getMonth().length() > 0) {
-                    filters.add(KEY_FILTER_MONTH + config.getMonth());
                 }
                 if (config.getYear() != null && config.getYear().length() > 0) {
                     filters.add(KEY_FILTER_YEAR + config.getYear());
@@ -593,8 +597,8 @@ public final class ConfigureFilterDialogBuilder {
             this.orderAttribute = null;
             this.subject = null;
             this.app = null;
-            this.appType = null;
-            this.month = null;
+            this.appType = VALUE_APP_TYPE_VIEW_ALL;
+            this.month = VALUE_MONTH_ALL;
             this.year = null;
             this.showUnverified = false;
 

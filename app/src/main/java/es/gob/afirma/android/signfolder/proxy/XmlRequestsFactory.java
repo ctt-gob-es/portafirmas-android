@@ -93,19 +93,23 @@ final class XmlRequestsFactory {
         if (filters != null && filters.length > 0) {
             sb.append("<fltrs>"); //$NON-NLS-1$
             for (final String filter : filters) {
-                sb.append("<fltr>"); //$NON-NLS-1$
                 final int equalPos = filter.indexOf('=') != -1 ? filter.indexOf('=') : filter.length();
-                sb.append("<key>"); //$NON-NLS-1$
-                if (equalPos > 0) {
-                    sb.append(filter.substring(0, equalPos));
+                String key = filter.substring(0, equalPos);
+                String value = filter.substring(equalPos + 1);
+                if(value != null && !value.isEmpty()) {
+                    sb.append("<fltr>"); //$NON-NLS-1$
+                    sb.append("<key>"); //$NON-NLS-1$
+                    if (equalPos > 0) {
+                        sb.append(key);
+                    }
+                    sb.append("</key>"); //$NON-NLS-1$
+                    sb.append("<value>"); //$NON-NLS-1$
+                    if (equalPos < filter.length() - 1) {
+                        sb.append(value);
+                    }
+                    sb.append("</value>"); //$NON-NLS-1$
+                    sb.append("</fltr>"); //$NON-NLS-1$
                 }
-                sb.append("</key>"); //$NON-NLS-1$
-                sb.append("<value>"); //$NON-NLS-1$
-                if (equalPos < filter.length() - 1) {
-                    sb.append(filter.substring(equalPos + 1));
-                }
-                sb.append("</value>"); //$NON-NLS-1$
-                sb.append("</fltr>"); //$NON-NLS-1$
             }
             sb.append("</fltrs>"); //$NON-NLS-1$
         }
