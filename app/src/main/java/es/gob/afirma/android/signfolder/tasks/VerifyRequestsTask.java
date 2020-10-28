@@ -68,12 +68,16 @@ public class VerifyRequestsTask extends AsyncTask<Void, Void, RequestVerifyResul
     @Override
     protected void onPostExecute(final RequestVerifyResult[] verifiedRequests) {
 
-        for (final RequestVerifyResult rResult : verifiedRequests) {
-            RequestResult res = new RequestResult(null, rResult.isStatusOk());
-            if (rResult.isStatusOk()) {
-                this.listener.requestOperationFinished(OperationRequestListener.VERIFY_OPERATION, res);
-            } else {
-                this.listener.requestOperationFailed(OperationRequestListener.VERIFY_OPERATION, res, this.t);
+        if(verifiedRequests == null){
+            this.listener.requestOperationFailed(OperationRequestListener.VERIFY_OPERATION, new RequestResult(null, false), this.t);
+        } else {
+            for (final RequestVerifyResult rResult : verifiedRequests) {
+                RequestResult res = new RequestResult(null, rResult.isStatusOk());
+                if (rResult.isStatusOk()) {
+                    this.listener.requestOperationFinished(OperationRequestListener.VERIFY_OPERATION, res);
+                } else {
+                    this.listener.requestOperationFailed(OperationRequestListener.VERIFY_OPERATION, res, this.t);
+                }
             }
         }
     }
