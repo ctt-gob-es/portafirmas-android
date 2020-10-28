@@ -848,13 +848,10 @@ public final class PetitionListActivity extends WebViewParentActivity implements
             intent.putExtra(PetitionListActivity.EXTRA_RESOURCE_CERT_ALIAS, this.certAlias);
             intent.putStringArrayListExtra(PetitionListActivity.EXTRA_RESOURCE_APP_IDS, new ArrayList<>(this.appIds));
             intent.putStringArrayListExtra(PetitionListActivity.EXTRA_RESOURCE_APP_NAMES, new ArrayList<>(this.appNames));
+            intent.putExtra(ConfigurationConstants.EXTRA_RESOURCE_CLEAN_STACK, true);
 
-            // Vaciamos la pila de actividades...
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             // Iniciamos la nueva actividad.
             startActivity(intent);
-            // Finalizamos la actividad actual.
-            finish();
         }
         // Abrir ayuda
         else if (item.getItemId() == R.id.help) {

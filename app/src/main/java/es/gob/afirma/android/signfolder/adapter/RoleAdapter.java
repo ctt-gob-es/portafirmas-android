@@ -38,13 +38,19 @@ public class RoleAdapter extends RecyclerView.Adapter<RoleAdapter.RoleViewHolder
     private Intent intent;
 
     /**
+     * Bandera que indica si se debe limpiar la pila de actividades previas.
+     */
+    private boolean cleanStack;
+
+    /**
      * Constructor de la clase.
      *
      * @param userconfig Configuración de usuario.
      */
-    public RoleAdapter(UserConfig userconfig, Intent intent) {
+    public RoleAdapter(UserConfig userconfig, Intent intent, boolean cleanStack) {
         this.userconfig = userconfig;
         this.intent = intent;
+        this.cleanStack = cleanStack;
     }
 
     @NonNull
@@ -80,6 +86,9 @@ public class RoleAdapter extends RecyclerView.Adapter<RoleAdapter.RoleViewHolder
                 intent.putExtra(ConfigurationConstants.EXTRA_RESOURCE_USER_CONFIG, userconfig);
                 intent.putExtra(ConfigurationConstants.EXTRA_RESOURCE_ROLE_SELECTED, userconfig.getRoles().get(roleViewHolder.getLayoutPosition()));
                 ((Activity) v.getContext()).startActivity(intent);
+                if(cleanStack){
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                }
                 ((Activity) v.getContext()).finish();
 
             }
