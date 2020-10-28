@@ -87,5 +87,10 @@ public interface ConfigurationConstants {
      */
     String EXTRA_RESOURCE_USER_INFO = "userInfo";
 
+    /**
+     * Constante que representa la bandera que indica si se debe limpiar la pila de actividades.
+     */
+    String EXTRA_RESOURCE_CLEAN_STACK = "cleanActivitiesStack";
+
 
 }

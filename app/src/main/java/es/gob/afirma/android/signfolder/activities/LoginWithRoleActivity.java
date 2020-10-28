@@ -35,6 +35,9 @@ public class LoginWithRoleActivity extends Activity {
         // Cargamos la configuración de usuario.
         UserConfig userConfig = (UserConfig) intent.getSerializableExtra(ConfigurationConstants.EXTRA_RESOURCE_USER_CONFIG);
 
+        // Recuperamos si es necesario limpiar la pila de actividades.
+        boolean cleanStack = intent.getBooleanExtra(ConfigurationConstants.EXTRA_RESOURCE_CLEAN_STACK, false);
+
         // Mostramos la lista de roles.
         RecyclerView recyclerView = new RecyclerView(this);
         recyclerView.setVerticalScrollBarEnabled(true);
@@ -45,7 +48,7 @@ public class LoginWithRoleActivity extends Activity {
         recyclerView.setLayoutManager(layoutManager);
         orderRoles(userConfig);
         addSignerRole(userConfig);
-        RoleAdapter adapter = new RoleAdapter(userConfig, intent);
+        RoleAdapter adapter = new RoleAdapter(userConfig, intent, cleanStack);
         recyclerView.setAdapter(adapter);
         ((LinearLayout) findViewById(R.id.rolesView)).addView(recyclerView);
     }
@@ -91,20 +94,5 @@ public class LoginWithRoleActivity extends Activity {
             RoleInfo signer = new RoleInfo("FIRMANTE", "FIRMANTE", null, null);
             userConfig.getRoles().add(0, signer);
         }
-    }
-
-    /**
-     * Método encargado de cerrar la actividad.
-     */
-    private void closeActivity() {
-        Intent intent = new Intent(this, LoginActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        startActivity(intent);
-        finish();
-    }
-
-    @Override
-    public void onBackPressed() {
-        closeActivity();
     }
 }
