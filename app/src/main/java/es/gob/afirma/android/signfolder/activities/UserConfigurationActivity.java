@@ -472,7 +472,7 @@ public final class UserConfigurationActivity extends Activity {
      * @throws IOException               si algo falla.
      */
     private List<?> getListUserByRole(ConfigurationRole role) throws ServerControlledException, SAXException, IOException {
-        List<?> proxyResult = CommManager.getInstance().getListUserByRole(role, 1, 10);
+        List<?> proxyResult = CommManager.getInstance().getUserConfiguration(role, 1, 10);
         if (role.equals(ConfigurationRole.AUTHORIZED)) {
             return proxyResult;
         } else if (role.equals(ConfigurationRole.VERIFIER)) {

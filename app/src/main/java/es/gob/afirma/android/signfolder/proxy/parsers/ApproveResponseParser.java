@@ -73,9 +73,8 @@ public class ApproveResponseParser {
 			boolean ok = true;
 
 			// Cargamos los atributos
-			Node attributeNode = null;
 			final NamedNodeMap attributes = requestNode.getAttributes();
-			attributeNode = attributes.getNamedItem(ID_ATTRIBUTE);
+			Node attributeNode = attributes.getNamedItem(ID_ATTRIBUTE);
 			if (attributeNode == null) {
 				throw new IllegalArgumentException("No se ha encontrado el atributo obligatorio '" + //$NON-NLS-1$
 						ID_ATTRIBUTE + "' en el resultado de rechazo de peticion"); //$NON-NLS-1$
@@ -83,7 +82,7 @@ public class ApproveResponseParser {
 			ref = attributeNode.getNodeValue();
 
 			attributeNode = attributes.getNamedItem(OK_ATTRIBUTE);
-			// ok = true, salvo que la propiedad status tenga el valor "KO"
+			// ok = true, salvo que la propiedad con el resultado tenga el valor "KO"
 			ok = (attributeNode == null || !"KO".equalsIgnoreCase(attributeNode.getNodeValue())); //$NON-NLS-1$
 
 			return new RequestResult(ref, ok);

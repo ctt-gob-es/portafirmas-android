@@ -6,14 +6,13 @@ import es.gob.afirma.android.signfolder.SFConstants;
 import es.gob.afirma.android.signfolder.listeners.OperationRequestListener;
 import es.gob.afirma.android.signfolder.proxy.CommManager;
 import es.gob.afirma.android.signfolder.proxy.RequestResult;
-import es.gob.afirma.android.signfolder.proxy.RequestVerifyResult;
 import es.gob.afirma.android.signfolder.proxy.SignRequest;
 import es.gob.afirma.android.util.PfLog;
 
 /**
  * Tarea asíncrona que realiza la validación de un conjunto de peticiones de firma.
  */
-public class VerifyRequestsTask extends AsyncTask<Void, Void, RequestVerifyResult[]> {
+public class VerifyRequestsTask extends AsyncTask<Void, Void, RequestResult[]> {
 
     private final String[] requestIds;
     private final CommManager commManager;
@@ -53,9 +52,9 @@ public class VerifyRequestsTask extends AsyncTask<Void, Void, RequestVerifyResul
     }
 
     @Override
-    protected RequestVerifyResult[] doInBackground(final Void... arg) {
+    protected RequestResult[] doInBackground(final Void... arg) {
 
-        RequestVerifyResult[] results = null;
+        RequestResult[] results = null;
         try {
             results = this.commManager.verifyRequests(this.requestIds);
         } catch (final Exception e) {
@@ -66,12 +65,12 @@ public class VerifyRequestsTask extends AsyncTask<Void, Void, RequestVerifyResul
     }
 
     @Override
-    protected void onPostExecute(final RequestVerifyResult[] verifiedRequests) {
+    protected void onPostExecute(final RequestResult[] verifiedRequests) {
 
         if(verifiedRequests == null){
             this.listener.requestOperationFailed(OperationRequestListener.VERIFY_OPERATION, new RequestResult(null, false), this.t);
         } else {
-            for (final RequestVerifyResult rResult : verifiedRequests) {
+            for (final RequestResult rResult : verifiedRequests) {
                 RequestResult res = new RequestResult(null, rResult.isStatusOk());
                 if (rResult.isStatusOk()) {
                     this.listener.requestOperationFinished(OperationRequestListener.VERIFY_OPERATION, res);

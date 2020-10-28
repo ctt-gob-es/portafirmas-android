@@ -159,6 +159,8 @@
     <string name="error_msg_rejecting_request">Ocurri\u00F3 un error al rechazar la petici\u00F3n.</string>
     <string name="error_msg_procesing_requests">Ocurri\u00F3 un error al procesar alguna de las peticiones seleccionadas.</string>
     <string name="error_msg_procesing_request">Ocurri\u00F3 un error al procesar la petici\u00F3n.</string>
+    <string name="error_msg_verifing_requests">Ocurri\u00F3 un error al validar alguna de las peticiones seleccionadas.</string>
+    <string name="error_msg_verifing_request">Ocurri\u00F3 un error al validar la petici\u00F3n.</string>
     <string name="error_msg_unsupported_device">Dispositivo no soportado.</string>
     <string name="error_msg_get_users_by_rol">Error: No ha sido posible recuperar la lista de usuarios.</string>
     <string name="error_msg_verifier_list_empty">No existen registros de validadores.</string>

@@ -120,8 +120,7 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
     static final String EXTRA_RESOURCE_REQUEST_STATE = "es.gob.afirma.signfolder.requestState"; //$NON-NLS-1$
     static final int RESULT_SIGN_OK = 1;
     static final int RESULT_REJECT_OK = 2;
-    static final int RESULT_SIGN_FAILED = 3;
-    static final int RESULT_REJECT_FAILED = 4;
+    static final int RESULT_VERIFY_OK = 3;
     static final int RESULT_SESSION_FAILED = 5;
     static final int RESULT_SESSION_CLOSED = 6;
     static final int REQUEST_CODE = 3;
@@ -234,8 +233,8 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
         }
 
         // Recuperamos aquellos parámetros necesarios para el cambio de rol.
-        this.dni = (String) getIntent().getStringExtra(PetitionListActivity.EXTRA_RESOURCE_DNI);
-        this.certB64 = (String) getIntent().getStringExtra(PetitionListActivity.EXTRA_RESOURCE_CERT_B64);
+        this.dni = getIntent().getStringExtra(PetitionListActivity.EXTRA_RESOURCE_DNI);
+        this.certB64 = getIntent().getStringExtra(PetitionListActivity.EXTRA_RESOURCE_CERT_B64);
         this.appIds = getIntent().getStringArrayListExtra(PetitionListActivity.EXTRA_RESOURCE_APP_IDS);
         this.appNames = getIntent().getStringArrayListExtra(PetitionListActivity.EXTRA_RESOURCE_APP_NAMES);
         this.userConfig = (UserConfig) getIntent().getSerializableExtra(ConfigurationConstants.EXTRA_RESOURCE_USER_CONFIG);
@@ -870,7 +869,7 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
         // Cuando se instala el certificado desde el dialogo de seleccion, Android da a elegir certificado
         // en 2 ocasiones y en la segunda se produce un "java.lang.AssertionError". Se ignorara este error.
         catch (final Throwable e) {
-            PfLog.e(SFConstants.LOG_TAG, "Error desconocido en la seleccion del certificado: " + e.toString()); //$NON-NLS-1$
+            PfLog.e(SFConstants.LOG_TAG, "Error desconocido en la seleccion del certificado: " + e); //$NON-NLS-1$
             showToastMessage(ErrorManager.getErrorMessage(ErrorManager.ERROR_PKE));
             return;
         }
@@ -927,16 +926,33 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
         dismissProgressDialog();
 
         if (requestResult.isStatusOk()) {
-            setResult(operation == OperationRequestListener.REJECT_OPERATION ?
-                    PetitionDetailsActivity.RESULT_REJECT_OK :
-                    PetitionDetailsActivity.RESULT_SIGN_OK);
+            int result;
+            switch (operation) {
+                case OperationRequestListener.REJECT_OPERATION:
+                    result = PetitionDetailsActivity.RESULT_REJECT_OK;
+                    break;
+                case OperationRequestListener.VERIFY_OPERATION:
+                    result = PetitionDetailsActivity.RESULT_VERIFY_OK;
+                    break;
+                default:
+                    result = PetitionDetailsActivity.RESULT_SIGN_OK;
+            }
+            setResult(result);
             closeActivity();
         } else {
             PfLog.e(SFConstants.LOG_TAG, "Ha fallado la operacion"); //$NON-NLS-1$
 
-            final int msgId = operation == OperationRequestListener.REJECT_OPERATION ?
-                    R.string.error_msg_rejecting_request :
-                    R.string.error_msg_procesing_request;
+            int msgId;
+            switch (operation) {
+                case OperationRequestListener.REJECT_OPERATION:
+                    msgId = R.string.error_msg_rejecting_request;
+                    break;
+                case OperationRequestListener.VERIFY_OPERATION:
+                    msgId = R.string.error_msg_verifing_request;
+                    break;
+                default:
+                    msgId = R.string.error_msg_procesing_request;
+            }
             showToastMessage(getString(msgId));
         }
     }
@@ -948,9 +964,17 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
 
         PfLog.e(SFConstants.LOG_TAG, "Ha fallado la operacion con la excepcion: " + t, t); //$NON-NLS-1$
 
-        final int msgId = operation == OperationRequestListener.REJECT_OPERATION ?
-                R.string.error_msg_rejecting_request :
-                R.string.error_msg_procesing_request;
+        int msgId;
+        switch (operation) {
+            case OperationRequestListener.REJECT_OPERATION:
+                msgId = R.string.error_msg_rejecting_request;
+                break;
+            case OperationRequestListener.VERIFY_OPERATION:
+                msgId = R.string.error_msg_verifing_request;
+                break;
+            default:
+                msgId = R.string.error_msg_procesing_request;
+        }
         showToastMessage(getString(msgId));
     }
 
@@ -1094,13 +1118,7 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
      */
     @Override
     public void fireLoadDataSuccess(FireLoadDataResult firePreSignResult) {
-
-        // Almacenamos la informacion trifasica para reutilizarla al solicitar las postfirmas
-        /**
-         * Informacion trifasica que se obtiene en la prefirma y reutiliza en la postfirma.
-         */
-
-        PfLog.w(SFConstants.LOG_TAG, "Recibido del PreSignTask:\n" + firePreSignResult.toString());
+        PfLog.w(SFConstants.LOG_TAG, "Recibido del PreSignTask:\n" + firePreSignResult);
 
         // Abrimos una actividad con un WebView en la que se muestre la URL recibida
         openWebViewActivity(

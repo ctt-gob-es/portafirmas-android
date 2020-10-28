@@ -403,8 +403,8 @@ public final class CommManager extends CommManagerOldVersion {
 
         // Preparamos la peticion. En caso de usarse el proxy nuevo, no se necesita el certificado
         String xml = XmlRequestsFactory.createAppListRequest(this.oldProxy ? certB64 : null);
-        String url;
-        url = this.signFolderProxyUrl + createUrlParams(OPERATION_APP_LIST, xml);
+        String url = this.signFolderProxyUrl + createUrlParams(OPERATION_APP_LIST, xml);
+
         return ApplicationListResponseParser.parse(getRemoteDocument(url));
     }
 
@@ -551,7 +551,7 @@ public final class CommManager extends CommManagerOldVersion {
      * @param requestIds Conjunto de identificadores de peticiones a validar.
      * @return Resultado de la operación.
      */
-    public RequestVerifyResult[] verifyRequests(final String[] requestIds) throws IOException, SAXException {
+    public RequestResult[] verifyRequests(final String[] requestIds) throws IOException, SAXException {
         String xml = oldProxy ?
                 XmlRequestsFactoryOldVersion.createVerifyRequest(requestIds, this.certb64) :
                 XmlRequestsFactory.createVerifyRequest(requestIds);
@@ -688,7 +688,7 @@ public final class CommManager extends CommManagerOldVersion {
      * @throws SAXException              Si algo falla en el proceso.
      * @throws ServerControlledException Si hay algún error en la comunicación con el proxy.
      */
-    public List<?> getListUserByRole(final ConfigurationRole role, final int numPage, final int pageSize)
+    public List<?> getUserConfiguration(final ConfigurationRole role, final int numPage, final int pageSize)
             throws IOException, SAXException, ServerControlledException {
 
         PartialResponseRolesList partialResult;

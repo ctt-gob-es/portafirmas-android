@@ -8,7 +8,6 @@ import org.w3c.dom.NodeList;
 import java.util.Vector;
 
 import es.gob.afirma.android.signfolder.proxy.RequestResult;
-import es.gob.afirma.android.signfolder.proxy.RequestVerifyResult;
 import es.gob.afirma.android.signfolder.proxy.XmlUtils;
 
 /**
@@ -36,7 +35,7 @@ public class VerifyResponseParser {
      * @return Objeto con los datos del XML.
      * @throws IllegalArgumentException Cuando el XML no tiene el formato esperado.
      */
-    public static RequestVerifyResult[] parse(final Document doc) {
+    public static RequestResult[] parse(final Document doc) {
 
         if (doc == null) {
             throw new IllegalArgumentException("El documento proporcionado no puede ser nulo");  //$NON-NLS-1$
@@ -49,7 +48,7 @@ public class VerifyResponseParser {
         }
 
         final NodeList requestNodes = doc.getDocumentElement().getChildNodes();
-        final Vector<RequestVerifyResult> listRequests = new Vector<>();
+        final Vector<RequestResult> listRequests = new Vector<>();
         for (int i = 0; i < requestNodes.getLength(); i++) {
             // Nos aseguramos de procesar solo nodos de tipo Element
             i = XmlUtils.nextNodeElementIndex(requestNodes, i);
@@ -59,7 +58,7 @@ public class VerifyResponseParser {
             listRequests.addElement(VerifyResponseParser.VerifyParser.parse(requestNodes.item(i)));
         }
 
-        final RequestVerifyResult[] ret = new RequestVerifyResult[listRequests.size()];
+        final RequestResult[] ret = new RequestResult[listRequests.size()];
         listRequests.copyInto(ret);
         return ret;
     }
@@ -72,16 +71,12 @@ public class VerifyResponseParser {
         /**
          * Nombre del nodo principal de cada validación.
          */
-        private static final String VERIFY_NODE = "verify"; //$NON-NLS-1$
+        private static final String VERIFY_NODE = "r"; //$NON-NLS-1$
 
-        /**
-         * Nombre del atributo asociado al error de la respuesta.
-         */
-        private static final String ERROR_NODE = "errorMsg"; //$NON-NLS-1$
+        /** Identificador de la petición de la cual es respuesta. */
+        private static final String ID_ATTRIBUTE = "id"; //$NON-NLS-1$
 
-        /**
-         * Nombre del atributo asociado al resultado de la validación.
-         */
+        /** Nombre del atributo asociado al resultado de la validación. */
         private static final String OK_ATTRIBUTE = "ok"; //$NON-NLS-1$
 
         /**
@@ -89,31 +84,30 @@ public class VerifyResponseParser {
          * @param requestNode Nodo a parsear.
          * @return el resultado de la validación.
          */
-        static RequestVerifyResult parse(final Node requestNode) {
+        static RequestResult parse(final Node requestNode) {
 
             if (!VERIFY_NODE.equalsIgnoreCase(requestNode.getNodeName())) {
                 throw new IllegalArgumentException("Se encontro un elemento '" + //$NON-NLS-1$
                         requestNode.getNodeName() + "' en el listado de peticiones"); //$NON-NLS-1$
             }
 
-            boolean ok;
-
             // Cargamos los atributos
-            Node attributeNode;
             final NamedNodeMap attributes = requestNode.getAttributes();
 
-            attributeNode = attributes.getNamedItem(OK_ATTRIBUTE);
-            // ok = true, salvo que la propiedad status tenga el valor "KO"
-            ok = "true".equalsIgnoreCase(attributeNode.getNodeValue()); //$NON-NLS-1$
-
-            // Recuperamos el mensaje de error en caso de existir.
-            Node errorNode = requestNode.getOwnerDocument().getElementsByTagName(ERROR_NODE).item(0);
-            String errorMsg = null;
-            if(errorNode != null){
-                errorMsg = errorNode.getTextContent();
+            String ref;
+            Node attributeNode = attributes.getNamedItem(ID_ATTRIBUTE);
+            if (attributeNode == null) {
+                throw new IllegalArgumentException("No se ha encontrado el atributo obligatorio '" + //$NON-NLS-1$
+                        ID_ATTRIBUTE + "' en el resultado de rechazo de peticion"); //$NON-NLS-1$
             }
+            ref = attributeNode.getNodeValue();
 
-            return new RequestVerifyResult(ok, errorMsg);
+            attributeNode = attributes.getNamedItem(OK_ATTRIBUTE);
+
+            // ok = true, salvo que la propiedad con el resultado no exista o tenga el valor "KO"
+            boolean ok = (attributeNode == null || !"KO".equalsIgnoreCase(attributeNode.getNodeValue())); //$NON-NLS-1$
+
+            return new RequestResult(ref, ok);
         }
     }
 

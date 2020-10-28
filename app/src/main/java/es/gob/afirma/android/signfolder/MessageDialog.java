@@ -7,6 +7,8 @@ import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 
+import es.gob.afirma.android.util.PfLog;
+
 /** Di&aacute;logo modal con el que mostrar al usuario un mensaje y un bot&oacute;n para ocultar el
  * di&aacute;logo y, opcionalmente, realizar una acci&oacute;n. */
 final public class MessageDialog extends DialogFragment {
@@ -48,6 +50,13 @@ final public class MessageDialog extends DialogFragment {
 
 	@Override
 	public Dialog onCreateDialog(final Bundle savedInstanceState) {
+
+		if (this.dialogBuilder == null) {
+			PfLog.w("es.gob.afirma",
+					"Se ha tratado de mostrar un dialogo sin definir antes el contexto");
+			return null;
+		}
+
 		if (this.title != null) {
 			this.dialogBuilder.setTitle(this.title);
 		}

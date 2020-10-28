@@ -176,6 +176,10 @@ public final class PetitionListActivity extends WebViewParentActivity implements
     private String currentState = null;
     private Menu menuRef;
     private int currentPage = FIRST_PAGE;
+
+    /** Se&ntilde;ala si se produjo alg&uacute;n error al procesar las peticiones. */
+    private boolean anyError = false;
+
     /**
      * Tarea de carga en ejecuci&oacute;n.
      */
@@ -848,13 +852,10 @@ public final class PetitionListActivity extends WebViewParentActivity implements
             intent.putExtra(PetitionListActivity.EXTRA_RESOURCE_CERT_ALIAS, this.certAlias);
             intent.putStringArrayListExtra(PetitionListActivity.EXTRA_RESOURCE_APP_IDS, new ArrayList<>(this.appIds));
             intent.putStringArrayListExtra(PetitionListActivity.EXTRA_RESOURCE_APP_NAMES, new ArrayList<>(this.appNames));
+            intent.putExtra(ConfigurationConstants.EXTRA_RESOURCE_CLEAN_STACK, true);
 
-            // Vaciamos la pila de actividades...
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             // Iniciamos la nueva actividad.
             startActivity(intent);
-            // Finalizamos la actividad actual.
-            finish();
         }
         // Abrir ayuda
         else if (item.getItemId() == R.id.help) {
@@ -1011,16 +1012,23 @@ public final class PetitionListActivity extends WebViewParentActivity implements
                 this.numRequestToApprovePending--;
             } else if (operation == REJECT_OPERATION) {
                 this.numRequestToRejectPending--;
+            } else if (operation == VERIFY_OPERATION) {
+                this.numRequestToVerifyPending--;
             }
 
             if (this.numRequestToSignPending <= 0
                     && this.numRequestToApprovePending <= 0
-                    && this.numRequestToRejectPending <= 0) {
+                    && this.numRequestToRejectPending <= 0
+                    && this.numRequestToVerifyPending <= 0) {
                 setVisibilityLoadingMessage(false, null, null);
 
-                // Una vez finalizada una operacion, recargamos el listado por
-                // la primera pagina
-                updateCurrentList(FIRST_PAGE);
+                // Una vez finalizada una operacion, si se produjo algun error,
+                // mostramos un dialogo informandolo. Si no, se recarga el listado
+                if (anyError) {
+                    showProcessingError(operation);
+                } else {
+                    updateCurrentList(FIRST_PAGE);
+                }
             }
         }
     }
@@ -1031,17 +1039,22 @@ public final class PetitionListActivity extends WebViewParentActivity implements
 
         synchronized (this) {
 
+            anyError = true;
+
             if (operation == SIGN_OPERATION) {
                 this.numRequestToSignPending--;
             } else if (operation == APPROVE_OPERATION) {
                 this.numRequestToApprovePending--;
             } else if (operation == REJECT_OPERATION) {
                 this.numRequestToRejectPending--;
+            } else if (operation == VERIFY_OPERATION) {
+                this.numRequestToVerifyPending--;
             }
 
             if (this.numRequestToSignPending <= 0
                     && this.numRequestToApprovePending <= 0
-                    && this.numRequestToRejectPending <= 0) {
+                    && this.numRequestToRejectPending <= 0
+                    && this.numRequestToVerifyPending <= 0) {
 
                 if (t != null) {
                     PfLog.e(SFConstants.LOG_TAG, "Error al procesar las peticiones de firma", t); //$NON-NLS-1$
@@ -1049,12 +1062,25 @@ public final class PetitionListActivity extends WebViewParentActivity implements
 
                 setVisibilityLoadingMessage(false, null, null);
 
-                final String errorMsg = getString(operation == REJECT_OPERATION ? R.string.error_msg_rejecting_requests
-                        : R.string.error_msg_procesing_requests);
-                PfLog.w(SFConstants.LOG_TAG, "Error: " + errorMsg); //$NON-NLS-1$
-                showErrorDialog(DIALOG_ERROR_PROCESSING, errorMsg);
+                showProcessingError(operation);
             }
         }
+    }
+
+    private void showProcessingError(int operation) {
+        String errorMsg;
+        switch (operation) {
+            case REJECT_OPERATION:
+                errorMsg = getString(R.string.error_msg_rejecting_requests);
+                break;
+            case VERIFY_OPERATION:
+                errorMsg = getString(R.string.error_msg_verifing_requests);
+                break;
+            default:
+                errorMsg = getString(R.string.error_msg_procesing_requests);
+        }
+        PfLog.w(SFConstants.LOG_TAG, "Error: " + errorMsg); //$NON-NLS-1$
+        showErrorDialog(DIALOG_ERROR_PROCESSING, errorMsg);
     }
 
     @Override
@@ -1245,18 +1271,10 @@ public final class PetitionListActivity extends WebViewParentActivity implements
 
         if (requestCode == PetitionDetailsActivity.REQUEST_CODE) {
             // Si se proceso le peticion correctamente actualizamos el listado
-            if (resultCode == PetitionDetailsActivity.RESULT_SIGN_OK || resultCode == PetitionDetailsActivity.RESULT_REJECT_OK) {
+            if (resultCode == PetitionDetailsActivity.RESULT_SIGN_OK
+                    || resultCode == PetitionDetailsActivity.RESULT_REJECT_OK
+                    || resultCode == PetitionDetailsActivity.RESULT_VERIFY_OK) {
                 updateCurrentList(FIRST_PAGE);
-            }
-            // Si se trato de firmar la peticion y fallo, se muestra el error
-            else if (resultCode == PetitionDetailsActivity.RESULT_SIGN_FAILED) {
-                PfLog.e(SFConstants.LOG_TAG, "Error al firmar la peticion desde la actividad de detalle"); //$NON-NLS-1$
-                showErrorDialog(DIALOG_RESULT_SIMPLE_REQUEST, getString(R.string.error_msg_procesing_request));
-            }
-            // Si se trato de rechazar la peticion y fallo, se muestra el error
-            else if (resultCode == PetitionDetailsActivity.RESULT_REJECT_FAILED) {
-                PfLog.e(SFConstants.LOG_TAG, "Error al rechazar la peticion desde la actividad de detalle"); //$NON-NLS-1$
-                showErrorDialog(DIALOG_RESULT_SIMPLE_REQUEST, getString(R.string.error_msg_rejecting_request));
             }
             // Si ha caducado la sesion vuelve a la actividad principal
             else if (resultCode == PetitionDetailsActivity.RESULT_SESSION_FAILED) {
@@ -1585,6 +1603,8 @@ public final class PetitionListActivity extends WebViewParentActivity implements
      * @param requests Listado de peticiones de visto bueno.
      */
     private void approveRequests(final SignRequest[] requests) {
+        // Antes de iniciar el proceso, reiniciamos la bandera que senala los errores
+        anyError = false;
         new ApproveRequestsTask(requests,
                 CommManager.getInstance(), this).execute();
     }
@@ -1596,6 +1616,8 @@ public final class PetitionListActivity extends WebViewParentActivity implements
      * @param requests Listado de peticiones de validación.
      */
     private void verifyRequests(final SignRequest[] requests) {
+        // Antes de iniciar el proceso, reiniciamos la bandera que senala los errores
+        anyError = false;
         new VerifyRequestsTask(requests, CommManager.getInstance(), this).execute();
     }
 
@@ -1609,6 +1631,8 @@ public final class PetitionListActivity extends WebViewParentActivity implements
      * @param requests Listado de peticiones de firma.
      */
     private void signRequets(final String alias, final SignRequest[] requests) {
+        // Antes de iniciar el proceso, reiniciamos la bandera que senala los errores
+        anyError = false;
         new RequestSigner(alias, this, this).sign(requests);
     }
 
