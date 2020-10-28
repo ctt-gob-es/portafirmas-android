@@ -32,6 +32,9 @@ import es.gob.afirma.android.util.PfLog;
 
 public final class ConfigureFilterDialogBuilder {
 
+    public static final String VALUE_APP_TYPE_VIEW_ALL = "view_all"; //$NON-NLS-1$
+    public static final String VALUE_APP_TYPE_VIEW_NO_VALIDATE = "view_no_validate"; //$NON-NLS-1$
+    public static final String VALUE_MONTH_ALL = "all"; //$NON-NLS-1$
     static final String FILTERS_ENABLED = "filters_enabled"; //$NON-NLS-1$
     static final String FILTERS_ORDER_ATTRIBUTE = "filters_order"; //$NON-NLS-1$
     static final String FILTERS_SUBJECT = "filters_subject"; //$NON-NLS-1$
@@ -43,27 +46,19 @@ public final class ConfigureFilterDialogBuilder {
     static final String FILTERS_APP_TYPE = "filters_app_type"; //$NON-NLS-1$
     static final String FILTERS_MONTH = "filters_month"; //$NON-NLS-1$
     static final String FILTERS_YEAR = "filters_year"; //$NON-NLS-1$
-
     private static final String KEY_ORDER = "orderAscDesc="; //$NON-NLS-1$
     private static final String VALUE_ORDER_DESC = "desc"; //$NON-NLS-1$
     private static final String VALUE_ORDER_ASC = "asc"; //$NON-NLS-1$
-
     private static final String KEY_ORDER_ATTR = "orderAttribute="; //$NON-NLS-1$
     private static final String VALUE_ORDER_ATTR_DATE = "fmodified"; //$NON-NLS-1$
     private static final String VALUE_ORDER_ATTR_SUBJECT = "dsubject"; //$NON-NLS-1$
     private static final String VALUE_ORDER_ATTR_APP = "application"; //$NON-NLS-1$
-
     private static final String DEFAULT_VALUE_ORDER_ATTR = VALUE_ORDER_ATTR_DATE;
-
     private static final String KEY_FILTER_APP_FILTER = "tipoFilter="; //$NON-NLS-1$
-    public static final String VALUE_APP_TYPE_VIEW_ALL = "view_all"; //$NON-NLS-1$
     private static final String VALUE_APP_TYPE_VIEW_SIGN = "view_sign"; //$NON-NLS-1$
     private static final String VALUE_APP_TYPE_VIEW_PASS = "view_pass"; //$NON-NLS-1$
     private static final String VALUE_APP_TYPE_VIEW_VALIDATE = "view_validate"; //$NON-NLS-1$
-    public static final String VALUE_APP_TYPE_VIEW_NO_VALIDATE = "view_no_validate"; //$NON-NLS-1$
-
     private static final String KEY_FILTER_MONTH = "mesFilter="; //$NON-NLS-1$
-    public static final String VALUE_MONTH_ALL = "all"; //$NON-NLS-1$
     private static final String VALUE_MONTH_LAST_24_HOURS = "last24Hours"; //$NON-NLS-1$
     private static final String VALUE_MONTH_LAST_WEEK = "lastWeek"; //$NON-NLS-1$
     private static final String VALUE_MONTH_LAST_MONTH = "lastMonth"; //$NON-NLS-1$
@@ -101,8 +96,8 @@ public final class ConfigureFilterDialogBuilder {
     private final Map<String, Integer> mAppsTypes = new HashMap<>();
     private final Map<String, Integer> mMonths = new HashMap<>();
     private final Map<String, Integer> mYears = new HashMap<>();
-    private boolean avoidFirstCall;
     private final FilterConfig filterConfig;
+    private boolean avoidFirstCall;
     private ConfigurationRole role;
 
     public ConfigureFilterDialogBuilder(final Bundle bundle, final String[] appIds, final String[] appNames, final ConfigurationRole role, final Activity activity) {
@@ -152,7 +147,7 @@ public final class ConfigureFilterDialogBuilder {
         KeyValuePair[] years = new KeyValuePair[year - VALUE_YEAR_BASE + 1];
         for (int i = VALUE_YEAR_BASE; i <= year; i++) {
             years[i - VALUE_YEAR_BASE] = new KeyValuePair(String.valueOf(i), String.valueOf(i));
-            mYears.put(String.valueOf(i),i - VALUE_YEAR_BASE );
+            mYears.put(String.valueOf(i), i - VALUE_YEAR_BASE);
         }
 
         //Inicializamos los maps que contienen los pares clave/valor de los spinners.
@@ -362,13 +357,18 @@ public final class ConfigureFilterDialogBuilder {
         ((Spinner) this.v.findViewById(R.id.spinner_order)).setSelection(0);
         ((TextView) this.v.findViewById(R.id.et_filter_subject)).setText(""); //$NON-NLS-1$
         ((Spinner) this.v.findViewById(R.id.spinner_app)).setSelection(0);
-        ((Spinner) this.v.findViewById(R.id.spinner_type)).setSelection(0);
+        if (ConfigurationRole.VERIFIER.equals(this.role)) {
+            ((Spinner) this.v.findViewById(R.id.spinner_type)).setSelection(4);
+        } else {
+            ((Spinner) this.v.findViewById(R.id.spinner_type)).setSelection(0);
+        }
         ((Spinner) this.v.findViewById(R.id.spinner_month)).setSelection(0);
         ((Spinner) this.v.findViewById(R.id.spinner_year)).setSelection(0);
         ((CheckBox) this.v.findViewById(R.id.show_verifier_rq_filter)).setChecked(false);
     }
 
-    /**+
+    /**
+     * +
      * Restablece los valores por los del objeto pasado como párametro del diálogo de filtros.
      */
     public void resetLayout(FilterConfig filterConfig) {
@@ -480,7 +480,7 @@ public final class ConfigureFilterDialogBuilder {
         private String userRole;
         private String ownerId;
 
-        public FilterConfig( ConfigurationRole role) {
+        public FilterConfig(ConfigurationRole role) {
             reset(role);
         }
 
@@ -495,14 +495,17 @@ public final class ConfigureFilterDialogBuilder {
             this.showUnverified = showUnverified;
         }
 
-        public static boolean isDefaultConfig(final FilterConfig config) {
+        public static boolean isDefaultConfig(final FilterConfig config, ConfigurationRole role) {
+            boolean appType = ConfigurationRole.VERIFIER.equals(role) ?
+                    config.appType == VALUE_APP_TYPE_VIEW_NO_VALIDATE :
+                    config.appType == VALUE_APP_TYPE_VIEW_ALL;
 
             return config == null ||
                     !config.enabled &&
                             (config.orderAttribute == null || DEFAULT_VALUE_ORDER_ATTR.equals(config.orderAttribute)) &&
                             (config.subject == null || config.subject.length() == 0) &&
-                            config.app == null && config.appType == VALUE_APP_TYPE_VIEW_ALL &&
-                            config.month == VALUE_MONTH_ALL  && config.year == null &&
+                            config.app == null && appType &&
+                            config.month == VALUE_MONTH_ALL && config.year == null &&
                             !config.showUnverified;
         }
 
@@ -641,6 +644,47 @@ public final class ConfigureFilterDialogBuilder {
     }
 
     /**
+     * Adaptador para el <i>Spinner</i> de aplicaciones.
+     */
+
+    static final class KeyValueSpinnerAdapter extends ArrayAdapter<KeyValuePair> {
+
+        KeyValueSpinnerAdapter(final KeyValuePair[] items, final Context context) {
+            super(context, android.R.layout.simple_spinner_item, items);
+            setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        }
+
+        KeyValueSpinnerAdapter(final String[] ids, final String[] names, final Context context) {
+            super(context, android.R.layout.simple_spinner_item);
+            setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            if (ids != null && names != null) {
+                for (int i = 0; i < ids.length; i++) {
+                    if (ids[i] != null && names[i] != null) {
+                        super.add(new KeyValuePair(ids[i], names[i]));
+                    }
+                }
+            }
+        }
+    }
+
+    private static final class KeyValuePair extends Pair<String, String> {
+
+        KeyValuePair(final String key, final String value) {
+            super(key, value);
+        }
+
+        String getKey() {
+            return this.first;
+        }
+
+        @NonNull
+        @Override
+        public String toString() {
+            return this.second;
+        }
+    }
+
+    /**
      * Clase para activar y desactivar las opciones de configuraci&oacute;n de filtros en el
      * di&aacute;logo de filtrado.
      */
@@ -683,47 +727,6 @@ public final class ConfigureFilterDialogBuilder {
                 PfLog.w(SFConstants.LOG_TAG, "No se ha podido configurar el valor de la propiedad de activacion de filtros"); //$NON-NLS-1$
                 e.printStackTrace();
             }
-        }
-    }
-
-    /**
-     * Adaptador para el <i>Spinner</i> de aplicaciones.
-     */
-
-    static final class KeyValueSpinnerAdapter extends ArrayAdapter<KeyValuePair> {
-
-        KeyValueSpinnerAdapter(final KeyValuePair[] items, final Context context) {
-            super(context, android.R.layout.simple_spinner_item, items);
-            setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        }
-
-        KeyValueSpinnerAdapter(final String[] ids, final String[] names, final Context context) {
-            super(context, android.R.layout.simple_spinner_item);
-            setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-            if (ids != null && names != null) {
-                for (int i = 0; i < ids.length; i++) {
-                    if (ids[i] != null && names[i] != null) {
-                        super.add(new KeyValuePair(ids[i], names[i]));
-                    }
-                }
-            }
-        }
-    }
-
-    private static final class KeyValuePair extends Pair<String, String> {
-
-        KeyValuePair(final String key, final String value) {
-            super(key, value);
-        }
-
-        String getKey() {
-            return this.first;
-        }
-
-        @NonNull
-        @Override
-        public String toString() {
-            return this.second;
         }
     }
 }

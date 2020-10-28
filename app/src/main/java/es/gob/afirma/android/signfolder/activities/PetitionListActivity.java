@@ -1330,7 +1330,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
 
         if (this.filterConfig != null) {
             menu.findItem(R.id.no_filter).setVisible(
-                    !FilterConfig.isDefaultConfig(this.filterConfig));
+                    !FilterConfig.isDefaultConfig(this.filterConfig, this.roleSelected));
         }
 
         // Mostramos el elemento para la seleccion o deseleccion de todas las
