@@ -234,7 +234,12 @@ public final class PetitionListActivity extends WebViewParentActivity implements
     }
 
     void setFilterConfig(final FilterConfig filterConfig) {
-        this.filterConfig = filterConfig;
+        if (!filterConfig.isEnabled()) {
+            this.filterConfig.reset(this.roleSelected);
+            this.filterDialogBuilder.resetLayout();
+        } else {
+            this.filterConfig = filterConfig;
+        }
     }
 
     ProgressDialog getProgressDialog() {
