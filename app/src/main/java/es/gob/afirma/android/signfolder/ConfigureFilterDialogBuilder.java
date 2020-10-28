@@ -60,7 +60,7 @@ public final class ConfigureFilterDialogBuilder {
     private static final String VALUE_APP_TYPE_VIEW_SIGN = "view_sign"; //$NON-NLS-1$
     private static final String VALUE_APP_TYPE_VIEW_PASS = "view_pass"; //$NON-NLS-1$
     private static final String VALUE_APP_TYPE_VIEW_VALIDATE = "view_validate"; //$NON-NLS-1$
-    private static final String VALUE_APP_TYPE_VIEW_NO_VALIDATE = "view_no_validate"; //$NON-NLS-1$
+    public static final String VALUE_APP_TYPE_VIEW_NO_VALIDATE = "view_no_validate"; //$NON-NLS-1$
 
     private static final String KEY_FILTER_MONTH = "mesFilter="; //$NON-NLS-1$
     public static final String VALUE_MONTH_ALL = "all"; //$NON-NLS-1$
@@ -103,11 +103,13 @@ public final class ConfigureFilterDialogBuilder {
     private final Map<String, Integer> mYears = new HashMap<>();
     private boolean avoidFirstCall;
     private final FilterConfig filterConfig;
+    private ConfigurationRole role;
 
     public ConfigureFilterDialogBuilder(final Bundle bundle, final String[] appIds, final String[] appNames, final ConfigurationRole role, final Activity activity) {
 
-        this.filterConfig = new FilterConfig();
+        this.filterConfig = new FilterConfig(role);
         avoidFirstCall = true;
+        this.role = role;
 
         this.builder = new AlertDialog.Builder(activity);
         final LayoutInflater inflater = activity.getLayoutInflater();
@@ -179,7 +181,7 @@ public final class ConfigureFilterDialogBuilder {
 
         // Si el usuario tiene el rol de validador, ocultamos el checkbox de mostrar peticiones no validadas
         // y recuperamos el dni del validador.
-        if (role != null && role.equals(ConfigurationRole.VERIFIER)) {
+        if (this.role != null && this.role.equals(ConfigurationRole.VERIFIER)) {
             this.v.findViewById(R.id.textView5).setVisibility(View.GONE);
             CheckBox cb = this.v.findViewById(R.id.show_verifier_rq_filter);
             cb.setVisibility(View.GONE);
@@ -478,8 +480,8 @@ public final class ConfigureFilterDialogBuilder {
         private String userRole;
         private String ownerId;
 
-        public FilterConfig() {
-            reset();
+        public FilterConfig( ConfigurationRole role) {
+            reset(role);
         }
 
         FilterConfig(final boolean enabled, final String orderAttribute, final String subject, final String app, final String appType, final String month, final String year, final boolean showUnverified) {
@@ -592,12 +594,16 @@ public final class ConfigureFilterDialogBuilder {
             this.ownerId = ownerId;
         }
 
-        public FilterConfig reset() {
+        public FilterConfig reset(ConfigurationRole role) {
             this.enabled = false;
             this.orderAttribute = null;
             this.subject = null;
             this.app = null;
-            this.appType = VALUE_APP_TYPE_VIEW_ALL;
+            if(ConfigurationRole.VERIFIER.equals(role)) {
+                this.appType = VALUE_APP_TYPE_VIEW_NO_VALIDATE;
+            } else {
+                this.appType = VALUE_APP_TYPE_VIEW_ALL;
+            }
             this.month = VALUE_MONTH_ALL;
             this.year = null;
             this.showUnverified = false;

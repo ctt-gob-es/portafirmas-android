@@ -322,7 +322,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
             ownerId = this.roleSelectedInfo.getOwnerDni();
         }
         if (this.filterConfig == null) {
-            this.filterConfig = new FilterConfig();
+            this.filterConfig = new FilterConfig(this.roleSelected);
         }
         this.filterConfig.setUserId(userId);
         this.filterConfig.setUserRole(userRole);
@@ -340,7 +340,11 @@ public final class PetitionListActivity extends WebViewParentActivity implements
             this.filterConfig.setMonth(ConfigureFilterDialogBuilder.VALUE_MONTH_ALL);
         }
         if (this.filterConfig.getAppType() == null) {
-            this.filterConfig.setAppType(ConfigureFilterDialogBuilder.VALUE_APP_TYPE_VIEW_ALL);
+            if(ConfigurationRole.VERIFIER.equals(this.roleSelected)){
+                this.filterConfig.setAppType(ConfigureFilterDialogBuilder.VALUE_APP_TYPE_VIEW_NO_VALIDATE);
+            } else {
+                this.filterConfig.setAppType(ConfigureFilterDialogBuilder.VALUE_APP_TYPE_VIEW_ALL);
+            }
         }
     }
 
@@ -793,7 +797,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
         }
         // Eliminar filtro
         else if (item.getItemId() == R.id.no_filter) {
-            setFilterConfig(this.filterConfig.reset());
+            setFilterConfig(this.filterConfig.reset(this.roleSelected));
             this.filterDialogBuilder.resetLayout();
             invalidateOptionsMenu();
             updateCurrentList(FIRST_PAGE);
@@ -1489,7 +1493,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
      */
     private void deepCopyFilterConfig() {
         if (this.filterConfig != null) {
-            this.oldFilterConfig = new FilterConfig();
+            this.oldFilterConfig = new FilterConfig(this.roleSelected);
             this.oldFilterConfig.setOrderAttribute(this.filterConfig.getOrderAttribute());
             this.oldFilterConfig.setEnabled(this.filterConfig.isEnabled());
             this.oldFilterConfig.setSubject(this.filterConfig.getSubject());
