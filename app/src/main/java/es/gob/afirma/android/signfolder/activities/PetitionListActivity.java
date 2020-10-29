@@ -824,11 +824,11 @@ public final class PetitionListActivity extends WebViewParentActivity implements
                 // Comprobamos que el token está actualizado.
                 checkChangesOnNotificationToken();
                 // y activamos las notificaciones.
-                UpdatePushNotificationsTask updatePushNotificationsTask = new UpdatePushNotificationsTask(true, this);
+                new UpdatePushNotificationsTask(true, this).execute();
             }
             // Si se ha solicitado desdctivarlas...
             else if (item.getTitle().equals(getString(R.string.disable_notifications))) {
-                UpdatePushNotificationsTask updatePushNotificationsTask = new UpdatePushNotificationsTask(false, this);
+                new UpdatePushNotificationsTask(false, this).execute();
             }
 
 
@@ -1093,18 +1093,32 @@ public final class PetitionListActivity extends WebViewParentActivity implements
     }
 
     @Override
-    public void onUpdatePushNotsSuccess(String result) {
-        if (result.equals("OK")) { //$NON-NLS-1$
-            Toast.makeText(this, "Notificaciones actualizadas", Toast.LENGTH_LONG).show(); //$NON-NLS-1$
+    public void onUpdatePushNotsSuccess(boolean request, String result) {
+        if (result.equals("OK") && request) { //$NON-NLS-1$
+            Toast.makeText(this, "Notificaciones activadas", Toast.LENGTH_LONG).show(); //$NON-NLS-1$
+            menuRef.findItem(R.id.notifications).setTitle(R.string.disable_notifications);
+        } else if (result.equals("OK") && !request) {
+            Toast.makeText(this, "Notificaciones desactivadas", Toast.LENGTH_LONG).show(); //$NON-NLS-1$
+            menuRef.findItem(R.id.notifications).setTitle(R.string.enable_notifications);
         } else {
-            Toast.makeText(this, "No ha sido posible actualizar el estado de las notificaciones push: " + result, Toast.LENGTH_LONG).show(); //$NON-NLS-1$
+            Toast.makeText(this, "No ha sido posible actualizar el estado de las notificaciones push", Toast.LENGTH_LONG).show(); //$NON-NLS-1$
+            if (result.equals("KO") && request) { //$NON-NLS-1$
+                menuRef.findItem(R.id.notifications).setTitle(R.string.enable_notifications);
+            } else if (result.equals("KO") && !request) { //$NON-NLS-1$
+                menuRef.findItem(R.id.notifications).setTitle(R.string.disable_notifications);
+            }
         }
     }
 
     @Override
-    public void onUpdatePushNotsError(Throwable exception) {
+    public void onUpdatePushNotsError(boolean request, Throwable exception) {
         Log.e("es.gob.afirma", "No ha sido posible actualizar el estado de las notificaciones push: " + exception.getMessage()); //$NON-NLS-1$ //$NON-NLS-2$
         Toast.makeText(this, R.string.toast_msg_update_push_nots_error, Toast.LENGTH_LONG).show();
+        if (request) {
+            menuRef.findItem(R.id.notifications).setTitle(R.string.enable_notifications);
+        } else {
+            menuRef.findItem(R.id.notifications).setTitle(R.string.disable_notifications);
+        }
     }
 
     /**

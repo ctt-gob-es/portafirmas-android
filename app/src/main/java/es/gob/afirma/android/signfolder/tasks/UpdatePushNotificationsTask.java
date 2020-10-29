@@ -13,12 +13,12 @@ public class UpdatePushNotificationsTask extends AsyncTask<Void, Void, String> {
     /**
      * Atributo que indica si las notificaciones se deben activar o desactivar.
      */
-    private boolean enableNots;
+    private final boolean enableNots;
 
     /**
      * Listener de la tarea.
      */
-    private UpdatePushNotsListener listener;
+    private final UpdatePushNotsListener listener;
 
     /**
      * Atributo que representa el error producido durante la ejecución de la tarea.
@@ -48,11 +48,11 @@ public class UpdatePushNotificationsTask extends AsyncTask<Void, Void, String> {
     }
 
     @Override
-    protected void onPostExecute(String s) {
-        if (s != null) {
-            this.listener.onUpdatePushNotsSuccess(s);
+    protected void onPostExecute(String result) {
+        if (result != null) {
+            this.listener.onUpdatePushNotsSuccess(this.enableNots, result);
         } else {
-            this.listener.onUpdatePushNotsError(this.t);
+            this.listener.onUpdatePushNotsError(this.enableNots, this.t);
         }
     }
 
@@ -63,14 +63,16 @@ public class UpdatePushNotificationsTask extends AsyncTask<Void, Void, String> {
 
         /**
          * Método para los casos de éxito.
+         * @param request Tipo de solicitud que se ha realizado (activación o desactivación).
          * @param result Resultado de la operación.
          */
-        void onUpdatePushNotsSuccess(String result);
+        void onUpdatePushNotsSuccess(boolean request, String result);
 
         /**
          * Método para los casos de error.
+         * @param request Tipo de solicitud que se ha realizado (activación o desactivación).
          * @param exception Excepción lanzada durante la operación.
          */
-        void onUpdatePushNotsError(Throwable exception);
+        void onUpdatePushNotsError(boolean request, Throwable exception);
     }
 }
