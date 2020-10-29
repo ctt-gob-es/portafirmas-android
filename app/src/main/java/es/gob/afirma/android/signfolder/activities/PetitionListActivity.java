@@ -814,11 +814,6 @@ public final class PetitionListActivity extends WebViewParentActivity implements
         }
         // Habilitar/deshabilitar notificaciones
         else if (item.getItemId() == R.id.notifications) {
-            if (checkPlayServices()) {
-                // Start IntentService to register this application with FireBase.
-                registerReceiver();
-            }
-            String result = null;
             // Si se ha solicitado activarlas...
             if (item.getTitle().equals(getString(R.string.enable_notifications))) {
                 // Comprobamos que el token está actualizado.
@@ -1097,9 +1092,11 @@ public final class PetitionListActivity extends WebViewParentActivity implements
         if (result.equals("OK") && request) { //$NON-NLS-1$
             Toast.makeText(this, "Notificaciones activadas", Toast.LENGTH_LONG).show(); //$NON-NLS-1$
             menuRef.findItem(R.id.notifications).setTitle(R.string.disable_notifications);
+            this.userConfig.setPushStatus(request);
         } else if (result.equals("OK") && !request) {
             Toast.makeText(this, "Notificaciones desactivadas", Toast.LENGTH_LONG).show(); //$NON-NLS-1$
             menuRef.findItem(R.id.notifications).setTitle(R.string.enable_notifications);
+            this.userConfig.setPushStatus(request);
         } else {
             Toast.makeText(this, "No ha sido posible actualizar el estado de las notificaciones push", Toast.LENGTH_LONG).show(); //$NON-NLS-1$
             if (result.equals("KO") && request) { //$NON-NLS-1$
