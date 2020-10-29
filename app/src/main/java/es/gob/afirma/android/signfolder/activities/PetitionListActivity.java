@@ -79,6 +79,7 @@ import es.gob.afirma.android.signfolder.tasks.LoadSignRequestsTask.LoadSignReque
 import es.gob.afirma.android.signfolder.tasks.LogoutRequestTask;
 import es.gob.afirma.android.signfolder.tasks.OpenHelpDocumentTask;
 import es.gob.afirma.android.signfolder.tasks.RejectRequestsTask;
+import es.gob.afirma.android.signfolder.tasks.UpdatePushNotificationsTask;
 import es.gob.afirma.android.signfolder.tasks.VerifyRequestsTask;
 import es.gob.afirma.android.user.configuration.ConfigurationConstants;
 import es.gob.afirma.android.user.configuration.ConfigurationRole;
@@ -99,7 +100,8 @@ import es.gob.afirma.android.util.PfLog;
 public final class PetitionListActivity extends WebViewParentActivity implements
         OperationRequestListener, LoadSignRequestListener, OnItemClickListener,
         DialogFragmentListener, FireLoadDataTask.FireLoadDataListener,
-        FireSignTask.FireSignListener {
+        FireSignTask.FireSignListener,
+        UpdatePushNotificationsTask.UpdatePushNotsListener {
 
     public final static String EXTRA_RESOURCE_DNI = "es.gob.afirma.signfolder.dni"; //$NON-NLS-1$
     public final static String EXTRA_RESOURCE_CERT_ALIAS = "es.gob.afirma.signfolder.alias"; //$NON-NLS-1$
@@ -177,7 +179,9 @@ public final class PetitionListActivity extends WebViewParentActivity implements
     private Menu menuRef;
     private int currentPage = FIRST_PAGE;
 
-    /** Se&ntilde;ala si se produjo alg&uacute;n error al procesar las peticiones. */
+    /**
+     * Se&ntilde;ala si se produjo alg&uacute;n error al procesar las peticiones.
+     */
     private boolean anyError = false;
 
     /**
@@ -217,7 +221,8 @@ public final class PetitionListActivity extends WebViewParentActivity implements
         @Override
         public void onReceive(Context context, Intent intent) {
             if (intent.getExtras() != null && intent.getExtras().getBoolean("success")) {
-                menuRef.findItem(R.id.notifications).setVisible(false);
+//                menuRef.findItem(R.id.notifications).setVisible(false);
+                menuRef.findItem(R.id.notifications).setTitle(R.string.disable_notifications);
                 if (intent.getExtras().getBoolean("noticeUser")) {
                     Toast.makeText(context, R.string.toast_msg_gcm_connection_ok, Toast.LENGTH_SHORT).show();
                 }
@@ -345,7 +350,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
             this.filterConfig.setMonth(ConfigureFilterDialogBuilder.VALUE_MONTH_ALL);
         }
         if (this.filterConfig.getAppType() == null) {
-            if(ConfigurationRole.VERIFIER.equals(this.roleSelected)){
+            if (ConfigurationRole.VERIFIER.equals(this.roleSelected)) {
                 this.filterConfig.setAppType(ConfigureFilterDialogBuilder.VALUE_APP_TYPE_VIEW_NO_VALIDATE);
             } else {
                 this.filterConfig.setAppType(ConfigureFilterDialogBuilder.VALUE_APP_TYPE_VIEW_ALL);
@@ -819,25 +824,14 @@ public final class PetitionListActivity extends WebViewParentActivity implements
                 // Comprobamos que el token está actualizado.
                 checkChangesOnNotificationToken();
                 // y activamos las notificaciones.
-                try {
-                    result = CommManager.getInstance().updatePushNotifications(true);
-                } catch (Exception e) {
-                    Log.e("es.gob.afirma", "No ha sido posible actualizar el estado de las notificaciones push: " + e.getMessage()); //$NON-NLS-1$ //$NON-NLS-2$
-                    Toast.makeText(this, R.string.toast_msg_update_push_nots_error, Toast.LENGTH_LONG).show();
-                }
+                UpdatePushNotificationsTask updatePushNotificationsTask = new UpdatePushNotificationsTask(true, this);
             }
             // Si se ha solicitado desdctivarlas...
             else if (item.getTitle().equals(getString(R.string.disable_notifications))) {
-                try {
-                    result = CommManager.getInstance().updatePushNotifications(false);
-                } catch (Exception e) {
-                    Log.e("es.gob.afirma", "No ha sido posible actualizar el estado de las notificaciones push: " + e.getMessage()); //$NON-NLS-1$ //$NON-NLS-2$
-                    Toast.makeText(this, R.string.toast_msg_update_push_nots_error, Toast.LENGTH_LONG).show();
-                }
+                UpdatePushNotificationsTask updatePushNotificationsTask = new UpdatePushNotificationsTask(false, this);
             }
-            if (result != null) {
-                Toast.makeText(this, "Notificaciones actualizadas: " + result, Toast.LENGTH_LONG).show(); //$NON-NLS-1$
-            }
+
+
         }
         // Configuración de usuario
         else if (item.getItemId() == R.id.setting) {
@@ -1096,6 +1090,21 @@ public final class PetitionListActivity extends WebViewParentActivity implements
     public void onBackPressed() {
         // Preguntamos si debe cerrarse la sesion
         showConfirmExitDialog();
+    }
+
+    @Override
+    public void onUpdatePushNotsSuccess(String result) {
+        if (result.equals("OK")) { //$NON-NLS-1$
+            Toast.makeText(this, "Notificaciones actualizadas", Toast.LENGTH_LONG).show(); //$NON-NLS-1$
+        } else {
+            Toast.makeText(this, "No ha sido posible actualizar el estado de las notificaciones push: " + result, Toast.LENGTH_LONG).show(); //$NON-NLS-1$
+        }
+    }
+
+    @Override
+    public void onUpdatePushNotsError(Throwable exception) {
+        Log.e("es.gob.afirma", "No ha sido posible actualizar el estado de las notificaciones push: " + exception.getMessage()); //$NON-NLS-1$ //$NON-NLS-2$
+        Toast.makeText(this, R.string.toast_msg_update_push_nots_error, Toast.LENGTH_LONG).show();
     }
 
     /**
