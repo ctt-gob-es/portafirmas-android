@@ -40,6 +40,7 @@ public final class ConfigureFilterDialogBuilder {
     static final String FILTERS_SUBJECT = "filters_subject"; //$NON-NLS-1$
     static final String FILTERS_APP = "filters_app"; //$NON-NLS-1$
     static final String FILTERS_SHOW_UNVERIFIED = "filters_show_unverified"; //$NON-NLS-1$
+    static final String FILTERS_USER_WITH_VERIFIERS = "filters_user_with_verifiers"; //$NON-NLS-1$
     static final String FILTERS_USER_ID = "filters_user_ID"; //$NON-NLS-1$
     static final String FILTERS_USER_ROLE = "filters_user_role"; //$NON-NLS-1$
     static final String FILTERS_OWNER_ID = "filter_owner_id"; //$NON-NLS-1$
@@ -99,12 +100,14 @@ public final class ConfigureFilterDialogBuilder {
     private final FilterConfig filterConfig;
     private boolean avoidFirstCall;
     private ConfigurationRole role;
+    private boolean hasVerifiers;
 
-    public ConfigureFilterDialogBuilder(final Bundle bundle, final String[] appIds, final String[] appNames, final ConfigurationRole role, final Activity activity) {
+    public ConfigureFilterDialogBuilder(final Bundle bundle, final String[] appIds, final String[] appNames, final ConfigurationRole role, final boolean hasVerifiers, final Activity activity) {
 
-        this.filterConfig = new FilterConfig(role);
+        this.filterConfig = new FilterConfig(role, hasVerifiers);
         avoidFirstCall = true;
         this.role = role;
+        this.hasVerifiers = hasVerifiers;
 
         this.builder = new AlertDialog.Builder(activity);
         final LayoutInflater inflater = activity.getLayoutInflater();
@@ -235,6 +238,8 @@ public final class ConfigureFilterDialogBuilder {
         this.filterConfig.setUserId(userId);
         final String userRole = bundle.getString(FILTERS_USER_ROLE) != null ? bundle.getString(FILTERS_USER_ROLE) : "";
         this.filterConfig.setUserRole(userRole);
+        final boolean userWithVerifiers = bundle.getBoolean(FILTERS_USER_WITH_VERIFIERS);
+        this.filterConfig.setUserWitVerifiers(userWithVerifiers);
 
         configureField((Spinner) this.v.findViewById(R.id.spinner_order), bundle.getString(FILTERS_ORDER_ATTRIBUTE), "setOrderAttribute"); //$NON-NLS-1$
         configureField((TextView) this.v.findViewById(R.id.et_filter_subject), bundle.getString(FILTERS_SUBJECT), "setSubject"); //$NON-NLS-1$
@@ -273,7 +278,8 @@ public final class ConfigureFilterDialogBuilder {
                 savedInstanceState.getString(FILTERS_APP_TYPE, null),
                 savedInstanceState.getString(FILTERS_MONTH, null),
                 savedInstanceState.getString(FILTERS_YEAR, null),
-                savedInstanceState.getBoolean(FILTERS_SHOW_UNVERIFIED, false));
+                savedInstanceState.getBoolean(FILTERS_SHOW_UNVERIFIED, false),
+                savedInstanceState.getBoolean(FILTERS_USER_WITH_VERIFIERS, false));
     }
 
     public static List<String> generateFilters(final FilterConfig config) {
@@ -359,6 +365,8 @@ public final class ConfigureFilterDialogBuilder {
         ((Spinner) this.v.findViewById(R.id.spinner_app)).setSelection(0);
         if (ConfigurationRole.VERIFIER.equals(this.role)) {
             ((Spinner) this.v.findViewById(R.id.spinner_type)).setSelection(4);
+        } else if(this.role == null && this.hasVerifiers) {
+            ((Spinner) this.v.findViewById(R.id.spinner_type)).setSelection(3);
         } else {
             ((Spinner) this.v.findViewById(R.id.spinner_type)).setSelection(0);
         }
@@ -479,12 +487,13 @@ public final class ConfigureFilterDialogBuilder {
         private String userId;
         private String userRole;
         private String ownerId;
+        private boolean userWitVerifiers;
 
-        public FilterConfig(ConfigurationRole role) {
-            reset(role);
+        public FilterConfig(ConfigurationRole role, boolean hasVerifiers) {
+            reset(role, hasVerifiers);
         }
 
-        FilterConfig(final boolean enabled, final String orderAttribute, final String subject, final String app, final String appType, final String month, final String year, final boolean showUnverified) {
+        FilterConfig(final boolean enabled, final String orderAttribute, final String subject, final String app, final String appType, final String month, final String year, final boolean showUnverified, final boolean userWitVerifiers) {
             this.enabled = enabled;
             this.orderAttribute = orderAttribute;
             this.subject = subject;
@@ -493,12 +502,18 @@ public final class ConfigureFilterDialogBuilder {
             this.month = month;
             this.year = year;
             this.showUnverified = showUnverified;
+            this.userWitVerifiers = userWitVerifiers;
         }
 
         public static boolean isDefaultConfig(final FilterConfig config, ConfigurationRole role) {
-            boolean appType = ConfigurationRole.VERIFIER.equals(role) ?
-                    config.appType == VALUE_APP_TYPE_VIEW_NO_VALIDATE :
-                    config.appType == VALUE_APP_TYPE_VIEW_ALL;
+            boolean appType;
+            if(ConfigurationRole.VERIFIER.equals(role)){
+                appType = config.appType == VALUE_APP_TYPE_VIEW_NO_VALIDATE;
+            } else if (role == null && config.isUserWitVerifiers()){
+                appType = config.appType == VALUE_APP_TYPE_VIEW_VALIDATE;
+            } else {
+                appType = config.appType == VALUE_APP_TYPE_VIEW_ALL;
+            }
 
             return config == null ||
                     !config.enabled &&
@@ -597,13 +612,20 @@ public final class ConfigureFilterDialogBuilder {
             this.ownerId = ownerId;
         }
 
-        public FilterConfig reset(ConfigurationRole role) {
+        public boolean isUserWitVerifiers() { return userWitVerifiers; }
+
+        public void setUserWitVerifiers(boolean userWitVerifiers) { this.userWitVerifiers = userWitVerifiers; }
+
+        public FilterConfig reset(ConfigurationRole role, boolean hasVerifiers) {
             this.enabled = false;
             this.orderAttribute = null;
             this.subject = null;
             this.app = null;
-            if(ConfigurationRole.VERIFIER.equals(role)) {
+            this.userWitVerifiers = hasVerifiers;
+            if (ConfigurationRole.VERIFIER.equals(role)) {
                 this.appType = VALUE_APP_TYPE_VIEW_NO_VALIDATE;
+            } else if (role == null && hasVerifiers) {
+                this.appType = VALUE_APP_TYPE_VIEW_VALIDATE;
             } else {
                 this.appType = VALUE_APP_TYPE_VIEW_ALL;
             }
@@ -638,6 +660,7 @@ public final class ConfigureFilterDialogBuilder {
             newBundle.putString(FILTERS_USER_ID, this.userId);
             newBundle.putString(FILTERS_USER_ROLE, this.userRole);
             newBundle.putString(FILTERS_OWNER_ID, this.ownerId);
+            newBundle.putBoolean(FILTERS_USER_WITH_VERIFIERS, this.userWitVerifiers);
 
             return newBundle;
         }

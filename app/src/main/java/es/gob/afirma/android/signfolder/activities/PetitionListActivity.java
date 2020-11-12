@@ -240,7 +240,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
 
     void setFilterConfig(final FilterConfig filterConfig) {
         if (!filterConfig.isEnabled()) {
-            this.filterConfig.reset(this.roleSelected);
+            this.filterConfig.reset(this.roleSelected, this.userConfig.isUserWithVerifiers());
             this.filterDialogBuilder.resetLayout();
         } else {
             this.filterConfig = filterConfig;
@@ -332,7 +332,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
             ownerId = this.roleSelectedInfo.getOwnerDni();
         }
         if (this.filterConfig == null) {
-            this.filterConfig = new FilterConfig(this.roleSelected);
+            this.filterConfig = new FilterConfig(this.roleSelected, this.userConfig.isUserWithVerifiers());
         }
         this.filterConfig.setUserId(userId);
         this.filterConfig.setUserRole(userRole);
@@ -807,7 +807,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
         }
         // Eliminar filtro
         else if (item.getItemId() == R.id.no_filter) {
-            setFilterConfig(this.filterConfig.reset(this.roleSelected));
+            setFilterConfig(this.filterConfig.reset(this.roleSelected, this.userConfig.isUserWithVerifiers()));
             this.filterDialogBuilder.resetLayout();
             invalidateOptionsMenu();
             updateCurrentList(FIRST_PAGE);
@@ -1472,7 +1472,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
 
         this.filterDialogBuilder = new ConfigureFilterDialogBuilder(
                 savedInstanceState, this.appIds.toArray(new String[0]),
-                this.appNames.toArray(new String[0]), this.roleSelected, this);
+                this.appNames.toArray(new String[0]), this.roleSelected, this.userConfig.isUserWithVerifiers(), this);
         this.filterDialogBuilder.setPositiveButton(R.string.ok,
                 new DialogInterface.OnClickListener() {
                     @Override
@@ -1518,7 +1518,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
      */
     private void deepCopyFilterConfig() {
         if (this.filterConfig != null) {
-            this.oldFilterConfig = new FilterConfig(this.roleSelected);
+            this.oldFilterConfig = new FilterConfig(this.roleSelected, this.userConfig.isUserWithVerifiers());
             this.oldFilterConfig.setOrderAttribute(this.filterConfig.getOrderAttribute());
             this.oldFilterConfig.setEnabled(this.filterConfig.isEnabled());
             this.oldFilterConfig.setSubject(this.filterConfig.getSubject());
