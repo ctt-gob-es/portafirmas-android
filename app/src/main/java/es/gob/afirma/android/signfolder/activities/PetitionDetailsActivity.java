@@ -773,7 +773,7 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
     private String getConfirmDialogMessage(final RequestType type) {
         if (type == RequestType.APPROVE) {
             return getString(R.string.dialog_msg_confirm_approve);
-        } else if (this.selectedRole.equals(ConfigurationRole.VERIFIER)) {
+        } else if (this.selectedRole != null && this.selectedRole.equals(ConfigurationRole.VERIFIER)) {
             return getString(R.string.dialog_msg_confirm_verify);
         }
         return getString(R.string.dialog_msg_confirm_sign);

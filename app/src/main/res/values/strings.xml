@@ -2,7 +2,7 @@
 <resources>
 
     <string name="app_name">Port@firmas</string>
-    <string name="app_title">Port@firmas v1.5.4</string>
+    <string name="app_title">Port@firmas v1.6</string>
     <string name="close">Cerrar</string>
     <string name="error">Error</string>
     <string name="server_select">Servidores Portafirmas</string>

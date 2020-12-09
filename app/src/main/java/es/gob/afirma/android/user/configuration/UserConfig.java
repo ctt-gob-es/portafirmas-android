@@ -1,6 +1,7 @@
 package es.gob.afirma.android.user.configuration;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -32,6 +33,17 @@ public class UserConfig implements Serializable {
      * Lista de filtros asociada al usuario.
      */
     private UserFilters userFilers;
+
+    /**
+     * Constructor de la clase.
+     */
+    public UserConfig() {
+        this.roles = new ArrayList<>();
+        this.simConfig = true;
+        this.userWithVerifiers = false;
+        this.pushStatus = false;
+        this.userFilers = null;
+    }
 
     /**
      * Constructor de la clase.

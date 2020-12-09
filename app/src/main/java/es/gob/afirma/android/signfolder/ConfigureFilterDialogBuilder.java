@@ -99,8 +99,8 @@ public final class ConfigureFilterDialogBuilder {
     private final Map<String, Integer> mYears = new HashMap<>();
     private final FilterConfig filterConfig;
     private boolean avoidFirstCall;
-    private ConfigurationRole role;
-    private boolean hasVerifiers;
+    private final ConfigurationRole role;
+    private final boolean hasVerifiers;
 
     public ConfigureFilterDialogBuilder(final Bundle bundle, final String[] appIds, final String[] appNames, final ConfigurationRole role, final boolean hasVerifiers, final Activity activity) {
 
@@ -180,11 +180,6 @@ public final class ConfigureFilterDialogBuilder {
         // Si el usuario tiene el rol de validador, ocultamos el checkbox de mostrar peticiones no validadas
         // y recuperamos el dni del validador.
         if (this.role != null && this.role.equals(ConfigurationRole.VERIFIER)) {
-            this.v.findViewById(R.id.textView5).setVisibility(View.GONE);
-            CheckBox cb = this.v.findViewById(R.id.show_verifier_rq_filter);
-            cb.setVisibility(View.GONE);
-            cb.setEnabled(false);
-
             final String verifierId = bundle.getString(FILTERS_OWNER_ID) != null ? bundle.getString(FILTERS_OWNER_ID) : "";
             this.filterConfig.setOwnerId(verifierId);
         }
@@ -229,11 +224,6 @@ public final class ConfigureFilterDialogBuilder {
         listener.onCheckedChanged(cb, checked);
         cb.setOnCheckedChangeListener(listener);
 
-        final boolean unverified = bundle.getBoolean(FILTERS_SHOW_UNVERIFIED, false);
-        final CheckBox sv = this.v.findViewById(R.id.show_verifier_rq_filter);
-        sv.setChecked(unverified);
-        this.filterConfig.setShowUnverified(unverified);
-
         final String userId = bundle.getString(FILTERS_USER_ID) != null ? bundle.getString(FILTERS_USER_ID) : "";
         this.filterConfig.setUserId(userId);
         final String userRole = bundle.getString(FILTERS_USER_ROLE) != null ? bundle.getString(FILTERS_USER_ROLE) : "";
@@ -246,7 +236,6 @@ public final class ConfigureFilterDialogBuilder {
         configureField((Spinner) this.v.findViewById(R.id.spinner_app), bundle.getString(FILTERS_APP), "setApp"); //$NON-NLS-1$
         configureField((Spinner) this.v.findViewById(R.id.spinner_type), bundle.getString(FILTERS_APP_TYPE), "setAppType"); //$NON-NLS-1$
         configureField((Spinner) this.v.findViewById(R.id.spinner_year), bundle.getString(FILTERS_YEAR), "setYear"); //$NON-NLS-1$
-        configureCheckBoxField((CheckBox) this.v.findViewById(R.id.show_verifier_rq_filter), bundle.getBoolean(FILTERS_SHOW_UNVERIFIED), "setShowUnverified"); //$NON-NLS-1$
 
         this.builder.setView(this.v).setTitle(R.string.title_configure_filter);
     }
@@ -290,21 +279,14 @@ public final class ConfigureFilterDialogBuilder {
             filters.add(KEY_ORDER + VALUE_ORDER_DESC);
         } else {
             String userId = "";
-            String userRole = "";
             String ownerId = "";
             if (config.getUserId() != null) {
                 userId = config.userId;
-            }
-            if (config.getUserRole() != null) {
-                userRole = config.userRole;
             }
             if (config.getOwnerId() != null) {
                 ownerId = config.ownerId;
             }
             filters.add(KEY_FILTER_USER_ID + userId);
-            if (!userRole.isEmpty()) {
-                filters.add(KEY_FILTER_USER_ROLE + userRole);
-            }
             if (!ownerId.isEmpty()) {
                 filters.add(KEY_FILTER_VERIFIER_DNI + ownerId);
             }
@@ -372,7 +354,6 @@ public final class ConfigureFilterDialogBuilder {
         }
         ((Spinner) this.v.findViewById(R.id.spinner_month)).setSelection(0);
         ((Spinner) this.v.findViewById(R.id.spinner_year)).setSelection(0);
-        ((CheckBox) this.v.findViewById(R.id.show_verifier_rq_filter)).setChecked(false);
     }
 
     /**
@@ -388,7 +369,6 @@ public final class ConfigureFilterDialogBuilder {
             ((Spinner) this.v.findViewById(R.id.spinner_type)).setSelection(filterConfig.getAppType() != null ? mAppsTypes.get(filterConfig.getAppType()) : 0);
             ((Spinner) this.v.findViewById(R.id.spinner_month)).setSelection(filterConfig.getMonth() != null ? mMonths.get(filterConfig.getMonth()) : 0);
             ((Spinner) this.v.findViewById(R.id.spinner_year)).setSelection(filterConfig.getYear() != null ? mYears.get(filterConfig.getYear()) : 0);
-            ((CheckBox) this.v.findViewById(R.id.show_verifier_rq_filter)).setChecked(filterConfig.isEnabled());
         }
     }
 
@@ -444,21 +424,6 @@ public final class ConfigureFilterDialogBuilder {
         });
     }
 
-    private void configureCheckBoxField(final CheckBox checkBox, final boolean value, final String methodName) {
-        checkBox.setEnabled(value);
-        checkBox.setOnCheckedChangeListener(new OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                try {
-                    getFilterConfig().getClass().getDeclaredMethod(methodName, boolean.class).invoke(getFilterConfig(), isChecked);
-                } catch (Exception e) {
-                    PfLog.e(SFConstants.LOG_TAG, "No ha sido posible modificar el valor del filtro correspondiente al checkBox" + buttonView.getId());
-                    e.printStackTrace();
-                }
-            }
-        });
-    }
-
     public Dialog create() {
         return this.builder.create();
     }
@@ -506,21 +471,25 @@ public final class ConfigureFilterDialogBuilder {
         }
 
         public static boolean isDefaultConfig(final FilterConfig config, ConfigurationRole role) {
-            boolean appType;
-            if(ConfigurationRole.VERIFIER.equals(role)){
-                appType = config.appType == VALUE_APP_TYPE_VIEW_NO_VALIDATE;
-            } else if (role == null && config.isUserWitVerifiers()){
-                appType = config.appType == VALUE_APP_TYPE_VIEW_VALIDATE;
-            } else {
-                appType = config.appType == VALUE_APP_TYPE_VIEW_ALL;
+
+            if (config == null) {
+                return true;
             }
 
-            return config == null ||
-                    !config.enabled &&
+            boolean appType;
+            if (ConfigurationRole.VERIFIER.equals(role)){
+                appType = VALUE_APP_TYPE_VIEW_NO_VALIDATE.equals(config.appType);
+            } else if (role == null && config.isUserWitVerifiers()){
+                appType = VALUE_APP_TYPE_VIEW_VALIDATE.equals(config.appType);
+            } else {
+                appType = VALUE_APP_TYPE_VIEW_ALL.equals(config.appType);
+            }
+
+            return !config.enabled &&
                             (config.orderAttribute == null || DEFAULT_VALUE_ORDER_ATTR.equals(config.orderAttribute)) &&
                             (config.subject == null || config.subject.length() == 0) &&
                             config.app == null && appType &&
-                            config.month == VALUE_MONTH_ALL && config.year == null &&
+                            VALUE_MONTH_ALL.equals(config.month) && config.year == null &&
                             !config.showUnverified;
         }
 
@@ -724,9 +693,7 @@ public final class ConfigureFilterDialogBuilder {
                 R.id.spinner_app,
                 R.id.spinner_type,
                 R.id.spinner_month,
-                R.id.spinner_year,
-                R.id.textView5,
-                R.id.show_verifier_rq_filter
+                R.id.spinner_year
         };
 
         FilterOptionCheckedListener(final View parentView) {

@@ -238,12 +238,18 @@ public final class PetitionListActivity extends WebViewParentActivity implements
         return this.currentState;
     }
 
-    void setFilterConfig(final FilterConfig filterConfig) {
-        if (!filterConfig.isEnabled()) {
-            this.filterConfig.reset(this.roleSelected, this.userConfig.isUserWithVerifiers());
-            this.filterDialogBuilder.resetLayout();
+    void setFilterConfig(final FilterConfig newFilterConfig) {
+        if (!newFilterConfig.isEnabled()) {
+            PfLog.w("es.gob.afirma", "============= this.filterConfig: " + this.filterConfig);
+            PfLog.w("es.gob.afirma", "============= this.userConfig: " + this.userConfig);
+            if (this.filterConfig != null) {
+                this.filterConfig.reset(this.roleSelected, this.userConfig.isUserWithVerifiers());
+            }
+            if (this.filterDialogBuilder != null) {
+                this.filterDialogBuilder.resetLayout();
+            }
         } else {
-            this.filterConfig = filterConfig;
+            this.filterConfig = newFilterConfig;
         }
     }
 
@@ -259,8 +265,11 @@ public final class PetitionListActivity extends WebViewParentActivity implements
     public void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.currentState = getIntent().getStringExtra(SIGN_REQUEST_STATE_KEY);
-        roleSelectedInfo = (RoleInfo) getIntent().getSerializableExtra(ConfigurationConstants.EXTRA_RESOURCE_ROLE_SELECTED);
-        userConfig = (UserConfig) getIntent().getSerializableExtra(ConfigurationConstants.EXTRA_RESOURCE_USER_CONFIG);
+        this.roleSelectedInfo = (RoleInfo) getIntent().getSerializableExtra(ConfigurationConstants.EXTRA_RESOURCE_ROLE_SELECTED);
+        this.userConfig = (UserConfig) getIntent().getSerializableExtra(ConfigurationConstants.EXTRA_RESOURCE_USER_CONFIG);
+        if (this.userConfig == null) {
+            this.userConfig = new UserConfig();
+        }
         if (roleSelectedInfo != null) {
             this.roleSelected = ConfigurationRole.getValue(roleSelectedInfo.getRoleId());
         }
@@ -302,7 +311,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
 
         getListView().setOnItemClickListener(this);
 
-        if (!CommManager.getInstance().isOldProxy() && userConfig.isSimConfig()) {
+        if (!CommManager.getInstance().isOldProxy() && this.userConfig.isSimConfig()) {
             checkChangesOnNotificationToken();
         }
 
@@ -834,7 +843,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
             intent.putExtra(ConfigurationConstants.EXTRA_RESOURCE_ROLE_SELECTED, roleSelected);
             intent.putStringArrayListExtra(EXTRA_RESOURCE_APP_IDS, new ArrayList<>(appIds));
             intent.putStringArrayListExtra(EXTRA_RESOURCE_APP_NAMES, new ArrayList<>(appNames));
-            intent.putExtra(ConfigurationConstants.EXTRA_RESOURCE_USER_CONFIG, userConfig);
+            intent.putExtra(ConfigurationConstants.EXTRA_RESOURCE_USER_CONFIG, this.userConfig);
             intent.putExtra(SIGN_REQUEST_STATE_KEY, currentState);
             intent.putExtra(EXTRA_RESOURCE_DNI, dni);
             intent.putExtra(EXTRA_RESOURCE_CERT_B64, certB64);
@@ -1353,10 +1362,8 @@ public final class PetitionListActivity extends WebViewParentActivity implements
     @Override
     public boolean onPrepareOptionsMenu(final Menu menu) {
 
-        if (this.filterConfig != null) {
-            menu.findItem(R.id.no_filter).setVisible(
-                    !FilterConfig.isDefaultConfig(this.filterConfig, this.roleSelected));
-        }
+        menu.findItem(R.id.no_filter).setVisible(
+                !FilterConfig.isDefaultConfig(this.filterConfig, this.roleSelected));
 
         // Mostramos el elemento para la seleccion o deseleccion de todas las
         // peticiones segun corresponda

@@ -115,7 +115,14 @@ public final class ClaveWebViewActivity extends FragmentActivity implements WebV
 			@Override
 			public void onReceivedHttpError(WebView view, WebResourceRequest request, WebResourceResponse errorResponse) {
 				PfLog.w(SFConstants.LOG_TAG, "No se ha podido cargar la URL requerida");
-				closeByStatusError(errorResponse);
+				String url = null;
+				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+					url = request.getUrl().toString();
+					PfLog.w(SFConstants.LOG_TAG, "URL que origino el error: " + url);
+				}
+				if (url == null || !url.endsWith("favicon.ico")) {	// Omitimos los errores en el favicon
+					closeByStatusError(errorResponse);
+				}
 			}
 
 			@Override

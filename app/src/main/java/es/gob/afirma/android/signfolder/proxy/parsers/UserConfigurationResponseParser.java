@@ -102,18 +102,18 @@ public final class UserConfigurationResponseParser {
             simParams = simParamsString.equalsIgnoreCase("S");
         }
 
-        // Usuario con validadores
-        NodeList userWithVerifiersNodeList = docElement.getElementsByTagName(TAG_NAME_USER_WITH_VERIFIERS);
-        if (userWithVerifiersNodeList != null) {
-            String userWithVerifiersString = userWithVerifiersNodeList.item(0).getTextContent();
-            userWithVerifiers = userWithVerifiersString.equalsIgnoreCase("S");
-        }
-
         // Estado notificaciones push
         NodeList pushStatusNodeList = docElement.getElementsByTagName(TAG_NAME_PUSH_STATUS);
         if (pushStatusNodeList != null) {
             String pushStatusString = pushStatusNodeList.item(0).getTextContent();
             pushStatus = pushStatusString.equalsIgnoreCase("S");
+        }
+
+        // Usuario con validadores
+        NodeList userWithVerifiersNodeList = docElement.getElementsByTagName(TAG_NAME_USER_WITH_VERIFIERS);
+        if (userWithVerifiersNodeList != null) {
+            String userWithVerifiersString = userWithVerifiersNodeList.item(0).getTextContent();
+            userWithVerifiers = userWithVerifiersString.equalsIgnoreCase("S");
         }
 
         // Filtros de usuario

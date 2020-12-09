@@ -53,7 +53,6 @@ import es.gob.afirma.android.signfolder.proxy.RequestAppConfiguration;
 import es.gob.afirma.android.signfolder.proxy.ValidationLoginResult;
 import es.gob.afirma.android.signfolder.tasks.ClaveLoginTask;
 import es.gob.afirma.android.signfolder.tasks.LoadConfigurationDataTask;
-import es.gob.afirma.android.signfolder.tasks.LoadConfigurationDataTask.LoadConfigurationListener;
 import es.gob.afirma.android.signfolder.tasks.LoadUserConfigTask;
 import es.gob.afirma.android.signfolder.tasks.LoginRequestValidationTask;
 import es.gob.afirma.android.signfolder.tasks.OpenHelpDocumentTask;
@@ -69,7 +68,7 @@ import es.gob.afirma.android.util.PfLog;
 public final class LoginActivity extends WebViewParentActivity implements KeystoreManagerListener,
         PrivateKeySelectionListener,
         LoginOptionsListener,
-        LoadConfigurationListener,
+        LoadConfigurationDataTask.LoadConfigurationListener,
         ClaveLoginTask.ClaveLoginRequestListener,
         LoginListener,
         LoadUserConfigTask.LoadUserConfigListener {
@@ -325,9 +324,7 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
             final ValidationLoginResult loginResult = new ValidationLoginResult(true);
             loginResult.setCertificateB64(Base64.encode(certEncoded));
             loginResult.setCertAlias(alias);
-            final LoadConfigurationDataTask lcdt = new LoadConfigurationDataTask(loginResult,
-                    CommManager.getInstance(), this, this);
-            lcdt.execute();
+            loadConfiguration(loginResult);
         } catch (Exception e) {
             // Error al conectar con el servidor
             showErrorDialog(getString(R.string.error_msg_communicating_server));
@@ -556,7 +553,9 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
                 if (dni == null) {
                     showErrorDialog(getString(R.string.error_logging_no_dni));
                 } else {
-                    loadConfiguration(dni);
+                    ValidationLoginResult loginResult = new ValidationLoginResult(true);
+                    loginResult.setDni(dni);
+                    loadConfiguration(loginResult);
                 }
             } else if (resultCode == RESULT_CANCELED) {
                 PfLog.i(SFConstants.LOG_TAG, "Operacion de firma cancelada por el usuario");
@@ -578,39 +577,6 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
                     showErrorDialog(getString(R.string.error_logging_with_clave));
                 }
             }
-        }
-    }
-
-    @Override
-    public void configurationLoadSuccess(final RequestAppConfiguration appConfig, final ValidationLoginResult loginResult) {
-        final Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-
-        if (loginResult != null && loginResult.getDni() != null) {
-            intent.putExtra(PetitionListActivity.EXTRA_RESOURCE_DNI, loginResult.getDni());
-        }
-        if (loginResult != null && loginResult.getCertAlias() != null) {
-            intent.putExtra(PetitionListActivity.EXTRA_RESOURCE_CERT_ALIAS, loginResult.getCertAlias());
-        }
-        intent.putStringArrayListExtra(PetitionListActivity.EXTRA_RESOURCE_APP_IDS, appConfig.getAppIdsList());
-        intent.putStringArrayListExtra(PetitionListActivity.EXTRA_RESOURCE_APP_NAMES, appConfig.getAppNamesList());
-
-        // Almacenamos la lista de aplicaciones, con su correspondiente numero asociado al picker
-        ConfigureFilterDialogBuilder.updateApps(appConfig.getAppNamesList());
-
-        intent.setClass(this, PetitionListActivity.class);
-        startActivity(intent);
-    }
-
-    @Override
-    public void configurationLoadError(final Throwable t) {
-        dismissProgressDialog();
-        if (t == null) {
-            // Error en la conexion
-            showErrorDialog(getString(R.string.error_loading_app_configuration), getString(R.string.error_loading_app_configuration_title));
-        } else {
-            // Error en las credenciales
-            PfLog.w(SFConstants.LOG_TAG, "Error durante el proceso de login", t);
-            showErrorDialog(getString(R.string.error_account_not_validated), getString(R.string.error_account_not_validated_title));
         }
     }
 
@@ -657,11 +623,8 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
     public void loginResult(ValidationLoginResult result) {
 
         if (result.isStatusOk()) {
-            // Intentamos recuperar la configuración de usuario mediante el nuevo servicio.
-            // En caso de que falle, intentamos seguir con el servicio antiguo de carga de configuración.
-            final LoadUserConfigTask luct = new LoadUserConfigTask(result, this);
-            luct.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-
+            // Cargamos la configuracion
+            loadConfiguration(result);
         } else {
             String errMsg = result.getErrorMsg();
             if (errMsg == null || errMsg.isEmpty()) {
@@ -674,6 +637,15 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
             }
             showErrorDialog(errMsg);
         }
+    }
+
+
+    /**
+     * @param loginResult Resultado del proceso de login.
+     */
+    public void loadConfiguration(ValidationLoginResult loginResult) {
+        LoadUserConfigTask task = new LoadUserConfigTask(loginResult,this);
+        task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
 
     @Override
@@ -709,16 +681,6 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
         startActivity(intent);
     }
 
-    @Override
-    public void userConfigLoadError(ValidationLoginResult loginResult, Throwable t) {
-        final LoadConfigurationDataTask lcdt = new LoadConfigurationDataTask(
-                loginResult,
-                CommManager.getInstance(),
-                this,
-                this);
-        lcdt.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-    }
-
     /**
      * Método auxiliar encargado de extraer los IDs y los nombres de las aplicaciones en 2 listas separadas.
      * @param src Lista de aplicaciones del tipo ApplicationFilter.
@@ -734,15 +696,12 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
         }
     }
 
-    /**
-     * Carga la configuracion del usuario.
-     *
-     * @param dni DNI del usuario.
-     */
-    public void loadConfiguration(String dni) {
+    @Override
+    public void userConfigLoadError(ValidationLoginResult loginResult, Throwable t) {
 
-        ValidationLoginResult loginResult = new ValidationLoginResult(true);
-        loginResult.setDni(dni);
+        // Si ha fallada la optencion de la configuracion del usuario, interpretaremos que se debe
+        // a que estamos ante un proxy que no soporta esa operacion. En ese caso, llamamos a la
+        // operacion antigua de obtencion de la configuracion general (listado de aplicaciones)
 
         final LoadConfigurationDataTask lcdt = new LoadConfigurationDataTask(
                 loginResult,
@@ -750,5 +709,38 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
                 this,
                 this);
         lcdt.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+    }
+
+    @Override
+    public void configurationLoadSuccess(final RequestAppConfiguration appConfig, final ValidationLoginResult loginResult) {
+        final Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+
+        if (loginResult != null && loginResult.getDni() != null) {
+            intent.putExtra(PetitionListActivity.EXTRA_RESOURCE_DNI, loginResult.getDni());
+        }
+        if (loginResult != null && loginResult.getCertAlias() != null) {
+            intent.putExtra(PetitionListActivity.EXTRA_RESOURCE_CERT_ALIAS, loginResult.getCertAlias());
+        }
+        intent.putStringArrayListExtra(PetitionListActivity.EXTRA_RESOURCE_APP_IDS, appConfig.getAppIdsList());
+        intent.putStringArrayListExtra(PetitionListActivity.EXTRA_RESOURCE_APP_NAMES, appConfig.getAppNamesList());
+
+        // Almacenamos la lista de aplicaciones, con su correspondiente numero asociado al picker
+        ConfigureFilterDialogBuilder.updateApps(appConfig.getAppNamesList());
+
+        intent.setClass(this, PetitionListActivity.class);
+        startActivity(intent);
+    }
+
+    @Override
+    public void configurationLoadError(final Throwable t) {
+        dismissProgressDialog();
+        if (t == null) {
+            // Error en la conexion
+            showErrorDialog(getString(R.string.error_loading_app_configuration), getString(R.string.error_loading_app_configuration_title));
+        } else {
+            // Error en las credenciales
+            PfLog.w(SFConstants.LOG_TAG, "Error durante el proceso de login", t);
+            showErrorDialog(getString(R.string.error_account_not_validated), getString(R.string.error_account_not_validated_title));
+        }
     }
 }
