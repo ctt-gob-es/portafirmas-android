@@ -12,10 +12,6 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.content.LocalBroadcastManager;
 import android.util.Base64;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -38,8 +34,10 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GoogleApiAvailability;
+import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -114,8 +112,6 @@ public final class PetitionListActivity extends WebViewParentActivity implements
      * se muestran actualmente.
      */
     public static final String SIGN_REQUEST_STATE_KEY = "SignRequestState"; //$NON-NLS-1$
-    // Funciones para implementar el registro de notificaciones GCM
-    public static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
     /**
      * Clave usada internamente para guardar el estado de la propiedad
      * "needReload"
@@ -149,10 +145,10 @@ public final class PetitionListActivity extends WebViewParentActivity implements
      * Di&aacute;logo para confirmar la firma de peticiones.
      */
     private final static int DIALOG_CONFIRM_SIGN = 15;
-    /**
-     * Di&aacute;logo para mostrar el resultado devuelto por la pantalla de detalle.
-     */
-    private final static int DIALOG_RESULT_SIMPLE_REQUEST = 16;
+//    /**
+//     * Di&aacute;logo para mostrar el resultado devuelto por la pantalla de detalle.
+//     */
+//    private final static int DIALOG_RESULT_SIMPLE_REQUEST = 16;
     private final static int PERMISSION_TO_OPEN_HELP = 22;
     /**
      * Di&aacute;logo de notificaci&oacute;n de error al procesar las
@@ -170,9 +166,14 @@ public final class PetitionListActivity extends WebViewParentActivity implements
     int numRequestToRejectPending;
     int numRequestToVerifyPending;
     /**
-     * Indica si debe recargarse el listado de peticiones.
+     * Indica si debe recargarse el listado de peticiones. Esto se usa cuando la logica de la propia
+     * actividad obliga a la recarga.
      */
     private boolean needReload = true;
+    /**
+     * Indica si se ha forzado la recarga del listado desde el exterior de la actividad.
+     */
+    private boolean forceReload = true;
     private boolean loadingRequests = false;
     private boolean allSelected = false;
     private String currentState = null;
@@ -216,7 +217,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
      */
     private UserConfig userConfig;
     private ConfigureFilterDialogBuilder filterDialogBuilder;
-    private BroadcastReceiver bReceiver = new BroadcastReceiver() {
+    private final BroadcastReceiver bReceiver = new BroadcastReceiver() {
 
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -240,8 +241,6 @@ public final class PetitionListActivity extends WebViewParentActivity implements
 
     void setFilterConfig(final FilterConfig newFilterConfig) {
         if (!newFilterConfig.isEnabled()) {
-            PfLog.w("es.gob.afirma", "============= this.filterConfig: " + this.filterConfig);
-            PfLog.w("es.gob.afirma", "============= this.userConfig: " + this.userConfig);
             if (this.filterConfig != null) {
                 this.filterConfig.reset(this.roleSelected, this.userConfig.isUserWithVerifiers());
             }
@@ -264,18 +263,20 @@ public final class PetitionListActivity extends WebViewParentActivity implements
     @Override
     public void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        this.currentState = getIntent().getStringExtra(SIGN_REQUEST_STATE_KEY);
-        this.roleSelectedInfo = (RoleInfo) getIntent().getSerializableExtra(ConfigurationConstants.EXTRA_RESOURCE_ROLE_SELECTED);
         this.userConfig = (UserConfig) getIntent().getSerializableExtra(ConfigurationConstants.EXTRA_RESOURCE_USER_CONFIG);
         if (this.userConfig == null) {
             this.userConfig = new UserConfig();
         }
+        this.roleSelectedInfo = (RoleInfo) getIntent().getSerializableExtra(ConfigurationConstants.EXTRA_RESOURCE_ROLE_SELECTED);
         if (roleSelectedInfo != null) {
             this.roleSelected = ConfigurationRole.getValue(roleSelectedInfo.getRoleId());
         }
+        this.currentState = getIntent().getStringExtra(SIGN_REQUEST_STATE_KEY);
         if (this.currentState == null) {
             this.currentState = SignRequest.STATE_UNRESOLVED;
         }
+        this.forceReload = getIntent().getBooleanExtra(
+                ConfigurationConstants.EXTRA_RESOURCE_FORCE_REFRESH, false);
 
         // Si esta configurado que no se necesita recargar la pagina, no lo
         // hacemos
@@ -311,8 +312,23 @@ public final class PetitionListActivity extends WebViewParentActivity implements
 
         getListView().setOnItemClickListener(this);
 
-        if (!CommManager.getInstance().isOldProxy() && this.userConfig.isSimConfig()) {
-            checkChangesOnNotificationToken();
+        // En el viejo proxy, si en algun momento se registraron las notificaciones, pero ahora ha
+        // cambiado el token, se vuelven a registrar
+        if (CommManager.getInstance().isOldProxy()) {
+            String userProxyId = getUserProxyId();
+            if (isNotificationTokenRegistered(userProxyId) && isNotificationTokenChanged(userProxyId)) {
+                registryNotificationToken(userProxyId, false);
+            }
+        }
+        // En el nuevo proxy, comprobaremos si esta la plataforma de notificaciones configurada y
+        // si el usuario tiene activas las notificaciones. En caso afirmativo, se registrara el token
+        // de notificaciones tanto si el usuario no tiene registradas las notificaciones (se activaron
+        // desde otro dispositivo) como si ha cambiado el token
+        else if (this.userConfig.isSimConfig() && this.userConfig.isPushActivated()) {
+            String userProxyId = getUserProxyId();
+            if (!isNotificationTokenRegistered(userProxyId) || isNotificationTokenChanged(userProxyId)) {
+                registryNotificationToken(userProxyId, false);
+            }
         }
 
         // Almacenamos como filtros de la petición el DNI del usuario,
@@ -368,50 +384,78 @@ public final class PetitionListActivity extends WebViewParentActivity implements
     }
 
     /**
-     * Comprueba si el usuario estaba dado de alta en el sistema de notificaciones y, en caso de
-     * estarlo, comprueba el token de notificaciones actual y lo enviar a actualizar al Portafirmas
-     * si no era el mismo que se registr&oacute; anteriormente.
+     * Indica si el usuario se ha dado previamente de alta en el sistema de notificaciones
+     * para este portafirmas.
+     * @param  userProxyId Identificador asociado a la combinación usuario/proxy.
+     * @return {@code true} si el usuario se ha dado previamente de alta, {@code false} en caso
+     * contrario.
      */
-    private void checkChangesOnNotificationToken() {
-
-        String userProxyId = getUserProxyId();
-
+    private boolean isNotificationTokenRegistered(String userProxyId) {
         AppPreferences prefs = AppPreferences.getInstance();
-        boolean registered = prefs.getPreferenceBool(
+        boolean tokenRegistered = prefs.getPreferenceBool(
                 AppPreferences.PREFERENCES_KEY_PREFIX_NOTIFICATION_ACTIVE + userProxyId,
                 false);
 
-        PfLog.i(SFConstants.LOG_TAG, "Las notificaciones se encuentran activadas: " + registered);
+        Log.d(SFConstants.LOG_TAG, "El token de notificaciones esta registrado: " + tokenRegistered);
 
-        if (registered) {
+        return tokenRegistered;
+    }
 
-            // Comprobamos si el token de notificaciones que tiene dado de alta ese usuario
-            // es igual al actual. En caso contrario, se actualiza
+    /**
+     * Indica si el token de notificaciones actual ha cambiado con respecto al último que el usuario
+     * dio de alta.
+     * @param  userProxyId Identificador asociado a la combinación usuario/proxy.
+     * @return {@code true} si el token actual no es igual al último que dio de alta el usuario,
+     * {@code false} en caso contrario.
+     */
+    private boolean isNotificationTokenChanged(String userProxyId) {
 
-            if (prefs.getCurrentToken() != null || prefs.getCurrentToken().isEmpty()) {
-                PfLog.i(SFConstants.LOG_TAG, "No se han encontrado cambios en el token de notificaciones");
-            } else if (!prefs.getCurrentToken().equals(
-                    prefs.getPreference(
-                            AppPreferences.PREFERENCES_KEY_PREFIX_NOTIFICATION_TOKEN + userProxyId,
-                            null)
-            )
-            ) {
-                PfLog.i(SFConstants.LOG_TAG, "Detectado cambio en el token de notificaciones. Damos de alta el nuevo: "
-                        + prefs.getCurrentToken());
+        AppPreferences prefs = AppPreferences.getInstance();
+        String registeredToken = prefs.getPreference(
+                AppPreferences.PREFERENCES_KEY_PREFIX_NOTIFICATION_TOKEN + userProxyId,
+                null);
 
-                Intent intent = new Intent(this, RegistrationIntentService.class);
-                if (this.certB64 != null) {
-                    intent.putExtra(RegistrationIntentService.EXTRA_RESOURCE_CERT_B64, this.certB64);
-                }
-                if (this.dni != null) {
-                    intent.putExtra(RegistrationIntentService.EXTRA_RESOURCE_DNI, this.dni);
-                }
-                intent.putExtra(RegistrationIntentService.EXTRA_RESOURCE_USER_PROXY_ID, userProxyId);
-                startService(intent);
-            } else {
-                PfLog.i(SFConstants.LOG_TAG, "El usuario ya tiene dado de alta el token de notificaciones correcto");
-            }
+        PfLog.i(SFConstants.LOG_TAG, "Recuperamos de la tabla interna de tokens: "
+                + AppPreferences.PREFERENCES_KEY_PREFIX_NOTIFICATION_TOKEN + userProxyId
+                + "=" + registeredToken);
+
+        // Obtenemos el token actual que le corresponde a la aplicacion
+        String currentToken = prefs.getCurrentToken();
+
+        // Si el token es nulo (no se ha podido obtener) no podemos saber si ha cambiado, por lo
+        // que lo negamos
+        if (currentToken == null) {
+            return false;
         }
+
+        // Comprobamos si el token de notificaciones que tiene dado de alta ese usuario
+        // es igual al actual. En caso contrario, se tendra que actualizar
+        boolean tokenChanged = !currentToken.equals(registeredToken);
+
+        Log.d(SFConstants.LOG_TAG, "El token ha cambiado: " + tokenChanged);
+
+        return tokenChanged;
+    }
+
+    /**
+     * Registra el nuevo token de notificaciones para que el usuario pueda recibirlas
+     * para este portafirmas y dispositivo.
+     * @param  userProxyId Identificador asociado a la combinación usuario/proxy.
+     */
+    private void registryNotificationToken(String userProxyId, boolean noticeUser) {
+
+        Log.d(SFConstants.LOG_TAG, "Iniciamos el registro del nuevo token de notificacion");
+
+        Intent intent = new Intent(this, RegistrationIntentService.class);
+        if (this.certB64 != null) {
+            intent.putExtra(RegistrationIntentService.EXTRA_RESOURCE_CERT_B64, this.certB64);
+        }
+        if (this.dni != null) {
+            intent.putExtra(RegistrationIntentService.EXTRA_RESOURCE_DNI, this.dni);
+        }
+        intent.putExtra(RegistrationIntentService.EXTRA_RESOURCE_NOTICE_USER, noticeUser);
+        intent.putExtra(RegistrationIntentService.EXTRA_RESOURCE_USER_PROXY_ID, userProxyId);
+        startService(intent);
     }
 
     /**
@@ -465,8 +509,10 @@ public final class PetitionListActivity extends WebViewParentActivity implements
     protected void onStart() {
         super.onStart();
 
-        if (this.needReload) {
+        if (this.needReload || this.forceReload) {
             updateCurrentList(FIRST_PAGE);
+            this.needReload = false;
+            this.forceReload = false;
         }
     }
 
@@ -724,10 +770,10 @@ public final class PetitionListActivity extends WebViewParentActivity implements
 
         // Si el rol con el que se ha accedido a la plataforma no es el de firmante,
         // se deshabilita la opción de acceder a la configuración de roles.
-        if (this.roleSelected != null && menu.findItem(R.id.setting) != null) {
-            menu.findItem(R.id.setting).setEnabled(false);
-            menu.findItem(R.id.setting).setVisible(false);
-        }
+//        if (this.roleSelected != null && menu.findItem(R.id.setting) != null) {
+//            menu.findItem(R.id.setting).setEnabled(false);
+//            menu.findItem(R.id.setting).setVisible(false);
+//        }
 
         // Si solo existe el rol de firmante, no mostramos la opción de cambiar de rol.
         if (this.userConfig.getRoles().size() < 1) {
@@ -735,42 +781,49 @@ public final class PetitionListActivity extends WebViewParentActivity implements
             menu.findItem(R.id.changeRole).setVisible(false);
         }
 
-        // En el proxy antiguo no permite notificaciones
-        if (!CommManager.getInstance().isOldProxy()) {
-            String userProxyId = getUserProxyId();
-            boolean registered = AppPreferences.getInstance().getPreferenceBool(
-                    AppPreferences.PREFERENCES_KEY_PREFIX_NOTIFICATION_ACTIVE + userProxyId,
-                    false);
 
-
-            // Comprobamos el estado de las notificaciones recibido en la configuración de usuario.
-            boolean isPushNotActived = this.userConfig.isPushStatus();
-
-            // Comprobamos si al usuario se le está permitido habilitar las notificaciones push.
-            boolean isPushActivationEnabled = this.userConfig.isSimConfig();
-
-            // Si el usuario no esta registrado en el sistema de notificaciones, le mostramos
-            // la opcion para que lo pueda hacer
-            if (!registered && isPushActivationEnabled) {
-                menu.findItem(R.id.notifications).setVisible(true);
-            } else {
-
-                // Si el usuario ya está registrado, comprobamos si se debe mostrar
-                // la opción de actualizar el estado de las notificaciones push.
-                if (isPushActivationEnabled && isPushNotActived) {
-                    // Mostramos la opción de deshabilitar las notificaciones.
-                    menu.findItem(R.id.notifications).setTitle(R.string.disable_notifications);
-                    menu.findItem(R.id.notifications).setVisible(true);
-                } else if (isPushActivationEnabled && !isPushNotActived) {
-                    // Mostramos la opción de habilitar las notificaciones.
-                    menu.findItem(R.id.notifications).setTitle(R.string.enable_notifications);
-                    menu.findItem(R.id.notifications).setVisible(true);
-                }
-
-            }
-
+        // Si no hemos podido recuperar nuestro token de notificaciones,
+        // no podemos dar la opcion de activarlas/desactivarlas
+        // Obtenemos el token actual que le corresponde a la aplicacion
+        String currentToken = AppPreferences.getInstance().getCurrentToken();
+        if (currentToken == null) {
+            menu.findItem(R.id.notifications).setVisible(false);
         }
+        // En el proxy viejo, cuando tengamos token de notificacion, aparecera la opcion
+        // de activarlas cuando no este ya registrado el usuario
+        else if (CommManager.getInstance().isOldProxy()) {
+            String userProxyId = getUserProxyId();
+            boolean tokenRegistered = isNotificationTokenRegistered(userProxyId);
+            if (!tokenRegistered) {
+                menu.findItem(R.id.notifications).setTitle(R.string.enable_notifications);
+            }
+            menu.findItem(R.id.notifications).setVisible(!tokenRegistered);
+        }
+        // En el proxy nuevo, la opcion de  las notificaciones solo se mostrara cuando
+        // el Portafirmas tenga configurada la conexion con la plataforma de notificaciones.
+        // Segun si las notificaciones se encuentren activas o no se mostrara la opcion de
+        // desactivarlas o volverlas a activar.
+        else {
+            // Comprobamos si al usuario se le está permitido habilitar las notificaciones push.
+            boolean isSimConfigured = this.userConfig.isSimConfig();
 
+            if (!isSimConfigured) {
+                menu.findItem(R.id.notifications).setVisible(false);
+            }
+            else {
+                // Comprobamos el estado de las notificaciones
+                boolean isPushActived = this.userConfig.isPushActivated();
+                // Si estan activadas, mostramos la opcion de desactivarlas
+                if (isPushActived) {
+                    menu.findItem(R.id.notifications).setTitle(R.string.disable_notifications);
+                }
+                // Si estan desactivadas, mostramos la opcion de activarlas
+                else {
+                    menu.findItem(R.id.notifications).setTitle(R.string.enable_notifications);
+                }
+                menu.findItem(R.id.notifications).setVisible(true);
+            }
+        }
         return true;
     }
 
@@ -825,31 +878,37 @@ public final class PetitionListActivity extends WebViewParentActivity implements
         else if (item.getItemId() == R.id.notifications) {
             // Si se ha solicitado activarlas...
             if (item.getTitle().equals(getString(R.string.enable_notifications))) {
-                // Comprobamos que el token está actualizado.
-                checkChangesOnNotificationToken();
-                // y activamos las notificaciones.
-                new UpdatePushNotificationsTask(true, this).execute();
+
+                String userProxyId = getUserProxyId();
+
+                // Al tratar de activar las notificaciones, registraremos el token de notificacion
+                // si no esta ya registrado o si ha cambiado desde la ultima vez
+                if (!isNotificationTokenRegistered(userProxyId) || isNotificationTokenChanged(userProxyId)) {
+                    registryNotificationToken(userProxyId, true);
+                }
+                // Si el token de notificacion ya se habia registrado, simplemente cambiamos el estado
+                else {
+                    new UpdatePushNotificationsTask(true, this).execute();
+                }
             }
-            // Si se ha solicitado desdctivarlas...
+            // Si se ha solicitado desactivarlas...
             else if (item.getTitle().equals(getString(R.string.disable_notifications))) {
                 new UpdatePushNotificationsTask(false, this).execute();
             }
-
-
         }
         // Configuración de usuario
-        else if (item.getItemId() == R.id.setting) {
-            Intent intent = new Intent(this, UserConfigurationActivity.class);
-            intent.putExtra(ConfigurationConstants.EXTRA_RESOURCE_ROLE_SELECTED, roleSelected);
-            intent.putStringArrayListExtra(EXTRA_RESOURCE_APP_IDS, new ArrayList<>(appIds));
-            intent.putStringArrayListExtra(EXTRA_RESOURCE_APP_NAMES, new ArrayList<>(appNames));
-            intent.putExtra(ConfigurationConstants.EXTRA_RESOURCE_USER_CONFIG, this.userConfig);
-            intent.putExtra(SIGN_REQUEST_STATE_KEY, currentState);
-            intent.putExtra(EXTRA_RESOURCE_DNI, dni);
-            intent.putExtra(EXTRA_RESOURCE_CERT_B64, certB64);
-            intent.putExtra(EXTRA_RESOURCE_CERT_ALIAS, certAlias);
-            startActivityForResult(intent, ConfigurationConstants.ACTIVITY_REQUEST_CODE_ROLE_VIEW);
-        }
+//        else if (item.getItemId() == R.id.setting) {
+//            Intent intent = new Intent(this, UserConfigurationActivity.class);
+//            intent.putExtra(ConfigurationConstants.EXTRA_RESOURCE_ROLE_SELECTED, roleSelected);
+//            intent.putStringArrayListExtra(EXTRA_RESOURCE_APP_IDS, new ArrayList<>(appIds));
+//            intent.putStringArrayListExtra(EXTRA_RESOURCE_APP_NAMES, new ArrayList<>(appNames));
+//            intent.putExtra(ConfigurationConstants.EXTRA_RESOURCE_USER_CONFIG, this.userConfig);
+//            intent.putExtra(SIGN_REQUEST_STATE_KEY, currentState);
+//            intent.putExtra(EXTRA_RESOURCE_DNI, dni);
+//            intent.putExtra(EXTRA_RESOURCE_CERT_B64, certB64);
+//            intent.putExtra(EXTRA_RESOURCE_CERT_ALIAS, certAlias);
+//            startActivityForResult(intent, ConfigurationConstants.ACTIVITY_REQUEST_CODE_ROLE_VIEW);
+//        }
         // Cambiar de rol.
         else if (item.getItemId() == R.id.changeRole) {
             Intent intent = new Intent(this, LoginWithRoleActivity.class);
@@ -1097,30 +1156,32 @@ public final class PetitionListActivity extends WebViewParentActivity implements
     }
 
     @Override
-    public void onUpdatePushNotsSuccess(boolean request, String result) {
-        if (result.equals("OK") && request) { //$NON-NLS-1$
-            Toast.makeText(this, "Notificaciones activadas", Toast.LENGTH_LONG).show(); //$NON-NLS-1$
-            menuRef.findItem(R.id.notifications).setTitle(R.string.disable_notifications);
-            this.userConfig.setPushStatus(request);
-        } else if (result.equals("OK") && !request) {
-            Toast.makeText(this, "Notificaciones desactivadas", Toast.LENGTH_LONG).show(); //$NON-NLS-1$
-            menuRef.findItem(R.id.notifications).setTitle(R.string.enable_notifications);
-            this.userConfig.setPushStatus(request);
-        } else {
-            Toast.makeText(this, "No ha sido posible actualizar el estado de las notificaciones push", Toast.LENGTH_LONG).show(); //$NON-NLS-1$
-            if (result.equals("KO") && request) { //$NON-NLS-1$
+    public void onUpdatePushNotsSuccess(boolean requestedState, boolean result) {
+        if (result) {
+            if (requestedState) {
+                Toast.makeText(this, R.string.toast_msg_push_activated, Toast.LENGTH_LONG).show(); //$NON-NLS-1$
+                menuRef.findItem(R.id.notifications).setTitle(R.string.disable_notifications);
+            } else {
+                Toast.makeText(this, R.string.toast_msg_push_deactivated, Toast.LENGTH_LONG).show(); //$NON-NLS-1$
                 menuRef.findItem(R.id.notifications).setTitle(R.string.enable_notifications);
-            } else if (result.equals("KO") && !request) { //$NON-NLS-1$
+            }
+            this.userConfig.setPushActivated(requestedState);
+
+        } else {
+            Toast.makeText(this, R.string.toast_msg_push_error_changing_state, Toast.LENGTH_LONG).show(); //$NON-NLS-1$
+            if (requestedState) {
+                menuRef.findItem(R.id.notifications).setTitle(R.string.enable_notifications);
+            } else {
                 menuRef.findItem(R.id.notifications).setTitle(R.string.disable_notifications);
             }
         }
     }
 
     @Override
-    public void onUpdatePushNotsError(boolean request, Throwable exception) {
+    public void onUpdatePushNotsError(boolean enable, Throwable exception) {
         Log.e("es.gob.afirma", "No ha sido posible actualizar el estado de las notificaciones push: " + exception.getMessage()); //$NON-NLS-1$ //$NON-NLS-2$
         Toast.makeText(this, R.string.toast_msg_update_push_nots_error, Toast.LENGTH_LONG).show();
-        if (request) {
+        if (enable) {
             menuRef.findItem(R.id.notifications).setTitle(R.string.enable_notifications);
         } else {
             menuRef.findItem(R.id.notifications).setTitle(R.string.disable_notifications);
@@ -1428,19 +1489,9 @@ public final class PetitionListActivity extends WebViewParentActivity implements
     void setVisibilityLoadingMessage(final boolean visible, final RejectRequestsTask rrt,
                                      final LoadSignRequestsTask lsrt) {
         if (visible) {
-            if (rrt != null) {
-                showProgressDialog(
-                        getString(R.string.dialog_msg_loading_petitions), rrt,
-                        null);
-            } else if (lsrt != null) {
-                showProgressDialog(
-                        getString(R.string.dialog_msg_loading_petitions), null,
-                        lsrt);
-            } else {
-                showProgressDialog(
-                        getString(R.string.dialog_msg_loading_petitions), null,
-                        null);
-            }
+            showProgressDialog(
+                    getString(R.string.dialog_msg_loading_petitions), rrt,
+                    lsrt);
         } else {
             dismissProgressDialog();
         }
@@ -1820,45 +1871,23 @@ public final class PetitionListActivity extends WebViewParentActivity implements
         }
     }
 
-    /**
-     * Check the device to make sure it has the Google Play Services APK. If
-     * it doesn't, display a dialog that allows users to download the APK from
-     * the Google Play Store or enable it in the device's system settings.
-     */
-    private boolean checkPlayServices() {
-        GoogleApiAvailability apiAvailability = GoogleApiAvailability.getInstance();
-        int resultCode = apiAvailability.isGooglePlayServicesAvailable(this);
-        if (resultCode != ConnectionResult.SUCCESS) {
-            if (apiAvailability.isUserResolvableError(resultCode)) {
-                apiAvailability.getErrorDialog(this, resultCode, PLAY_SERVICES_RESOLUTION_REQUEST)
-                        .show();
-            } else {
-                PfLog.w(SFConstants.LOG_TAG, "Dispositivo no soportado.");
-                Toast.makeText(this, R.string.error_msg_unsupported_device, Toast.LENGTH_SHORT).show();
-                closeActivity();
-            }
-            return false;
-        }
-        return true;
-    }
-
-    private void registerReceiver() {
-
-        // Comprobamos si el usuario ya esta registrado en el sistema de notificaciones
-
-        // TODO: Cuando este disponible un servicio para la baja en el sistema de notificaciones, lo usaremos
-        // Si el usuario ya esta registrado en el servicio de notificaciones, lo damos de baja
-
-        // Si aun no se ha registrado, lo hacemos
-        String userProxyId = getUserProxyId();
-        Intent intent = new Intent(this, RegistrationIntentService.class);
-        intent.putExtra(RegistrationIntentService.EXTRA_RESOURCE_DNI, this.dni);
-        intent.putExtra(RegistrationIntentService.EXTRA_RESOURCE_USER_PROXY_ID, userProxyId);
-        // Indicamos que se le debe mostrar al usuario un mensaje con el resultado del registro
-        intent.putExtra(RegistrationIntentService.EXTRA_RESOURCE_NOTICE_USER, true);
-
-        startService(intent);
-    }
+//    private void registerReceiver() {
+//
+//        // Comprobamos si el usuario ya esta registrado en el sistema de notificaciones
+//
+//        // TODO: Cuando este disponible un servicio para la baja en el sistema de notificaciones, lo usaremos
+//        // Si el usuario ya esta registrado en el servicio de notificaciones, lo damos de baja
+//
+//        // Si aun no se ha registrado, lo hacemos
+//        String userProxyId = getUserProxyId();
+//        Intent intent = new Intent(this, RegistrationIntentService.class);
+//        intent.putExtra(RegistrationIntentService.EXTRA_RESOURCE_DNI, this.dni);
+//        intent.putExtra(RegistrationIntentService.EXTRA_RESOURCE_USER_PROXY_ID, userProxyId);
+//        // Indicamos que se le debe mostrar al usuario un mensaje con el resultado del registro
+//        intent.putExtra(RegistrationIntentService.EXTRA_RESOURCE_NOTICE_USER, true);
+//
+//        startService(intent);
+//    }
 
     protected void onResume() {
         super.onResume();

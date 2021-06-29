@@ -2,13 +2,20 @@ package es.gob.afirma.android.fcm;
 
 import android.app.IntentService;
 import android.content.Intent;
-import android.support.annotation.NonNull;
-import android.support.v4.content.LocalBroadcastManager;
+import android.os.Build;
 
+/*
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.InstanceIdResult;
+*/
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.installations.FirebaseInstallations;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 import es.gob.afirma.android.signfolder.AppPreferences;
 import es.gob.afirma.android.signfolder.SFConstants;
@@ -17,8 +24,8 @@ import es.gob.afirma.android.util.PfLog;
 /**
  * Created by sergio.martinez on 16/08/2017.
  */
-public class RegistrationIntentService extends IntentService
-        implements OnCompleteListener<InstanceIdResult> {
+public class RegistrationIntentService extends IntentService {
+//        implements OnCompleteListener<String> {
 
     private static final String TAG = "RegIntentService";
 
@@ -41,49 +48,57 @@ public class RegistrationIntentService extends IntentService
     @Override
     protected void onHandleIntent(Intent intent) {
         try {
-            // [START register_for_fcm]
-            // Initially this call goes out to the network to retrieve the token, subsequent calls
-            // are local.
-            // R.string.gcm_defaultSenderId (the Sender ID) is typically derived from google-services.json.
-            // See https://developers.google.com/cloud-messaging/android/start for details on this file.
-            // [START get_token]
+            // Obtenemos los datos proporcionado en la llamada
             this.dni = intent.getStringExtra(EXTRA_RESOURCE_DNI);
             this.certB64 = intent.getStringExtra(EXTRA_RESOURCE_CERT_B64);
             this.userProxyId = intent.getStringExtra(EXTRA_RESOURCE_USER_PROXY_ID);
             this.noticeUser = intent.getBooleanExtra(EXTRA_RESOURCE_NOTICE_USER, false);
-            FirebaseInstanceId.getInstance().getInstanceId().addOnCompleteListener(this);
+//            FirebaseInstallations.getInstance().getId().addOnCompleteListener(this);
 
-            // [END register_for_gcm]
+            // Notificamos el nuevo token al Portafirmas
+            token = AppPreferences.getInstance().getCurrentToken();
+            sendRegistrationToServer(token);
+
         } catch (Exception e) {
-            PfLog.e(SFConstants.LOG_TAG, "Error al recuperar el token de registro de Firebase", e);
+            PfLog.e(SFConstants.LOG_TAG, "Error al recuperar el ID de instalacion de la aplicacion", e);
             // If an exception happens while fetching the new token or updating our registration data
             // on a third-party server, this ensures that we'll attempt the update at a later time.
             noticeResult(false);
         }
     }
 
-    @Override
-    public void onComplete(@NonNull Task<InstanceIdResult> task) {
-
-        if (!task.isSuccessful()) {
-            PfLog.e(SFConstants.LOG_TAG, "Error al recuperar el token de registro de Firebase");
-            noticeResult(false);
-            return;
-        }
-        // Almacenamos el token.
-        if (task.getResult() != null) {
-            token = task.getResult().getToken();
-            PfLog.i(SFConstants.LOG_TAG, "Registramos el token de notificaciones proporcionado por FCM: " + token);
-        }
-        // Si no hemos podido recuperar el token, lo intentamos recuperar de las preferencias.
-        if (token == null) {
-            token = AppPreferences.getInstance().getCurrentToken();
-            PfLog.i(SFConstants.LOG_TAG, "Registramos el token de notificaciones ya almacenado en las preferencias: " + token);
-        }
-
-        // Notificamos el nuevo token al Portafirmas
-        sendRegistrationToServer(token);
+    /**
+     * Se solicita al Portafirmas el alta en el sistema de notificaciones.
+     * @param token Nuevo token.
+     */
+    public void sendRegistrationToServer(String token) {
+        final String androidId = "" + android.provider.Settings.Secure.getString(getContentResolver(), android.provider.Settings.Secure.ANDROID_ID);
+        PfLog.i(SFConstants.LOG_TAG, "Token usado para las notificaciones: " + token);
+        new RegisterSIMServiceTask().execute(this, token, androidId, this.dni != null ? this.dni : this.certB64);
     }
+
+//    @Override
+//    public void onComplete(Task<String> task) {
+//
+//        if (!task.isSuccessful()) {
+//            PfLog.e(SFConstants.LOG_TAG, "Error al recuperar el token de registro de Firebase");
+//            noticeResult(false);
+//            return;
+//        }
+//        // Almacenamos el token.
+//        if (task.getResult() != null) {
+//            token = task.getResult();
+//            PfLog.i(SFConstants.LOG_TAG, "Registramos el token de notificaciones proporcionado por FCM: " + token);
+//        }
+//        // Si no hemos podido recuperar el token, lo intentamos recuperar de las preferencias.
+//        if (token == null) {
+//            token = AppPreferences.getInstance().getCurrentToken();
+//            PfLog.i(SFConstants.LOG_TAG, "Registramos el token de notificaciones ya almacenado en las preferencias: " + token);
+//        }
+//
+//        // Notificamos el nuevo token al Portafirmas
+//        sendRegistrationToServer(token);
+//    }
 
     /**
      * Establece y notifica el resultado de la operacion de registro.
@@ -103,6 +118,9 @@ public class RegistrationIntentService extends IntentService
                 AppPreferences.getInstance().setPreference(
                         AppPreferences.PREFERENCES_KEY_PREFIX_NOTIFICATION_TOKEN + this.userProxyId,
                         token);
+                PfLog.i(SFConstants.LOG_TAG, "Establecemos en la tabla interna de tokens: "
+                        + AppPreferences.PREFERENCES_KEY_PREFIX_NOTIFICATION_TOKEN + this.userProxyId
+                        + "=" + token);
             }
         }
 
@@ -115,15 +133,5 @@ public class RegistrationIntentService extends IntentService
         intent.putExtra("success", success);
         intent.putExtra("noticeUser", this.noticeUser);
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
-    }
-
-    /**
-     * Se solicita al Portafirmas el alta en el sistema de notificaciones.
-     * @param token Nuevo token.
-     */
-    public void sendRegistrationToServer(String token) {
-        final String androidId = "" + android.provider.Settings.Secure.getString(getContentResolver(), android.provider.Settings.Secure.ANDROID_ID);
-        PfLog.i(SFConstants.LOG_TAG, "Token usado para las notificaciones: " + token);
-        new RegisterSIMServiceTask().execute(this, token, androidId, this.dni != null ? this.dni : this.certB64);
     }
 }

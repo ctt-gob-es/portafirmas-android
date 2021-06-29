@@ -9,10 +9,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -24,6 +20,11 @@ import android.widget.ScrollView;
 import android.widget.TabHost;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import org.xml.sax.SAXException;
 
@@ -472,7 +473,7 @@ public final class UserConfigurationActivity extends Activity {
      * @throws IOException               si algo falla.
      */
     private List<?> getListUserByRole(ConfigurationRole role) throws ServerControlledException, SAXException, IOException {
-        List<?> proxyResult = CommManager.getInstance().getUserConfiguration(role, 1, 10);
+        List<?> proxyResult = CommManager.getInstance().getUsers(role, 1, 10);
         if (role.equals(ConfigurationRole.AUTHORIZED)) {
             return proxyResult;
         } else if (role.equals(ConfigurationRole.VERIFIER)) {

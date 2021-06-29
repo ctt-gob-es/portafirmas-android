@@ -1,7 +1,8 @@
 package es.gob.afirma.android.signfolder.activities;
 
 import android.content.Intent;
-import android.support.v4.app.FragmentActivity;
+
+import androidx.fragment.app.FragmentActivity;
 
 import es.gob.afirma.android.signfolder.SFConstants;
 import es.gob.afirma.android.util.PfLog;

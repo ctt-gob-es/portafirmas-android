@@ -8,12 +8,12 @@ import es.gob.afirma.android.signfolder.proxy.CommManager;
 /**
  * Clase que implementa la tarea encargada de actualizar el estado de las notificacione push.
  */
-public class UpdatePushNotificationsTask extends AsyncTask<Void, Void, String> {
+public class UpdatePushNotificationsTask extends AsyncTask<Void, Void, Boolean> {
 
     /**
      * Atributo que indica si las notificaciones se deben activar o desactivar.
      */
-    private final boolean enableNots;
+    private final boolean requestedState;
 
     /**
      * Listener de la tarea.
@@ -27,32 +27,32 @@ public class UpdatePushNotificationsTask extends AsyncTask<Void, Void, String> {
 
     /**
      * Constructor por defecto.
-     * @param enableNots Indica si se debe activar (<i>true</i>) o desactivar (<i>false</i>) las notificaciones.
+     * @param requestedState Indica si se debe activar (<i>true</i>) o desactivar (<i>false</i>) las notificaciones.
      * @param listener Listener de la tarea.
      */
-    public UpdatePushNotificationsTask(boolean enableNots, UpdatePushNotsListener listener) {
-        this.enableNots = enableNots;
+    public UpdatePushNotificationsTask(boolean requestedState, UpdatePushNotsListener listener) {
+        this.requestedState = requestedState;
         this.listener = listener;
     }
 
     @Override
-    protected String doInBackground(Void... voids) {
-        String res = null;
+    protected Boolean doInBackground(Void... voids) {
+        Boolean result = Boolean.FALSE;
         try {
-            res = CommManager.getInstance().updatePushNotifications(enableNots);
+            result = CommManager.getInstance().updatePushNotifications(requestedState);
         } catch (Exception e) {
             Log.e("es.gob.afirma", "No ha sido posible actualizar el estado de las notificaciones push: " + e.getMessage()); //$NON-NLS-1$ //$NON-NLS-2$
             this.t = e;
         }
-        return res;
+        return result;
     }
 
     @Override
-    protected void onPostExecute(String result) {
-        if (result != null) {
-            this.listener.onUpdatePushNotsSuccess(this.enableNots, result);
+    protected void onPostExecute(Boolean result) {
+        if (this.t == null) {
+            this.listener.onUpdatePushNotsSuccess(this.requestedState, result != null ? result.booleanValue() : false);
         } else {
-            this.listener.onUpdatePushNotsError(this.enableNots, this.t);
+            this.listener.onUpdatePushNotsError(this.requestedState, this.t);
         }
     }
 
@@ -63,16 +63,16 @@ public class UpdatePushNotificationsTask extends AsyncTask<Void, Void, String> {
 
         /**
          * Método para los casos de éxito.
-         * @param request Tipo de solicitud que se ha realizado (activación o desactivación).
-         * @param result Resultado de la operación.
+         * @param enable Indica si se ha solicitado activar (true) o desactivar (false) las notificaciones.
+         * @param result Si el cambio se completó ({@code true}) o no ({@code false}).
          */
-        void onUpdatePushNotsSuccess(boolean request, String result);
+        void onUpdatePushNotsSuccess(boolean enable, boolean result);
 
         /**
          * Método para los casos de error.
-         * @param request Tipo de solicitud que se ha realizado (activación o desactivación).
+         * @param enable Indica si se ha solicitado activar (true) o desactivar (false) las notificaciones.
          * @param exception Excepción lanzada durante la operación.
          */
-        void onUpdatePushNotsError(boolean request, Throwable exception);
+        void onUpdatePushNotsError(boolean enable, Throwable exception);
     }
 }

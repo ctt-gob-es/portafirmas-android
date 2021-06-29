@@ -18,12 +18,15 @@ public final class UpdatePushNotsResponseParser {
      * @param remoteDocument Documento a parsear.
      * @return Resultado de la operación recibido.
      */
-    public static String parse(Document remoteDocument) {
+    public static boolean parse(Document remoteDocument) {
         if (!DOC_NODE.equalsIgnoreCase(remoteDocument.getDocumentElement().getNodeName())) {
             throw new IllegalArgumentException("El elemento raiz del XML debe ser '" + //$NON-NLS-1$
                     DOC_NODE + "' y aparece: " + //$NON-NLS-1$
                     remoteDocument.getDocumentElement().getNodeName());
         }
-        return remoteDocument.getDocumentElement().getTextContent();
+
+        final String result = remoteDocument.getDocumentElement().getTextContent();
+
+        return "OK".equalsIgnoreCase(result);
     }
 }

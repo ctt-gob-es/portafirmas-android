@@ -2,12 +2,15 @@ package es.gob.afirma.android.signfolder.activities;
 
 import android.app.Activity;
 import android.app.ListActivity;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
 import android.view.View;
 import android.widget.ListView;
+
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -31,7 +34,6 @@ public final class FileChooserActivity extends ListActivity {
 
 	private String[] excludedDirs = new String[0];
 
-	private FileArrayAdapter adapter;
 	private File currentDir;
 
 	private String initialDirectoryName = null;
@@ -44,16 +46,12 @@ public final class FileChooserActivity extends ListActivity {
 
 		setContentView(R.layout.activity_file_chooser);
 
-		String title = null;
 		// Establecemos los filtros por extension de fichero
-		if(getIntent().getExtras() != null) {
-			this.extFilters = getIntent().getExtras().getString("es.gob.afirma.signfolder.exts"); //$NON-NLS-1$
-			this.excludedDirs = getIntent().getExtras().getStringArray("es.gob.afirma.android.excludedDirs"); //$NON-NLS-1$
-			// Establecemos el titulo de la ventana
-			title = getIntent().getExtras().getString("es.gob.afirma.signfolder.title"); //$NON-NLS-1$
-		}
+		this.extFilters = getIntent().getExtras().getString("es.gob.afirma.signfolder.exts"); //$NON-NLS-1$
+		this.excludedDirs = getIntent().getExtras().getStringArray("es.gob.afirma.signfolder.excludedDirs"); //$NON-NLS-1$
 
-
+		// Establecemos el titulo de la ventana
+		final String title = getIntent().getExtras().getString("es.gob.afirma.android.title"); //$NON-NLS-1$
 		if (title != null) {
 			setTitle(title);
 		}
@@ -87,23 +85,25 @@ public final class FileChooserActivity extends ListActivity {
 		final List<FileOption> dir = new ArrayList<>();
 		final List<FileOption> fls = new ArrayList<>();
 
-		for (final File ff : f.listFiles()) {
-			// No mostramos ficheros ni directorios ocultos
-			if (ff.getName().startsWith(".")) { //$NON-NLS-1$
-				continue;
-			}
-			// Si es un directorio y no esta en el listado de excluidos...
-			if (ff.isDirectory() && !arrayContains(ff.getName(), this.excludedDirs)) {
-				dir.add(new FileOption(ff));
-			}
-			else {
-				if (this.extFilters == null) {
-					fls.add(new FileOption(ff));
+		File[] childsFiles = f.listFiles();
+		if (childsFiles != null) {
+			for (final File ff : childsFiles) {
+				// No mostramos ficheros ni directorios ocultos
+				if (ff.getName().startsWith(".")) { //$NON-NLS-1$
+					continue;
+				}
+				// Si es un directorio y no esta en el listado de excluidos...
+				if (ff.isDirectory() && !arrayContains(ff.getName(), this.excludedDirs)) {
+					dir.add(new FileOption(ff));
 				} else {
-					for (final String extFilter : this.extFilters.split(",")) { //$NON-NLS-1$
-						if (ff.getName().toLowerCase(Locale.ENGLISH).endsWith(extFilter)) {
-							fls.add(new FileOption(ff));
-							break;
+					if (this.extFilters == null) {
+						fls.add(new FileOption(ff));
+					} else {
+						for (final String extFilter : this.extFilters.split(",")) { //$NON-NLS-1$
+							if (ff.getName().toLowerCase(Locale.ENGLISH).endsWith(extFilter)) {
+								fls.add(new FileOption(ff));
+								break;
+							}
 						}
 					}
 				}
@@ -117,8 +117,11 @@ public final class FileChooserActivity extends ListActivity {
 			dir.add(0, new FileOption(f, true));
 		}
 
-		this.adapter = new FileArrayAdapter(FileChooserActivity.this, dir);
-		setListAdapter(this.adapter);
+		final FileArrayAdapter adapter = new FileArrayAdapter(
+				FileChooserActivity.this,
+				R.layout.array_adapter_file_chooser,
+				dir);
+		setListAdapter(adapter);
 	}
 
 	private static boolean arrayContains(final String key, final String[] array) {

@@ -17,10 +17,6 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.security.KeyChainException;
-import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.content.FileProvider;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -34,6 +30,11 @@ import android.widget.ListView;
 import android.widget.TabHost;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 
 import java.io.File;
 import java.security.KeyStore.PrivateKeyEntry;
@@ -1174,10 +1175,10 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
 
         // Deshabilitamos la opción de acceder a la configuración de roles
         // si el rol con el que se ha accedido a la plataforma no es el de firmante.
-        if (this.selectedRole != null && menu.findItem(R.id.setting) != null) {
-            menu.findItem(R.id.setting).setEnabled(false);
-            menu.findItem(R.id.setting).setVisible(false);
-        }
+//        if (this.selectedRole != null && menu.findItem(R.id.setting) != null) {
+//            menu.findItem(R.id.setting).setEnabled(false);
+//            menu.findItem(R.id.setting).setVisible(false);
+//        }
 
         // Si solo existe el rol de firmante, no mostramos la opción de cambiar de rol.
         if (this.userConfig.getRoles().size() < 1) {

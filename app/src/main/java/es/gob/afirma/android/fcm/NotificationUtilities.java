@@ -8,13 +8,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Build;
-import android.support.annotation.NonNull;
-import android.support.v4.app.NotificationCompat;
+
+import androidx.core.app.NotificationCompat;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.iid.FirebaseInstanceId;
-import com.google.firebase.iid.InstanceIdResult;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 import es.gob.afirma.android.signfolder.AppPreferences;
 import es.gob.afirma.android.signfolder.R;
@@ -194,11 +193,13 @@ public final class NotificationUtilities {
     }
 
     /**
-     * Check current notification token of the application.
+     * Obtiene el token de recepci&oacute;n de notificaciones actual y lo registra internamente
+     * como el token de notificaciones activo.
      */
-    public static void checkCurrentToken() {
+    public static void registerCurrentToken() {
 
         if (token == null) {
+/*
             FirebaseInstanceId.getInstance().getInstanceId()
                     .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
                         @Override
@@ -211,9 +212,27 @@ public final class NotificationUtilities {
                             // Recuperamos el token y lo almacenamos en el atributo.
                             if (task.getResult() != null) {
                                 token = task.getResult().getToken();
-                                PfLog.i(SFConstants.LOG_TAG, "Se obtiene el token de notificaciones actual: " + token);
+                                PfLog.i(SFConstants.LOG_TAG, "Se obtiene el token de notificaciones actual (modo antiguo): " + token);
                                 AppPreferences.getInstance().setCurrentToken(token);
                             }
+                        }
+                    });
+*/
+            FirebaseMessaging.getInstance().getToken()
+                    .addOnCompleteListener(new OnCompleteListener<String>() {
+                        @Override
+                        public void onComplete(Task<String> task) {
+                            if (!task.isSuccessful()) {
+                                PfLog.w(SFConstants.LOG_TAG, "Fetching FCM registration token failed", task.getException());
+                                return;
+                            }
+
+                            // Get new FCM registration token
+                            token = task.getResult();
+
+                            // Log
+                            PfLog.i(SFConstants.LOG_TAG, "Se obtiene el token de notificaciones actual (modo nuevo): " + token);
+                            AppPreferences.getInstance().setCurrentToken(token);
                         }
                     });
         }

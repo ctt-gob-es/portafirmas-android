@@ -1,12 +1,12 @@
 package es.gob.afirma.android.signfolder.adapter;
 
-import android.support.annotation.NonNull;
-import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+
+import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.List;
 
@@ -32,7 +32,6 @@ public class VerifierAdapter extends RecyclerView.Adapter<VerifierAdapter.Verifi
         dataSet = myDataset;
     }
 
-    @NonNull
     @Override
     public VerifierAdapter.VerifierViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         RelativeLayout l = (RelativeLayout) LayoutInflater.from(parent.getContext())

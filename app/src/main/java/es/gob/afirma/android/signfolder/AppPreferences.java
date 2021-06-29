@@ -77,7 +77,9 @@ public final class AppPreferences {
 	private AppPreferences(){ }
 
 	public static AppPreferences getInstance(){
-		if (mInstance == null) mInstance = new AppPreferences();
+		if (mInstance == null) {
+			mInstance = new AppPreferences();
+		}
 		return mInstance;
 	}
 
@@ -96,6 +98,10 @@ public final class AppPreferences {
 		if (sharedPref == null) {
 			sharedPref = PreferenceManager.getDefaultSharedPreferences(activity);
 		}
+	}
+
+	public boolean isInitialized() {
+		return config != null && sharedPref != null;
 	}
 
 	/**

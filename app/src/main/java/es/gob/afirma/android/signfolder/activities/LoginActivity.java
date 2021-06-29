@@ -13,14 +13,15 @@ import android.os.Build;
 import android.os.Bundle;
 import android.security.KeyChain;
 import android.security.KeyChainException;
-import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
@@ -118,7 +119,7 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
         // Una vez, tras el inicio de la aplicacion, obtenemos el token para el envio de
         // notificaciones a la aplicacion y lo registramos
         if (!notificationTokenChecked) {
-            NotificationUtilities.checkCurrentToken();
+            NotificationUtilities.registerCurrentToken();
             notificationTokenChecked = true;
         }
 
@@ -149,47 +150,53 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
 
         //Boton Acceder
         if (v.getId() == R.id.button_acceder) {
-
-            // Reiniciamos la conexion con el servicio proxy
-            // y comprobamos que tenemos conexion con el
-            CommManager.resetConfig();
-            if (!CommManager.getInstance().verifyProxyUrl()) {
-                showErrorDialog(getString(R.string.error_msg_proxy_no_config));
-                return;
-            }
-
-            // Acceso con certificado local
-            if (!AppPreferences.getInstance().isCloudCertEnabled()) {
-                // Iniciamos la carga del certificado
-                loadKeyStore();
-            }
-            // Acceso con certificado en la nube
-            else {
-                // Ejecutamos la tarea de conexion con Clave
-                ClaveLoginTask loginTask = new ClaveLoginTask(this);
-                showProgressDialog(getString(R.string.dialog_msg_clave), this, loginTask);
-                loginTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-            }
+            onClickAccessButton();
         }
         // Boton importar certificados
         else {
+            onClickImportCertButton();
+        }
+    }
 
-            // Comprobamos si tenemos permisos para cargar el almacen de certificados en disco
-            boolean storagePerm = (
-                    ContextCompat.checkSelfPermission(
-                            this,
-                            Manifest.permission.WRITE_EXTERNAL_STORAGE
-                    ) == PackageManager.PERMISSION_GRANTED
-            );
+    public void onClickAccessButton() {
+        // Reiniciamos la conexion con el servicio proxy
+        // y comprobamos que tenemos conexion con el
+        CommManager.resetConfig();
+        if (!CommManager.getInstance().verifyProxyUrl()) {
+            showErrorDialog(getString(R.string.error_msg_proxy_no_config));
+            return;
+        }
 
-            if (storagePerm) {
-                browseKeyStore();
-            } else {
-                ActivityCompat.requestPermissions(
+        // Acceso con certificado local
+        if (!AppPreferences.getInstance().isCloudCertEnabled()) {
+            // Iniciamos la carga del certificado
+            loadKeyStore();
+        }
+        // Acceso con certificado en la nube
+        else {
+            // Ejecutamos la tarea de conexion con Clave
+            ClaveLoginTask loginTask = new ClaveLoginTask(this);
+            showProgressDialog(getString(R.string.dialog_msg_clave), this, loginTask);
+            loginTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        }
+    }
+
+    public void onClickImportCertButton() {
+        // Comprobamos si tenemos permisos para cargar el almacen de certificados en disco
+        boolean storagePerm = (
+                ContextCompat.checkSelfPermission(
                         this,
-                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                        PERMISSION_TO_BROWSE_FILE);
-            }
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE
+                ) == PackageManager.PERMISSION_GRANTED
+        );
+
+        if (storagePerm) {
+            browseKeyStore();
+        } else {
+            ActivityCompat.requestPermissions(
+                    this,
+                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    PERMISSION_TO_BROWSE_FILE);
         }
     }
 
@@ -210,6 +217,7 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
                             Toast.LENGTH_LONG
                     ).show();
                 }
+                break;
             }
             case PERMISSION_TO_OPEN_HELP: {
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -222,6 +230,7 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
                             Toast.LENGTH_LONG
                     ).show();
                 }
+                break;
             }
         }
     }
@@ -383,6 +392,7 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
      * Abre el fichero de ayuda de la aplicaci&oacute;n.
      */
     private void openHelp() {
+        PfLog.i(SFConstants.LOG_TAG, "Abrimos el fichero de ayuda");
         OpenHelpDocumentTask task = new OpenHelpDocumentTask(this);
         task.execute();
     }

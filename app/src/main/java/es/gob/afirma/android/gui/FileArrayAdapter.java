@@ -25,11 +25,12 @@ public final class FileArrayAdapter extends ArrayAdapter<FileOption> {
 	/** Construye un objeto <code>FileArrayAdapter</code> con una lista de objetos de tipo <code>Option</code> y lo asocia a un contexto definido por
 	 * el usuario y a un recurso donde se mostrar&aacute;n
 	 * @param context Contexto de la aplicaci&oacute;n donde se mostrar&aacute; la lista
+	 * @param textViewResourceId Recurso en el que se pintara la lista
 	 * @param objects Lista de objetos a pintar */
-	public FileArrayAdapter(final Context context, final List<FileOption> objects) {
-		super(context, R.layout.array_adapter_file_chooser, objects);
+	public FileArrayAdapter(final Context context, final int textViewResourceId, final List<FileOption> objects) {
+		super(context, textViewResourceId, objects);
 		this.c = context;
-		this.id = R.layout.array_adapter_file_chooser;
+		this.id = textViewResourceId;
 		this.items = objects;
 	}
 

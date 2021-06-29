@@ -68,7 +68,7 @@ public final class UserConfigurationResponseParser {
 
         // Roles
         final NodeList rolesNodeList = docElement.getElementsByTagName(TAG_NAME_ROLES);
-        if (rolesNodeList != null) {
+        if (rolesNodeList != null && rolesNodeList.getLength() > 0) {
 
             Node roleNode = rolesNodeList.item(0);
             for (int e = 0; e < roleNode.getChildNodes().getLength(); e++) {

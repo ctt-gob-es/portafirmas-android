@@ -65,6 +65,8 @@ public interface ConfigurationConstants {
      */
     String EXTRA_RESOURCE_ROLE_SELECTED = "ROLE_SELECTED";
 
+    String EXTRA_RESOURCE_FORCE_REFRESH = "FORCE_REFRESH";
+
     /**
      * Constante que representa la clave para almacenar la configuración de usuario durante el login.
      */

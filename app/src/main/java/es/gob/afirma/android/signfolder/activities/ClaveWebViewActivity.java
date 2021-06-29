@@ -1,5 +1,6 @@
 package es.gob.afirma.android.signfolder.activities;
 
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Intent;
@@ -8,7 +9,6 @@ import android.net.http.SslCertificate;
 import android.net.http.SslError;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
 import android.webkit.CookieManager;
 import android.webkit.HttpAuthHandler;
 import android.webkit.SslErrorHandler;
@@ -19,6 +19,8 @@ import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+
+import androidx.fragment.app.FragmentActivity;
 
 import java.lang.reflect.Field;
 import java.security.cert.X509Certificate;
@@ -56,13 +58,13 @@ public final class ClaveWebViewActivity extends FragmentActivity implements WebV
 	/**
 	 * Carga la URL proporcionada a la actividad en la p&aacute;gina.
 	 */
+	@SuppressLint("JavascriptInterface")
 	public void loadPage() {
 
 		WebView webView = findViewById(R.id.webView);
 
 		// Definimos el comportamiento del WebView
 		webView.setWebViewClient(new WebViewClient() {
-
 			@Override
 			public void onPageStarted(WebView view, String url, Bitmap favicon) {
 				PfLog.i(SFConstants.LOG_TAG, "---- Inicio de pagina: " + url);
@@ -120,9 +122,11 @@ public final class ClaveWebViewActivity extends FragmentActivity implements WebV
 					url = request.getUrl().toString();
 					PfLog.w(SFConstants.LOG_TAG, "URL que origino el error: " + url);
 				}
-				if (url == null || !url.endsWith("favicon.ico")) {	// Omitimos los errores en el favicon
+				if (url == null || !(url.endsWith(".ico") || url.endsWith(".js"))) {	// Omitimos los errores en recursos secundarios
 					closeByStatusError(errorResponse);
+					return;
 				}
+				PfLog.w(SFConstants.LOG_TAG, "Se ignora el error en la carga del recurso: " + url);
 			}
 
 			@Override

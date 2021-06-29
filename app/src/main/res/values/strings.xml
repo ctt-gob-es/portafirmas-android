@@ -181,7 +181,7 @@
     <string name="toast_msg_signs_ko">Error al firmar %1$d de las %2$d peticiones seleccionadas</string>
     <string name="toast_msg_sign_ko">Error al firmar la petici\u00F3n seleccionada</string>
     <string name="toast_msg_download_ok">La firma se ha guardado correctamente en su directorio de Descargas</string>
-    <string name="toast_msg_gcm_connection_ok">Se han habilitado las notificaciones en el dispositivo.</string>
+    <string name="toast_msg_gcm_connection_ok">Se han habilitado las notificaciones en el dispositivo para este Portafirmas.</string>
     <string name="toast_msg_gcm_connection_ko">Error al conectar con el servidor de notificaciones.</string>
     <string name="toast_msg_fire_comunication_ko">No se ha podido establecer la comunicaci\u00F3n con Cl@ve Firma.</string>
     <string name="toast_msg_creation_auth_role_ok">Autorizaci\u00F3n creada correctamente</string>
@@ -191,7 +191,10 @@
     <string name="toast_error_access_denegated">No tiene permiso para acceder al recurso</string>
     <string name="toast_msg_list_updated">Lista actualizada</string>
     <string name="toast_msg_update_push_nots_error">Error al actualizar el estado de las notificaciones push.</string>
-
+    <string name="toast_msg_push_activated">Notificaciones activadas</string>
+    <string name="toast_msg_push_deactivated">Notificaciones desactivadas</string>
+    <string name="toast_msg_push_error_changing_state">No se ha podido actualizar el estado de las notificaciones</string>
+    <string name="toast_msg_directory_doesnt_exists">No se tiene acceso a este directorio</string>
 
     <string name="title_activity_cert_chooser">Importar certificado</string>
     <string name="title_clave_login">Autenticaci\u00F3n con Cl@ve</string>

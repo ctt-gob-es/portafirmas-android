@@ -2,7 +2,8 @@ package es.gob.afirma.android.fcm;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
+
+import androidx.fragment.app.FragmentActivity;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -13,6 +14,8 @@ import es.gob.afirma.android.signfolder.AppPreferences;
 import es.gob.afirma.android.signfolder.activities.LoginActivity;
 import es.gob.afirma.android.signfolder.activities.PetitionListActivity;
 import es.gob.afirma.android.signfolder.SFConstants;
+import es.gob.afirma.android.signfolder.proxy.CommManager;
+import es.gob.afirma.android.user.configuration.ConfigurationConstants;
 import es.gob.afirma.android.util.PfLog;
 
 
@@ -21,50 +24,39 @@ import es.gob.afirma.android.util.PfLog;
  */
 public class StartFromNotificationActivity extends FragmentActivity {
 
+    public static final String EXTRA_RESOURCE_SERVERURL = "es.gob.afirma.signfolder.serverurl";
+    public static final String EXTRA_RESOURCE_SERVERALIAS = "es.gob.afirma.signfolder.serveralias";
+    public static final String EXTRA_RESOURCE_USERID = "es.gob.afirma.signfolder.userid";
     final static String EXTRA_RESOURCE_CERT_B64 = "es.gob.afirma.signfolder.cert"; //$NON-NLS-1$
 
-    Thread thread = new Thread(new Runnable() {
-
-        @Override
-        public void run() {
-            try {
-                URL url = new URL(AppPreferences.getInstance().getSelectedProxyUrl());
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                int code = connection.getResponseCode();
-
-                if (code == 200) {
-                    Intent notificationIntent2 = new Intent(getApplicationContext(), PetitionListActivity.class);
-                    notificationIntent2.putExtra(EXTRA_RESOURCE_CERT_B64, getIntent().getStringExtra(EXTRA_RESOURCE_CERT_B64));
-                    notificationIntent2.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                    startActivity(notificationIntent2);
-                }
-            } catch (SSLHandshakeException e) {
-                // Fallo por el protocolo SSL, pero tiene conexion
-                Intent notificationIntent2 = new Intent(getApplicationContext(), PetitionListActivity.class);
-                Intent intent = getIntent();
-                String certb64 = intent.getStringExtra(EXTRA_RESOURCE_CERT_B64);
-                notificationIntent2.putExtra(EXTRA_RESOURCE_CERT_B64, certb64);
-                notificationIntent2.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                startActivity(notificationIntent2);
-            } catch (Exception e) {
-                PfLog.e(SFConstants.LOG_TAG, "No se puede conectar con el portafirmas");
-            }
-            finish();
-        }
-    });
 
     @Override
     public void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // Si inicia la actividad de login y la de peticion de firma
-        Intent notificationIntent = new Intent(getApplicationContext(), LoginActivity.class);
-        notificationIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        startActivity(notificationIntent);
-        try {
-            thread.start();
-        } catch (Exception e) {
-            //Se queda en la pantalla de login
-            PfLog.e(SFConstants.LOG_TAG, "No se puede conectar con el portafirmas");
+
+        // Cargamos los datos de la notificacion proporcionados en la notificacion
+        String serverUrl = getIntent().getStringExtra(EXTRA_RESOURCE_SERVERURL);
+        String serverAlias = getIntent().getStringExtra(EXTRA_RESOURCE_SERVERALIAS);
+        String userId = getIntent().getStringExtra(EXTRA_RESOURCE_USERID);
+
+        // Comprobamos si el Portafirmas solicitado es el actual
+        AppPreferences prefs = AppPreferences.getInstance();
+        String selectedUrl = prefs.getSelectedProxyUrl();
+
+        // Si estaba configurado, comprobamos si hay sesion y accedemos en dicho caso
+        if (serverUrl.equals(selectedUrl) && CommManager.getInstance().isUserLogged()) {
+            Intent intent = new Intent(getApplicationContext(), PetitionListActivity.class);
+            intent.putExtra(ConfigurationConstants.EXTRA_RESOURCE_FORCE_REFRESH, true);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(intent);
         }
+        // Si no estaba, lo configuramos y abrimos la pagina principal
+        else {
+            prefs.setSelectedProxy(serverAlias, selectedUrl);
+            Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(intent);
+        }
+        finish();
     }
 }

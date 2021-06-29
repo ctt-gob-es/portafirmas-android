@@ -21,6 +21,9 @@ public class RegisterOnNotificationParser {
         }
 
         if (!NOTIFICATION_RESPONSE_NODE.equalsIgnoreCase(doc.getDocumentElement().getNodeName())) {
+            if (ERROR_ATTRIBUTE.equalsIgnoreCase(doc.getDocumentElement().getNodeName())) {
+                return new NotificationRegistryResult(false, doc.getDocumentElement().getTextContent());
+            }
             throw new IllegalArgumentException("El elemento raiz del XML debe ser '" + //$NON-NLS-1$
                     NOTIFICATION_RESPONSE_NODE + "' y aparece: " + //$NON-NLS-1$
                     doc.getDocumentElement().getNodeName());

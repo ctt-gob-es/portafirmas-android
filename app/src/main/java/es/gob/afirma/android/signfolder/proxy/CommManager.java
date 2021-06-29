@@ -1,14 +1,14 @@
 package es.gob.afirma.android.signfolder.proxy;
 
+import android.util.Log;
+
 import org.w3c.dom.Document;
-import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.StringReader;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.security.cert.CertificateEncodingException;
@@ -17,8 +17,6 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
-
-import javax.xml.parsers.DocumentBuilderFactory;
 
 import es.gob.afirma.android.network.AndroidUrlHttpManager;
 import es.gob.afirma.android.network.ConnectionResponse;
@@ -46,8 +44,6 @@ import es.gob.afirma.android.user.configuration.UserConfig;
 import es.gob.afirma.android.util.AOUtil;
 import es.gob.afirma.android.util.Base64;
 import es.gob.afirma.android.util.PfLog;
-import es.gob.afirma.core.misc.http.UrlHttpManager;
-import es.gob.afirma.core.misc.http.UrlHttpManagerFactory;
 
 /**
  * Gestor de comunicaciones con el servidor de portafirmas m&oacute;vil.
@@ -85,7 +81,7 @@ public final class CommManager extends CommManagerOldVersion {
     private static final String OPERATION_GET_USER_CONFIG = "18"; //$NON-NLS-1$
 
     // TODO: Identificador de servicio no habilitado aún. Servicio de busqueda de usuario.
-//    private static final String OPERATION_GET_USERS = "19"; //$NON-NLS-1$
+    private static final String OPERATION_GET_USERS = "19"; //$NON-NLS-1$
 
     private static final String OPERATION_VERIFY = "20"; //$NON-NLS-1$
 
@@ -109,6 +105,8 @@ public final class CommManager extends CommManagerOldVersion {
      */
     private String remoteId = null;
     private boolean oldProxy = false;
+
+    private boolean logged = false;
 
     private CommManager() {
         super();
@@ -194,6 +192,8 @@ public final class CommManager extends CommManagerOldVersion {
         this.remoteId = result.getTransactionId();
         result.setTransactionId(null);
 
+        this.logged = true;
+
         return result;
     }
 
@@ -221,6 +221,8 @@ public final class CommManager extends CommManagerOldVersion {
         this.remoteId = result.getSsid();
         result.setSsid(null);
 
+        this.logged = true;
+
         return result;
     }
 
@@ -247,26 +249,23 @@ public final class CommManager extends CommManagerOldVersion {
         // Llamada al metodo de logout
         // --------------------------
         if (!oldProxy) {
-            final UrlHttpManager urlManager = UrlHttpManagerFactory.getInstalledManager();
-
             String xml = "<lgorq />"; //$NON-NLS-1$
             String url = this.signFolderProxyUrl + createUrlParams(OPERATION_LOGOUT_REQUEST, xml); //$NON-NLS-1$
 
-            final InputStream is = getRemoteDocumentIs(url);
-            byte[] data = AOUtil.getDataFromInputStream(is);
-            is.close();
-
-            String xmlResponse = new String(data);
-
-            PfLog.i(SFConstants.LOG_TAG, "Respuesta a la peticion de logout:\n" + xmlResponse);
-
-            Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder()
-                    .parse(new InputSource(new StringReader(xmlResponse)));
+            Document doc;
+            try {
+                doc = getRemoteDocument(url);
+            } catch (UnknownHostException e) {
+                throw new OldProxyException("El proxy no soporta la nueva operacion de login", e);
+            }
 
             LogoutResponseParser.parse(doc);
         } else {
             CommManagerOldVersion.getInstance().logoutRequest();
         }
+
+        this.logged = false;
+
         instance = null;
     }
 
@@ -578,6 +577,8 @@ public final class CommManager extends CommManagerOldVersion {
             return null;
         }
 
+        Log.i(SFConstants.LOG_TAG, " ============== Registro en el sistema de notificaciones");
+
         // Realizamos la peticion
         String xml = XmlRequestsFactory.createRegisterNotificationRequest(token, device, dni);
         String url = this.signFolderProxyUrl + createUrlParams(OPERATION_NOTIFICATION_SERVICE_REGISTER, xml);
@@ -688,12 +689,12 @@ public final class CommManager extends CommManagerOldVersion {
      * @throws SAXException              Si algo falla en el proceso.
      * @throws ServerControlledException Si hay algún error en la comunicación con el proxy.
      */
-    public List<?> getUserConfiguration(final ConfigurationRole role, final int numPage, final int pageSize)
+    public List<?> getUsers(final ConfigurationRole role, final int numPage, final int pageSize)
             throws IOException, SAXException, ServerControlledException {
 
         PartialResponseRolesList partialResult;
         String xml = XmlRequestsFactory.createRequestListRoles(role, numPage, pageSize);
-        String url = this.signFolderProxyUrl + createUrlParams(OPERATION_GET_USER_CONFIG, xml);
+        String url = this.signFolderProxyUrl + createUrlParams(OPERATION_GET_USERS, xml);
 
         partialResult = RequestListResponseParser.parseRolesReq(getRemoteDocument(url));
         if (role.equals(ConfigurationRole.AUTHORIZED)) {
@@ -710,15 +711,22 @@ public final class CommManager extends CommManagerOldVersion {
         return UserConfigurationResponseParser.parseUserConfigReq(getRemoteDocument(url));
     }
 
+    public boolean isUserLogged() {
+        return this.logged;
+    }
+
     /**
      * Método que actualiza el estado de las notificaciones push.
      *
      * @param activePushNots Nuevo estado de las notificaciones.
-     * @return la respuesta generada por portafrimas-web.
+     * @return la respuesta generada por portafirmas-web.
      * @throws IOException  Si algo falla en el proceso.
      * @throws SAXException Si algo falla en el proceso.
      */
-    public String updatePushNotifications(boolean activePushNots) throws IOException, SAXException {
+    public boolean updatePushNotifications(boolean activePushNots) throws IOException, SAXException {
+
+        Log.i(SFConstants.LOG_TAG, " ============== Cambio de estado en las notificaciones. Activar: " + activePushNots);
+
         String xml = XmlRequestsFactory.createUpdatePushNotsRequest(activePushNots);
         String url = this.signFolderProxyUrl + createUrlParams(OPERATION_UPDATE_PUSH_NOTIFICATIONS, xml);
         return UpdatePushNotsResponseParser.parse(getRemoteDocument(url));

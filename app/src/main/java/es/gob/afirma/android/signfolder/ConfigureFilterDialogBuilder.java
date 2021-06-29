@@ -6,7 +6,6 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Pair;
@@ -21,6 +20,8 @@ import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -34,7 +35,6 @@ public final class ConfigureFilterDialogBuilder {
 
     public static final String VALUE_APP_TYPE_VIEW_ALL = "view_all"; //$NON-NLS-1$
     public static final String VALUE_APP_TYPE_VIEW_NO_VALIDATE = "view_no_validate"; //$NON-NLS-1$
-    public static final String VALUE_MONTH_ALL = "all"; //$NON-NLS-1$
     static final String FILTERS_ENABLED = "filters_enabled"; //$NON-NLS-1$
     static final String FILTERS_ORDER_ATTRIBUTE = "filters_order"; //$NON-NLS-1$
     static final String FILTERS_SUBJECT = "filters_subject"; //$NON-NLS-1$
@@ -60,6 +60,7 @@ public final class ConfigureFilterDialogBuilder {
     private static final String VALUE_APP_TYPE_VIEW_PASS = "view_pass"; //$NON-NLS-1$
     private static final String VALUE_APP_TYPE_VIEW_VALIDATE = "view_validate"; //$NON-NLS-1$
     private static final String KEY_FILTER_MONTH = "mesFilter="; //$NON-NLS-1$
+    public static final String VALUE_MONTH_ALL = "all"; //$NON-NLS-1$
     private static final String VALUE_MONTH_LAST_24_HOURS = "last24Hours"; //$NON-NLS-1$
     private static final String VALUE_MONTH_LAST_WEEK = "lastWeek"; //$NON-NLS-1$
     private static final String VALUE_MONTH_LAST_MONTH = "lastMonth"; //$NON-NLS-1$

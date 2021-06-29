@@ -1,6 +1,6 @@
 package es.gob.afirma.android.signfolder.proxy;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 /**
  * Resultado obtenido al cargar peticiones de firma en FIRe.

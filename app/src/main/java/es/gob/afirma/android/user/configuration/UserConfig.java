@@ -27,7 +27,7 @@ public class UserConfig implements Serializable {
     /**
      * Bandera que indica el estado de las notificaciones push.
      */
-    private boolean pushStatus;
+    private boolean pushActivated;
 
     /**
      * Lista de filtros asociada al usuario.
@@ -41,7 +41,7 @@ public class UserConfig implements Serializable {
         this.roles = new ArrayList<>();
         this.simConfig = true;
         this.userWithVerifiers = false;
-        this.pushStatus = false;
+        this.pushActivated = false;
         this.userFilers = null;
     }
 
@@ -50,14 +50,14 @@ public class UserConfig implements Serializable {
      * @param roles Lista de roles del usuario.
      * @param simConfig Bandera de la configuración de los parámetros SIM.
      * @param userWithVerifiers Bandera que indica si el usuario tiene validadores.
-     * @param pushStatus Bandera del estado de las notificaciones push.
+     * @param pushActivated Bandera del estado de las notificaciones push.
      * @param userFilers Lista de filtros del usuario.
      */
-    public UserConfig(List<RoleInfo> roles, boolean simConfig, boolean userWithVerifiers, boolean pushStatus, UserFilters userFilers){
+    public UserConfig(List<RoleInfo> roles, boolean simConfig, boolean userWithVerifiers, boolean pushActivated, UserFilters userFilers){
         this.roles = roles;
         this.simConfig = simConfig;
         this.userWithVerifiers = userWithVerifiers;
-        this.pushStatus = pushStatus;
+        this.pushActivated = pushActivated;
         this.userFilers = userFilers;
     }
 
@@ -113,16 +113,16 @@ public class UserConfig implements Serializable {
      * Método get del atributo <i>pushStatus</i>.
      * @return el valor del atributo.
      */
-    public boolean isPushStatus() {
-        return pushStatus;
+    public boolean isPushActivated() {
+        return pushActivated;
     }
 
     /**
      * Método set del atributo <i>pushStatus</i>.
-     * @param pushStatus Nuevo valor del atributo.
+     * @param pushActivated Nuevo valor del atributo.
      */
-    public void setPushStatus(boolean pushStatus) {
-        this.pushStatus = pushStatus;
+    public void setPushActivated(boolean pushActivated) {
+        this.pushActivated = pushActivated;
     }
 
     /**
