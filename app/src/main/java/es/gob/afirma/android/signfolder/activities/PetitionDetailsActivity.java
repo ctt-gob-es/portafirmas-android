@@ -645,89 +645,25 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
 
         final Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        intent.setDataAndType(fileUri, mimetype);
 
-        if (mimetype != null && mimetype.equals(PDF_MIMETYPE) ||
-                documentFile.getName().toLowerCase(Locale.US).endsWith(PDF_FILE_EXTENSION)) {
-            intent.setDataAndType(fileUri, PDF_MIMETYPE);
-            viewPdf(intent);
-        } else {
-            intent.setDataAndType(fileUri, mimetype);
-            try {
-                this.startActivity(intent);
-            } catch (final ActivityNotFoundException e) {
+        try {
+            this.startActivity(intent);
+        } catch (final ActivityNotFoundException e) {
 
-                PfLog.w(SFConstants.LOG_TAG, "No se pudo abrir el fichero guardado: " + e); //$NON-NLS-1$
-                e.printStackTrace();
+            PfLog.w(SFConstants.LOG_TAG, "No se pudo abrir el fichero guardado: " + e); //$NON-NLS-1$
+            e.printStackTrace();
 
-                final MessageDialog md = new MessageDialog();
-                md.setMessage(getString(R.string.error_file_not_support));
-                md.setTitle(getString(R.string.error_title_openning_file));
-                md.setContext(this);
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        md.show(getSupportFragmentManager(), "ErrorDialog"); //$NON-NLS-1$
-                    }
-                });
-            }
-        }
-    }
-
-    private void viewPdf(final Intent openFileIntent) {
-        final String adobePackage = "com.adobe.reader"; //$NON-NLS-1$
-        final String gdrivePackage = "com.google.android.apps.viewer"; //$NON-NLS-1$
-        boolean isGdriveInstalled = false;
-
-        final PackageManager pm = getApplicationContext().getPackageManager();
-        final List<ResolveInfo> list = pm.queryIntentActivities(openFileIntent, 0);
-        if (list.isEmpty()) {
-            PfLog.w(SFConstants.LOG_TAG, "No hay visor pdf instalado"); //$NON-NLS-1$
-            new AlertDialog.Builder(PetitionDetailsActivity.this)
-                    .setTitle(R.string.error)
-                    .setMessage(R.string.no_pdf_viewer_msg)
-                    .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(final DialogInterface dialog, final int which) {
-                            // No hacemos nada
-                        }
-                    })
-                    .create().show();
-        } else {
-
-
-            for (final ResolveInfo resolveInfo : list) {
-                if (resolveInfo.activityInfo.name.startsWith(adobePackage)) {
-                    openFileIntent.setPackage(resolveInfo.activityInfo.packageName);
-                    startActivity(openFileIntent);
-                    return;
-                } else if (resolveInfo.activityInfo.name.startsWith(gdrivePackage)) {
-                    openFileIntent.setPackage(resolveInfo.activityInfo.packageName);
-                    isGdriveInstalled = true;
+            final MessageDialog md = new MessageDialog();
+            md.setMessage(getString(R.string.error_file_not_support));
+            md.setTitle(getString(R.string.error_title_openning_file));
+            md.setContext(this);
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    md.show(getSupportFragmentManager(), "ErrorDialog"); //$NON-NLS-1$
                 }
-            }
-
-            if (isGdriveInstalled) {
-                startActivity(openFileIntent);
-                return;
-            }
-
-            PfLog.i(SFConstants.LOG_TAG, "Ni Adobe ni Gdrive instalado"); //$NON-NLS-1$
-            new AlertDialog.Builder(PetitionDetailsActivity.this)
-                    .setTitle(R.string.aviso)
-                    .setMessage(R.string.no_adobe_reader_msg)
-                    .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(final DialogInterface dialog, final int which) {
-                            startActivity(openFileIntent);
-                        }
-                    })
-                    .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(final DialogInterface dialog, final int which) {
-                            // No hacemos nada
-                        }
-                    })
-                    .create().show();
+            });
         }
     }
 

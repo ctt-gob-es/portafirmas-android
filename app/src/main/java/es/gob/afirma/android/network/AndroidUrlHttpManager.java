@@ -10,6 +10,8 @@
 
 package es.gob.afirma.android.network;
 
+import android.util.Log;
+
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.net.CookieHandler;
@@ -17,6 +19,7 @@ import java.net.CookieManager;
 import java.net.CookiePolicy;
 import java.net.HttpURLConnection;
 import java.net.Proxy;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
@@ -78,7 +81,7 @@ public final class AndroidUrlHttpManager {
 
 		// Si la URL no tiene parametros la leemos por GET
 		if (!url.contains("?")) { //$NON-NLS-1$
-			return getRemoteDataByGet(url);
+			return getRemoteDataByGet(url, timeout);
 		}
 
 		final StringTokenizer st = new StringTokenizer(url, "?"); //$NON-NLS-1$
@@ -87,7 +90,8 @@ public final class AndroidUrlHttpManager {
 
 		final URL uri = new URL(request);
 		final HttpURLConnection conn = (HttpURLConnection) uri.openConnection(Proxy.NO_PROXY);
-		//conn.setConnectTimeout(timeout);
+		conn.setConnectTimeout(timeout);
+		conn.setReadTimeout(timeout);
 		conn.setRequestMethod("POST"); //$NON-NLS-1$
 
 		conn.setDoOutput(true);
@@ -99,9 +103,14 @@ public final class AndroidUrlHttpManager {
 
 		// Componemos la respuesta
 		final ConnectionResponse response = new ConnectionResponse();
-		response.setDataIs(conn.getInputStream());
-        response.setCookieId(extractCookieId(conn));
-
+		try {
+			response.setDataIs(conn.getInputStream());
+			response.setCookieId(extractCookieId(conn));
+		}
+		catch (SocketTimeoutException e) {
+			Log.e(SFConstants.LOG_TAG, "Timeout", e);
+			throw e;
+		}
 		return response;
 	}
 
@@ -135,15 +144,19 @@ public final class AndroidUrlHttpManager {
 
 	/** Lee una URL HTTP o HTTPS por GET. En HTTPS no se hacen comprobaciones del certificado servidor.
 	 * @param url URL a leer
+	 * @param timeout Tiempo m&aacute;ximo en milisegundos que se debe esperar por la respuesta. Un timeout de 0
+	 * se interpreta como un timeout infinito. Si se indica -1, se usar&aacute; el por defecto de Java.
 	 * @return Contenido de la URL
 	 * @throws IOException Si no se puede leer la URL */
-	static ConnectionResponse getRemoteDataByGet(final String url) throws IOException {
+	static ConnectionResponse getRemoteDataByGet(final String url, final int timeout) throws IOException {
         if (url == null) {
             throw new IllegalArgumentException("La URL a leer no puede ser nula"); //$NON-NLS-1$
         }
 
         final URL uri = new URL(url);
         final HttpURLConnection conn = (HttpURLConnection) uri.openConnection(Proxy.NO_PROXY);
+        conn.setConnectTimeout(timeout);
+        conn.setReadTimeout(timeout);
         conn.setRequestMethod("GET"); //$NON-NLS-1$
 
         // Componemos la respuesta

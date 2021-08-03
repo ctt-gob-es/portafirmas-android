@@ -4,6 +4,8 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
+import androidx.annotation.NonNull;
+
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.cert.X509Certificate;
@@ -263,6 +265,7 @@ public final class AppPreferences {
 		removePreference(PREFERENCES_KEY_SELECTED_PROXY_URL);
 	}
 	
+	@NonNull
 	public List<String> getServersList() {
 		ArrayList<String> servers = new ArrayList<>();
 		Map<String, ?> allPrefs = sharedPref.getAll();

@@ -22,6 +22,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -358,7 +359,6 @@ public final class ConfigureFilterDialogBuilder {
     }
 
     /**
-     * +
      * Restablece los valores por los del objeto pasado como párametro del diálogo de filtros.
      */
     public void resetLayout(FilterConfig filterConfig) {
@@ -441,7 +441,7 @@ public final class ConfigureFilterDialogBuilder {
         return this.filterConfig;
     }
 
-    public static final class FilterConfig {
+    public static final class FilterConfig implements Serializable {
         private boolean enabled;
         private String orderAttribute;
         private String subject;
@@ -477,19 +477,19 @@ public final class ConfigureFilterDialogBuilder {
                 return true;
             }
 
-            boolean appType;
+            boolean defaultAppType;
             if (ConfigurationRole.VERIFIER.equals(role)){
-                appType = VALUE_APP_TYPE_VIEW_NO_VALIDATE.equals(config.appType);
+                defaultAppType = VALUE_APP_TYPE_VIEW_NO_VALIDATE.equals(config.appType);
             } else if (role == null && config.isUserWitVerifiers()){
-                appType = VALUE_APP_TYPE_VIEW_VALIDATE.equals(config.appType);
+                defaultAppType = VALUE_APP_TYPE_VIEW_VALIDATE.equals(config.appType);
             } else {
-                appType = VALUE_APP_TYPE_VIEW_ALL.equals(config.appType);
+                defaultAppType = VALUE_APP_TYPE_VIEW_ALL.equals(config.appType);
             }
 
             return !config.enabled &&
                             (config.orderAttribute == null || DEFAULT_VALUE_ORDER_ATTR.equals(config.orderAttribute)) &&
                             (config.subject == null || config.subject.length() == 0) &&
-                            config.app == null && appType &&
+                            config.app == null && defaultAppType &&
                             VALUE_MONTH_ALL.equals(config.month) && config.year == null &&
                             !config.showUnverified;
         }

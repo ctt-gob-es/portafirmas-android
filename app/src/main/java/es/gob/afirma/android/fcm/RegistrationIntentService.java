@@ -2,20 +2,12 @@ package es.gob.afirma.android.fcm;
 
 import android.app.IntentService;
 import android.content.Intent;
-import android.os.Build;
 
-/*
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.iid.FirebaseInstanceId;
-import com.google.firebase.iid.InstanceIdResult;
-*/
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.installations.FirebaseInstallations;
-import com.google.firebase.messaging.FirebaseMessaging;
 
 import es.gob.afirma.android.signfolder.AppPreferences;
 import es.gob.afirma.android.signfolder.SFConstants;
@@ -24,8 +16,8 @@ import es.gob.afirma.android.util.PfLog;
 /**
  * Created by sergio.martinez on 16/08/2017.
  */
-public class RegistrationIntentService extends IntentService {
-//        implements OnCompleteListener<String> {
+public class RegistrationIntentService extends IntentService
+        implements OnCompleteListener<String> {
 
     private static final String TAG = "RegIntentService";
 
@@ -53,11 +45,11 @@ public class RegistrationIntentService extends IntentService {
             this.certB64 = intent.getStringExtra(EXTRA_RESOURCE_CERT_B64);
             this.userProxyId = intent.getStringExtra(EXTRA_RESOURCE_USER_PROXY_ID);
             this.noticeUser = intent.getBooleanExtra(EXTRA_RESOURCE_NOTICE_USER, false);
-//            FirebaseInstallations.getInstance().getId().addOnCompleteListener(this);
+            FirebaseInstallations.getInstance().getId().addOnCompleteListener(this);
 
-            // Notificamos el nuevo token al Portafirmas
-            token = AppPreferences.getInstance().getCurrentToken();
-            sendRegistrationToServer(token);
+//            // Notificamos el nuevo token al Portafirmas
+//            token = AppPreferences.getInstance().getCurrentToken();
+//            sendRegistrationToServer(token);
 
         } catch (Exception e) {
             PfLog.e(SFConstants.LOG_TAG, "Error al recuperar el ID de instalacion de la aplicacion", e);
@@ -77,28 +69,28 @@ public class RegistrationIntentService extends IntentService {
         new RegisterSIMServiceTask().execute(this, token, androidId, this.dni != null ? this.dni : this.certB64);
     }
 
-//    @Override
-//    public void onComplete(Task<String> task) {
-//
-//        if (!task.isSuccessful()) {
-//            PfLog.e(SFConstants.LOG_TAG, "Error al recuperar el token de registro de Firebase");
-//            noticeResult(false);
-//            return;
-//        }
-//        // Almacenamos el token.
-//        if (task.getResult() != null) {
-//            token = task.getResult();
-//            PfLog.i(SFConstants.LOG_TAG, "Registramos el token de notificaciones proporcionado por FCM: " + token);
-//        }
-//        // Si no hemos podido recuperar el token, lo intentamos recuperar de las preferencias.
-//        if (token == null) {
-//            token = AppPreferences.getInstance().getCurrentToken();
-//            PfLog.i(SFConstants.LOG_TAG, "Registramos el token de notificaciones ya almacenado en las preferencias: " + token);
-//        }
-//
-//        // Notificamos el nuevo token al Portafirmas
-//        sendRegistrationToServer(token);
-//    }
+    @Override
+    public void onComplete(Task<String> task) {
+
+        if (!task.isSuccessful()) {
+            PfLog.e(SFConstants.LOG_TAG, "Error al recuperar el token de registro de Firebase");
+            noticeResult(false);
+            return;
+        }
+        // Almacenamos el token.
+        if (task.getResult() != null) {
+            token = task.getResult();
+            PfLog.i(SFConstants.LOG_TAG, "Registramos el token de notificaciones proporcionado por FCM: " + token);
+        }
+        // Si no hemos podido recuperar el token, lo intentamos recuperar de las preferencias.
+        if (token == null) {
+            token = AppPreferences.getInstance().getCurrentToken();
+            PfLog.i(SFConstants.LOG_TAG, "Registramos el token de notificaciones ya almacenado en las preferencias: " + token);
+        }
+
+        // Notificamos el nuevo token al Portafirmas
+        sendRegistrationToServer(token);
+    }
 
     /**
      * Establece y notifica el resultado de la operacion de registro.

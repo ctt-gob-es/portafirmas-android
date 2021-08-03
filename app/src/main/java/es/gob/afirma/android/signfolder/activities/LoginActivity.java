@@ -8,6 +8,7 @@ import android.content.DialogInterface.OnKeyListener;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -24,6 +25,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -103,7 +105,7 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
         AppPreferences prefs = AppPreferences.getInstance();
         prefs.init(getApplicationContext());
         List<String> servers = prefs.getServersList();
-        if (servers == null || servers.size() == 0) {
+        if (servers.size() == 0) {
             prefs.setDefaultServers();
         }
 
@@ -249,10 +251,19 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
      * Abre un activity para la seleccion de un fichero PKCS#12 local.
      */
     public void browseKeyStore() {
-        final Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-        intent.setClass(this, FileChooserActivity.class);
-        intent.putExtra(EXTRA_RESOURCE_TITLE, getString(R.string.title_activity_cert_chooser));
-        intent.putExtra(EXTRA_RESOURCE_EXT, CERTIFICATE_EXTS);
+
+        Intent intent;
+        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            intent.setType("*/*"); //$NON-NLS-1$
+        }
+        else {
+            intent = new Intent(Intent.ACTION_GET_CONTENT);
+            intent.setClass(this, FileChooserActivity.class);
+            intent.putExtra(EXTRA_RESOURCE_TITLE, getString(R.string.title_activity_cert_chooser));
+            intent.putExtra(EXTRA_RESOURCE_EXT, CERTIFICATE_EXTS);
+        }
         startActivityForResult(intent, SELECT_CERT_REQUEST_CODE);
     }
 
@@ -532,18 +543,20 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
 
         if (requestCode == SELECT_CERT_REQUEST_CODE && resultCode == RESULT_OK && data != null) {
 
-            final String filename = data.getStringExtra(FileChooserActivity.RESULT_DATA_STRING_FILENAME);
 
-            int n;
-            final byte[] buffer = new byte[1024];
-            final ByteArrayOutputStream baos;
+            byte[] certContent;
+            String filename = null;
             try {
-                baos = new ByteArrayOutputStream();
-                final InputStream is = new FileInputStream(filename);
-                while ((n = is.read(buffer)) > 0) {
-                    baos.write(buffer, 0, n);
+                if (data.getStringExtra(FileChooserActivity.RESULT_DATA_STRING_FILENAME) != null) {
+                    final String path = data.getStringExtra(FileChooserActivity.RESULT_DATA_STRING_FILENAME);
+                    File certFile = new File(path);
+                    filename = certFile.getName();
+                    certContent = readDataFromFile(certFile);
+                } else {
+                    final Uri dataUri = data.getData();
+                    filename = dataUri.getLastPathSegment();
+                    certContent = readDataFromUri(dataUri);
                 }
-                is.close();
             } catch (final IOException e) {
                 showErrorDialog(getString(R.string.error_loading_selected_file, filename));
                 PfLog.e(SFConstants.LOG_TAG, "Error al cargar el fichero: " + e, e); //$NON-NLS-1$
@@ -551,7 +564,7 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
             }
 
             final Intent intent = KeyChain.createInstallIntent();
-            intent.putExtra(KeyChain.EXTRA_PKCS12, baos.toByteArray());
+            intent.putExtra(KeyChain.EXTRA_PKCS12, certContent);
             startActivity(intent);
         } else if (requestCode == WEBVIEW_REQUEST_CODE) {
 
@@ -588,6 +601,31 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
                 }
             }
         }
+    }
+
+    private byte[] readDataFromFile(File dataFile) throws IOException {
+        int n;
+        final byte[] buffer = new byte[1024];
+        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try (final InputStream is = new FileInputStream(dataFile);) {
+            while ((n = is.read(buffer)) > 0) {
+                baos.write(buffer, 0, n);
+            }
+        }
+        return baos.toByteArray();
+    }
+
+    private byte[] readDataFromUri(Uri uri) throws IOException {
+        int n;
+        final byte[] buffer = new byte[1024];
+        final ByteArrayOutputStream baos;
+        try (InputStream is = getContentResolver().openInputStream(uri);) {
+            baos = new ByteArrayOutputStream();
+            while ((n = is.read(buffer)) > 0) {
+                baos.write(buffer, 0, n);
+            }
+        }
+        return baos.toByteArray();
     }
 
     //metodo vacio para evitar bugs en versiones superiores al api11

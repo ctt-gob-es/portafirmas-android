@@ -122,7 +122,14 @@ public final class PetitionListActivity extends WebViewParentActivity implements
      * "loadingRequests"
      */
     private static final String KEY_SAVEINSTANCE_LOADING = "saveinstance_loading"; //$NON-NLS-1$
+    /**
+     * Clave usada internamente para guardar el estado de la propiedad
+     * "filterConfig".
+     */
+    private static final String KEY_SAVEINSTANCE_FILTER_CONFIG = "saveinstance_filterConfig"; //$NON-NLS-1$
+
     private static final String KEY_DAYS_TO_EXPIRE = "caducidad";
+
     private static final int DEFAULT_DAYS_TO_EXPIRE = 3;
     private final static int PAGE_SIZE = 50;
     /**
@@ -194,14 +201,10 @@ public final class PetitionListActivity extends WebViewParentActivity implements
     private String certAlias = null;
     private List<String> appIds = null;
     private List<String> appNames = null;
-    /**
-     * Configuraci&oacute;n del filtro a aplicar sobre el listado de peticiones.
-     */
+
+    /** Configuración actual de filtros. */
     private FilterConfig filterConfig = null;
-    /**
-     * Configuraci&oacute;n de filtro utilizada para el guardado temporal de los datos.
-     */
-    private FilterConfig oldFilterConfig = null;
+
     private int numPages = -1;
     private ProgressDialog progressDialog = null;
     /**
@@ -331,54 +334,50 @@ public final class PetitionListActivity extends WebViewParentActivity implements
             }
         }
 
-        // Almacenamos como filtros de la petición el DNI del usuario,
-        // el DNI del propietario de las peticiones y el rol.
-        storeUserIdAndRole();
-
-        // Comprobamos que los filtros tienen valores correctos.
-        checkFiltersValues();
+        // Si los filtros no estan inicializados, establecemos el valor por defecto que deben tener.
+        // No se entrara aqui, por ejemplo, cuando se este recontruyendo la actividad despues de
+        // cambiar de listado
+        if (this.filterConfig == null) {
+            // Comprobamos que los filtros tienen valores correctos.
+            configureDefaultFilters();
+        }
     }
 
     /**
-     * Método encargado de añadir el DNI y el rol de usuario
-     * a los filtros para recuperar las peticiones de firma.
+     * Método para la creacion del filtro de peticiones por defecto.
      */
-    private void storeUserIdAndRole() {
-        String userId = "";
-        String userRole = "";
-        String ownerId = "";
-        if (this.dni != null) {
-            userId = this.dni;
-        }
-        if (this.roleSelected != null) {
-            userRole = this.roleSelected.value;
-        }
-        if (this.roleSelectedInfo != null) {
-            ownerId = this.roleSelectedInfo.getOwnerDni();
-        }
+    private void initFilterConfig() {
         if (this.filterConfig == null) {
             this.filterConfig = new FilterConfig(this.roleSelected, this.userConfig.isUserWithVerifiers());
         }
+        String userId = this.dni != null ? this.dni : "";
         this.filterConfig.setUserId(userId);
+        String userRole = this.roleSelected != null ? this.roleSelected.value : "";
         this.filterConfig.setUserRole(userRole);
+        String ownerId = this.roleSelectedInfo != null ? this.roleSelectedInfo.getOwnerDni() : "";
         this.filterConfig.setOwnerId(ownerId);
     }
 
     /**
      * Método encargado de comprobar que los filtros tienen unos valores correctos.
      */
-    private void checkFiltersValues() {
-        if (this.filterConfig == null) {
-            storeUserIdAndRole();
-        }
-        if (this.filterConfig.getMonth() == null) {
-            this.filterConfig.setMonth(ConfigureFilterDialogBuilder.VALUE_MONTH_ALL);
-        }
-        if (this.filterConfig.getAppType() == null) {
-            if (ConfigurationRole.VERIFIER.equals(this.roleSelected)) {
-                this.filterConfig.setAppType(ConfigureFilterDialogBuilder.VALUE_APP_TYPE_VIEW_NO_VALIDATE);
-            } else {
-                this.filterConfig.setAppType(ConfigureFilterDialogBuilder.VALUE_APP_TYPE_VIEW_ALL);
+    private void configureDefaultFilters() {
+
+        // Inicializamos la configuracion de filtros
+        initFilterConfig();
+
+        // Si no se tiene establecida una configuracion particular de filtros, se aplican la
+        // configuracion por defecto
+        if (!this.filterConfig.isEnabled()) {
+            if (this.filterConfig.getMonth() == null) {
+                this.filterConfig.setMonth(ConfigureFilterDialogBuilder.VALUE_MONTH_ALL);
+            }
+            if (this.filterConfig.getAppType() == null) {
+                if (ConfigurationRole.VERIFIER.equals(this.roleSelected)) {
+                    this.filterConfig.setAppType(ConfigureFilterDialogBuilder.VALUE_APP_TYPE_VIEW_NO_VALIDATE);
+                } else {
+                    this.filterConfig.setAppType(ConfigureFilterDialogBuilder.VALUE_APP_TYPE_VIEW_ALL);
+                }
             }
         }
     }
@@ -431,6 +430,8 @@ public final class PetitionListActivity extends WebViewParentActivity implements
         // Comprobamos si el token de notificaciones que tiene dado de alta ese usuario
         // es igual al actual. En caso contrario, se tendra que actualizar
         boolean tokenChanged = !currentToken.equals(registeredToken);
+        //boolean tokenChanged = !currentToken.startsWith(registeredToken);
+
 
         Log.d(SFConstants.LOG_TAG, "El token ha cambiado: " + tokenChanged);
 
@@ -488,7 +489,10 @@ public final class PetitionListActivity extends WebViewParentActivity implements
                 !savedInstanceState.containsKey(KEY_SAVEINSTANCE_LOADING) ||
                         savedInstanceState.getBoolean(KEY_SAVEINSTANCE_LOADING);
 
-        setFilterConfig(ConfigureFilterDialogBuilder.loadFilter(savedInstanceState));
+        // Recuperamos la configuracion de filtros
+        if (savedInstanceState.containsKey(KEY_SAVEINSTANCE_FILTER_CONFIG)) {
+            this.filterConfig = (FilterConfig) savedInstanceState.getSerializable(KEY_SAVEINSTANCE_FILTER_CONFIG);
+        }
     }
 
     private void loadIntentExtra(final Intent intent) {
@@ -725,12 +729,6 @@ public final class PetitionListActivity extends WebViewParentActivity implements
         return requests.toArray(new SignRequest[0]);
     }
 
-    protected RejectRequestsTask rejectRequests(final String reason, final SignRequest... signRequests) {
-        final RejectRequestsTask rrt = new RejectRequestsTask(signRequests, CommManager.getInstance(), this, reason);
-        rrt.execute();
-        return rrt;
-    }
-
     // Definimos el menu de opciones de la aplicacion, cuyas opciones estan
     // definidas
     // para cada listado de peticiones
@@ -863,9 +861,10 @@ public final class PetitionListActivity extends WebViewParentActivity implements
         else if (item.getItemId() == R.id.filter) {
             // Almacenamos el filtro actual de forma temporal para poder restaurarlo
             // en caso de que se pulse "cancelar".
-            deepCopyFilterConfig();
-            showDialog(DIALOG_FILTER, this.filterConfig == null ? new Bundle()
-                    : this.filterConfig.copyToBundle(null));
+//            deepCopyFilterConfig();
+//            showDialog(DIALOG_FILTER, this.filterConfig == null ? new Bundle()
+//                    : this.filterConfig.copyToBundle(null));
+            showDialog(DIALOG_FILTER, this.filterConfig.copyToBundle(null));
         }
         // Eliminar filtro
         else if (item.getItemId() == R.id.no_filter) {
@@ -1518,6 +1517,8 @@ public final class PetitionListActivity extends WebViewParentActivity implements
 
         outState.putBoolean(KEY_SAVEINSTANCE_NEED_RELOAD, this.needReload);
         outState.putBoolean(KEY_SAVEINSTANCE_LOADING, this.loadingRequests);
+
+        outState.putSerializable(KEY_SAVEINSTANCE_FILTER_CONFIG, this.filterConfig);
     }
 
     ConfigureFilterDialogBuilder getFilterDialogBuilder() {
@@ -1556,35 +1557,10 @@ public final class PetitionListActivity extends WebViewParentActivity implements
      * Method that replaces the values of the current filter configuration by its old values.
      */
     private void restoreFilterConfigValues() {
-        if (this.oldFilterConfig != null) {
-            this.filterConfig.setOrderAttribute(this.oldFilterConfig.getOrderAttribute());
-            this.filterConfig.setEnabled(this.oldFilterConfig.isEnabled());
-            this.filterConfig.setSubject(this.oldFilterConfig.getSubject());
-            this.filterConfig.setApp(this.oldFilterConfig.getApp());
-            this.filterConfig.setAppType(this.oldFilterConfig.getAppType());
-            this.filterConfig.setMonth(this.oldFilterConfig.getMonth());
-            this.filterConfig.setYear(this.oldFilterConfig.getYear());
-            this.filterConfig.setShowUnverified(this.oldFilterConfig.isShowUnverified());
+        if (this.filterConfig != null) {
             this.filterDialogBuilder.resetLayout(this.filterConfig);
         } else {
             this.filterDialogBuilder.resetLayout();
-        }
-    }
-
-    /**
-     * Method that copy the current filter configuration into a new ConfigurationFilter object.
-     */
-    private void deepCopyFilterConfig() {
-        if (this.filterConfig != null) {
-            this.oldFilterConfig = new FilterConfig(this.roleSelected, this.userConfig.isUserWithVerifiers());
-            this.oldFilterConfig.setOrderAttribute(this.filterConfig.getOrderAttribute());
-            this.oldFilterConfig.setEnabled(this.filterConfig.isEnabled());
-            this.oldFilterConfig.setSubject(this.filterConfig.getSubject());
-            this.oldFilterConfig.setApp(this.filterConfig.getApp());
-            this.oldFilterConfig.setAppType(this.filterConfig.getAppType());
-            this.oldFilterConfig.setMonth(this.filterConfig.getMonth());
-            this.oldFilterConfig.setYear(this.filterConfig.getYear());
-            this.oldFilterConfig.setShowUnverified(this.filterConfig.isShowUnverified());
         }
     }
 
@@ -1706,6 +1682,20 @@ public final class PetitionListActivity extends WebViewParentActivity implements
         // Antes de iniciar el proceso, reiniciamos la bandera que senala los errores
         anyError = false;
         new VerifyRequestsTask(requests, CommManager.getInstance(), this).execute();
+    }
+
+    /**
+     * Manda a rechazar el listado de peticiones indicado.
+     * Llama a la operación de éxito o fallo del listener una vez por cada petición.
+     *
+     * @param requests Listado de peticiones de validación.
+     */
+    protected RejectRequestsTask rejectRequests(final String reason, final SignRequest... signRequests) {
+        // Antes de iniciar el proceso, reiniciamos la bandera que senala los errores
+        anyError = false;
+        final RejectRequestsTask rrt = new RejectRequestsTask(signRequests, CommManager.getInstance(), this, reason);
+        rrt.execute();
+        return rrt;
     }
 
     /**

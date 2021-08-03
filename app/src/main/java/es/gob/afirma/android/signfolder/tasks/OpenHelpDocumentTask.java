@@ -9,6 +9,7 @@ import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Environment;
+import android.util.Log;
 import android.widget.Toast;
 
 import androidx.core.content.FileProvider;
@@ -61,8 +62,9 @@ public final class OpenHelpDocumentTask extends AsyncTask<Void, Void, File> {
 		}
 
 		// Calculamos la ruta de guardado del documento de ayuda
+		//Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
 		File helpFile = new File(
-				Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+				this.activity.getFilesDir(),
 				helpFilename);
 
 		boolean exist = helpFile.exists();
@@ -71,7 +73,7 @@ public final class OpenHelpDocumentTask extends AsyncTask<Void, Void, File> {
 		try {
 			if (!exist) {
 
-				PfLog.i(SFConstants.LOG_TAG, "Descargamos el fichero de ayuda");
+				PfLog.i(SFConstants.LOG_TAG, "No se ha encontrado el fichero de ayuda. Se descargara");
 
 				CommManager comm = CommManager.getInstance();
 				InputStream docIs = comm.getRemoteDocumentIs(helpUrl);
@@ -88,11 +90,11 @@ public final class OpenHelpDocumentTask extends AsyncTask<Void, Void, File> {
 			}
 		}
 		catch (SecurityException e) {
-			PfLog.e(SFConstants.LOG_TAG, "No se pudo acceder al fichero o comprobar su existencia: " + helpFile.toString(), e);
+			PfLog.e(SFConstants.LOG_TAG, "No se pudo acceder al fichero o comprobar su existencia: " + helpFile, e);
 			helpFile = null;
 		}
 		catch (IOException e) {
-			PfLog.e(SFConstants.LOG_TAG, "No se pudo descargar el fichero: " + helpFile.toString(), e);
+			PfLog.e(SFConstants.LOG_TAG, "No se pudo descargar el fichero: " + helpFile, e);
 			helpFile = null;
 		}
 
@@ -112,74 +114,85 @@ public final class OpenHelpDocumentTask extends AsyncTask<Void, Void, File> {
 	}
 
 	private void viewPdf (final File file, final Activity activity) {
-		final String adobePackage = "com.adobe.reader"; //$NON-NLS-1$
-		final String gdrivePackage = "com.google.android.apps.viewer"; //$NON-NLS-1$
-		boolean isGdriveInstalled = false;
 
-		final Intent intent = new Intent(Intent.ACTION_VIEW);
-		intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-		/*final Uri fileUri = FileProvider.getUriForFile(
-				this.activity,
-				this.activity.getPackageName() + ".fileprovider",
-				file);*/
+		// Obtenemos la URI del PDF y concedemos permisos
 		final Uri fileUri = FileProvider.getUriForFile(
 				this.activity,
 				this.activity.getPackageName() + ".fileprovider",
 				file);
 		this.activity.grantUriPermission(this.activity.getPackageName(), fileUri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+		PfLog.i(SFConstants.LOG_TAG, "URI: " + fileUri);
+
+		// Abrimos el documento
+		final Intent intent = new Intent(Intent.ACTION_VIEW);
+		intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 		intent.setDataAndType(fileUri, PDF_MIMETYPE);
 
 		final PackageManager pm = activity.getPackageManager();
-		final List<ResolveInfo> list = pm.queryIntentActivities(intent, 0);
-		if (list.isEmpty()) {
-			PfLog.w(SFConstants.LOG_TAG, "No hay visor pdf instalado"); //$NON-NLS-1$
-			new AlertDialog.Builder(activity)
-					.setTitle(R.string.error)
-					.setMessage(R.string.no_pdf_viewer_msg)
-					.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-						@Override
-						public void onClick(final DialogInterface dialog, final int which) {
-							// Cerramos la ventana
-						}
-					})
-					.create().show();
-		}
-		else {
 
-			for (final ResolveInfo resolveInfo : list) {
-				if (resolveInfo.activityInfo.name.startsWith(adobePackage)) {
-					intent.setPackage(resolveInfo.activityInfo.packageName);
+		// Intentamos abrir directamente el fichero
+		if (intent.resolveActivity(pm) != null) {
+			activity.startActivity(intent);
+			return;
+		}
+		// Si no se pudo abrir directamente, se intentamos abrirla con alguna de las aplicaciones
+		// que encontremos instalada (Adobe Acrobat o el lector de Google)
+		else {
+			final List<ResolveInfo> list = pm.queryIntentActivities(intent, PackageManager.MATCH_ALL);
+			if (list.isEmpty()) {
+				PfLog.w(SFConstants.LOG_TAG, "No hay visor pdf instalado"); //$NON-NLS-1$
+				new AlertDialog.Builder(activity)
+						.setTitle(R.string.error)
+						.setMessage(R.string.no_pdf_viewer_msg)
+						.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+							@Override
+							public void onClick(final DialogInterface dialog, final int which) {
+								// Cerramos la ventana
+							}
+						})
+						.create().show();
+			} else {
+				final String adobePackage = "com.adobe.reader"; //$NON-NLS-1$
+				final String gdrivePackage = "com.google.android.apps.viewer"; //$NON-NLS-1$
+				boolean isGdriveInstalled = false;
+
+				for (final ResolveInfo resolveInfo : list) {
+					PfLog.w(SFConstants.LOG_TAG, "Aplicacion: " + resolveInfo.activityInfo.name);
+
+					if (resolveInfo.activityInfo.name.startsWith(adobePackage)) {
+						intent.setPackage(resolveInfo.activityInfo.packageName);
+						activity.startActivity(intent);
+						return;
+					} else if (resolveInfo.activityInfo.name.startsWith(gdrivePackage)) {
+						intent.setPackage(resolveInfo.activityInfo.packageName);
+						isGdriveInstalled = true;
+					}
+				}
+
+				if (isGdriveInstalled) {
 					activity.startActivity(intent);
 					return;
 				}
-				else if (resolveInfo.activityInfo.name.startsWith(gdrivePackage)) {
-					intent.setPackage(resolveInfo.activityInfo.packageName);
-					isGdriveInstalled = true;
-				}
-			}
 
-			if (isGdriveInstalled) {
-				activity.startActivity(intent);
-				return;
+				PfLog.i(SFConstants.LOG_TAG, "Ni Adobe ni Gdrive instalado"); //$NON-NLS-1$
+				new AlertDialog.Builder(activity)
+						.setTitle(R.string.aviso)
+						.setMessage(R.string.no_adobe_reader_msg)
+						.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+							@Override
+							public void onClick(final DialogInterface dialog, final int which) {
+								activity.startActivity(intent);
+							}
+						})
+						.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+							@Override
+							public void onClick(final DialogInterface dialog, final int which) {
+								// Cerramos la ventana
+							}
+						})
+						.create().show();
 			}
-
-			PfLog.i(SFConstants.LOG_TAG, "Ni Adobe ni Gdrive instalado"); //$NON-NLS-1$
-			new AlertDialog.Builder(activity)
-					.setTitle(R.string.aviso)
-					.setMessage(R.string.no_adobe_reader_msg)
-					.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-						@Override
-						public void onClick(final DialogInterface dialog, final int which) {
-							activity.startActivity(intent);
-						}
-					})
-					.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-						@Override
-						public void onClick(final DialogInterface dialog, final int which) {
-							// Cerramos la ventana
-						}
-					})
-					.create().show();
 		}
 	}
 }

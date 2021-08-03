@@ -37,16 +37,11 @@ public class SaveFileTask extends AsyncTask<Void, Void, File> {
 	@Override
 	protected File doInBackground(final Void... arg0) {
 
-		if (!isExternalStorageWritable()) {
-            PfLog.e(SFConstants.LOG_TAG, "No se encuentra disponible el almacenamiento externo para guardar del fichero"); //$NON-NLS-1$
-		    return null;
-        }
-
         File outFile = null;
         int i = 0;
         do {
             outFile = new File(
-                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+					this.activity.getFilesDir(),
                     generateFileName(this.filename, i++)
             );
         } while (outFile.exists());
@@ -67,18 +62,6 @@ public class SaveFileTask extends AsyncTask<Void, Void, File> {
 		PfLog.i(SFConstants.LOG_TAG, "Fichero guardado con exito: " + outFile.exists());
 
 		return outFile;
-	}
-
-	/**
-	 * Comprueba si el almac&eacute;n externo esta disponible para lectura y escritura.
-	 * @return {@code true} si est&aacute; disponible, {@code false} en caso contrario.
-	 */
-	public static boolean isExternalStorageWritable() {
-		String state = Environment.getExternalStorageState();
-		if (Environment.MEDIA_MOUNTED.equals(state)) {
-			return true;
-		}
-		return false;
 	}
 
 	/**

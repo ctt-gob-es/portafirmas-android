@@ -24,7 +24,7 @@ import es.gob.afirma.android.signfolder.R;
 import es.gob.afirma.android.signfolder.SFConstants;
 import es.gob.afirma.android.util.PfLog;
 
-/** Actividad Android para la elecci&oacue;n de un fichero en el almacenamiento del dispositivo. */
+/** Actividad Android para la elección de un fichero en el almacenamiento del dispositivo. */
 public final class FileChooserActivity extends ListActivity {
 
 	private static final String SAVE_INSTANCE_KEY_CURRENT_DIR = "currentDir"; //$NON-NLS-1$
@@ -51,7 +51,7 @@ public final class FileChooserActivity extends ListActivity {
 		this.excludedDirs = getIntent().getExtras().getStringArray("es.gob.afirma.signfolder.excludedDirs"); //$NON-NLS-1$
 
 		// Establecemos el titulo de la ventana
-		final String title = getIntent().getExtras().getString("es.gob.afirma.android.title"); //$NON-NLS-1$
+		final String title = getIntent().getExtras().getString("es.gob.afirma.signfolder.title"); //$NON-NLS-1$
 		if (title != null) {
 			setTitle(title);
 		}
@@ -80,11 +80,10 @@ public final class FileChooserActivity extends ListActivity {
 
 	private void fill(final File f) {
 
-		((TextView) findViewById(R.id.current_directory)).setText(getString(R.string.file_chooser_directorio_actual) + " " + f.getName());  //$NON-NLS-1$
+		((TextView) findViewById(R.id.current_directory)).setText(getString(R.string.file_chooser_directorio_actual, f.getName()));  //$NON-NLS-1$
 
 		final List<FileOption> dir = new ArrayList<>();
 		final List<FileOption> fls = new ArrayList<>();
-
 		File[] childsFiles = f.listFiles();
 		if (childsFiles != null) {
 			for (final File ff : childsFiles) {

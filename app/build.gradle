@@ -9,8 +9,8 @@ android {
         applicationId "es.gob.afirma.android.signfolder"
         minSdkVersion 16
         targetSdkVersion 30
-        versionCode 17
-        versionName "1.6"
+        versionCode 18
+        versionName "1.6.1"
     }
 
     buildTypes {
@@ -24,9 +24,11 @@ android {
         sourceCompatibility 1.8
     }
     sourceSets {
-        main { assets.srcDirs = ['src/main/assets', 'src/main/res/drawable/ic_launcher2'] }
+        main { assets.srcDirs = ['src/main/assets'] }
     }
 }
+
+
 
 repositories {
     mavenLocal()
