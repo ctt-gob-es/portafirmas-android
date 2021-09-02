@@ -12,6 +12,7 @@ package es.gob.afirma.android.network;
 
 import android.util.Log;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.net.CookieHandler;
@@ -35,6 +36,7 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
 import es.gob.afirma.android.signfolder.SFConstants;
+import es.gob.afirma.android.util.AOUtil;
 import es.gob.afirma.android.util.PfLog;
 
 /** Implementacion de una clase para la lectura del contenido de una URL. */
@@ -88,29 +90,38 @@ public final class AndroidUrlHttpManager {
 		final String request = st.nextToken();
 		final String urlParameters = st.nextToken();
 
+		ConnectionResponse response;
+
 		final URL uri = new URL(request);
 		final HttpURLConnection conn = (HttpURLConnection) uri.openConnection(Proxy.NO_PROXY);
-		conn.setConnectTimeout(timeout);
-		conn.setReadTimeout(timeout);
-		conn.setRequestMethod("POST"); //$NON-NLS-1$
-
-		conn.setDoOutput(true);
-
-		final OutputStreamWriter writer = new OutputStreamWriter(conn.getOutputStream());
-
-		writer.write(urlParameters);
-		writer.flush();
-
-		// Componemos la respuesta
-		final ConnectionResponse response = new ConnectionResponse();
 		try {
-			response.setDataIs(conn.getInputStream());
+			conn.setConnectTimeout(timeout);
+			conn.setReadTimeout(timeout);
+			conn.setRequestMethod("POST"); //$NON-NLS-1$
+
+			conn.setDoOutput(true);
+
+			final OutputStreamWriter writer = new OutputStreamWriter(conn.getOutputStream());
+
+			writer.write(urlParameters);
+			writer.flush();
+
+			// Leemos los datos
+			byte[] data = AOUtil.getDataFromInputStream(conn.getInputStream());
+
+			// Componemos la respuesta
+			response = new ConnectionResponse();
+			response.setDataIs(new ByteArrayInputStream(data));
 			response.setCookieId(extractCookieId(conn));
 		}
 		catch (SocketTimeoutException e) {
 			Log.e(SFConstants.LOG_TAG, "Timeout", e);
 			throw e;
 		}
+		finally {
+			conn.disconnect();
+		}
+
 		return response;
 	}
 
@@ -159,9 +170,12 @@ public final class AndroidUrlHttpManager {
         conn.setReadTimeout(timeout);
         conn.setRequestMethod("GET"); //$NON-NLS-1$
 
+		// Leemos los datos
+		byte[] data = AOUtil.getDataFromInputStream(conn.getInputStream());
+
         // Componemos la respuesta
         final ConnectionResponse response = new ConnectionResponse();
-        response.setDataIs(conn.getInputStream());
+        response.setDataIs(new ByteArrayInputStream(data));
         response.setCookieId(extractCookieId(conn));
 
         return response;

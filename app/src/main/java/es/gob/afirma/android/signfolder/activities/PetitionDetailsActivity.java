@@ -553,6 +553,7 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
                             Toast.LENGTH_LONG
                     ).show();
                 }
+                break;
             }
             case PERMISSION_TO_OPEN_HELP: {
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -565,6 +566,7 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
                             Toast.LENGTH_LONG
                     ).show();
                 }
+                break;
             }
         }
     }

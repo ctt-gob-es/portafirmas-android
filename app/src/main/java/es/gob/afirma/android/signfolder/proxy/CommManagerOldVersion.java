@@ -238,8 +238,10 @@ public class CommManagerOldVersion {
 	 */
 	private Document getRemoteDocument(final String url) throws SAXException, IOException {
 
-		PfLog.i(SFConstants.LOG_TAG, "PETICION AL PROXY ANTIGUO");
-		PfLog.i(SFConstants.LOG_TAG, url);
+		if (!PfLog.isProduction) {
+			PfLog.i(SFConstants.LOG_TAG, "PETICION AL PROXY ANTIGUO");
+			PfLog.i(SFConstants.LOG_TAG, url);
+		}
 
 		if (url.startsWith(HTTPS)) {
 			try {

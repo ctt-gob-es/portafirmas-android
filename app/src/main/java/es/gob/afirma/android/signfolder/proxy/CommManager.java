@@ -595,13 +595,19 @@ public final class CommManager extends CommManagerOldVersion {
      */
     private Document getRemoteDocument(final String url) throws SAXException, IOException {
 
-        final InputStream is = getRemoteDocumentIs(url);
-        byte[] data = AOUtil.getDataFromInputStream(is);
+        InputStream is = getRemoteDocumentIs(url);
+
+        // En entornos de depuracion hacemos una precarga de los datos para mostrarlos en el log
+        if (!PfLog.isProduction) {
+            byte[] data = AOUtil.getDataFromInputStream(is);
+            is.close();
+            is = new ByteArrayInputStream(data);
+            PfLog.w(SFConstants.LOG_TAG, "XML recibido: " + new String(data));
+        }
+        final Document doc = this.db.parse(is);
         is.close();
 
-        PfLog.w(SFConstants.LOG_TAG, "XML recibido: " + new String(data));
-
-        return this.db.parse(new ByteArrayInputStream(data));
+        return doc;
     }
 
     /**
@@ -625,8 +631,10 @@ public final class CommManager extends CommManagerOldVersion {
      */
     private ConnectionResponse getRemoteData(final String url) throws IOException {
 
-        PfLog.i(SFConstants.LOG_TAG, "PETICION AL PROXY NUEVO");
-        PfLog.i(SFConstants.LOG_TAG, url);
+        if (!PfLog.isProduction) {
+            PfLog.i(SFConstants.LOG_TAG, "PETICION AL PROXY NUEVO");
+            PfLog.i(SFConstants.LOG_TAG, url);
+        }
 
         if (url.startsWith(HTTPS)) {
             try {

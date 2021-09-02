@@ -429,8 +429,8 @@ public final class PetitionListActivity extends WebViewParentActivity implements
 
         // Comprobamos si el token de notificaciones que tiene dado de alta ese usuario
         // es igual al actual. En caso contrario, se tendra que actualizar
-        boolean tokenChanged = !currentToken.equals(registeredToken);
-        //boolean tokenChanged = !currentToken.startsWith(registeredToken);
+        //boolean tokenChanged = !currentToken.equals(registeredToken);
+        boolean tokenChanged = !currentToken.startsWith(registeredToken);
 
 
         Log.d(SFConstants.LOG_TAG, "El token ha cambiado: " + tokenChanged);
@@ -475,8 +475,9 @@ public final class PetitionListActivity extends WebViewParentActivity implements
             return null;
         }
         md.update(AppPreferences.getInstance().getSelectedProxyUrl().getBytes());
-        md.update(this.dni.getBytes());
-
+        if (this.dni != null) {
+            md.update(this.dni.getBytes());
+        }
         return Base64.encodeToString(md.digest(), Base64.NO_PADDING).trim();
     }
 
@@ -1352,7 +1353,9 @@ public final class PetitionListActivity extends WebViewParentActivity implements
         final Intent changeActivityIntent = new Intent(this, PetitionDetailsActivity.class);
         changeActivityIntent.putExtra(PetitionDetailsActivity.EXTRA_RESOURCE_REQUEST_STATE, getCurrentState());
         changeActivityIntent.putExtra(PetitionDetailsActivity.EXTRA_RESOURCE_REQUEST_ID, requestId);
-        changeActivityIntent.putExtra(PetitionDetailsActivity.EXTRA_RESOURCE_DNI, this.dni);
+        if (this.dni != null) {
+            changeActivityIntent.putExtra(PetitionDetailsActivity.EXTRA_RESOURCE_DNI, this.dni);
+        }
         changeActivityIntent.putExtra(EXTRA_RESOURCE_CERT_B64, this.certB64);
         changeActivityIntent.putExtra(PetitionDetailsActivity.EXTRA_RESOURCE_CERT_ALIAS, this.certAlias);
         changeActivityIntent.putExtra(ConfigurationConstants.EXTRA_RESOURCE_ROLE_SELECTED, this.roleSelectedInfo);

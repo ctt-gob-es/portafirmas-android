@@ -63,7 +63,7 @@ public class RegistrationIntentService extends IntentService
      * Se solicita al Portafirmas el alta en el sistema de notificaciones.
      * @param token Nuevo token.
      */
-    public void sendRegistrationToServer(String token) {
+    private void sendRegistrationToServer(String token) {
         final String androidId = "" + android.provider.Settings.Secure.getString(getContentResolver(), android.provider.Settings.Secure.ANDROID_ID);
         PfLog.i(SFConstants.LOG_TAG, "Token usado para las notificaciones: " + token);
         new RegisterSIMServiceTask().execute(this, token, androidId, this.dni != null ? this.dni : this.certB64);
