@@ -2,7 +2,7 @@
 <resources>
 
     <string name="app_name">Port@firmas</string>
-    <string name="app_title">Port@firmas v1.6.2 Beta</string>
+    <string name="app_title">Port@firmas v1.6.2</string>
     <string name="close">Cerrar</string>
     <string name="error">Error</string>
     <string name="server_select">Servidores Portafirmas</string>
@@ -307,7 +307,7 @@
     <string name="megabytes">MB</string>
     <string name="error_title_openning_file">Error al abrir el fichero</string>
     <string name="error_loading_selected_file">Ocurri\u00F3 un error cargando el fichero \"%s\"</string>
-    <string name="error_file_not_support">No se ha encontrado una aplicación que soporte el tipo de fichero descargado.</string>
+    <string name="error_file_not_support">No se ha encontrado una aplicaci\u00F3n que soporte el tipo de fichero descargado. Se copiar\u00E1 al directorio de descargas.</string>
     <string name="error_loading_app_configuration">No se pudo conectar con el servidor. Compruebe la URL del servicio de Portafirmas. </string>
     <string name="error_account_not_validated">El certificado de acceso seleccionado no es v\u00E1lido.</string>
 
