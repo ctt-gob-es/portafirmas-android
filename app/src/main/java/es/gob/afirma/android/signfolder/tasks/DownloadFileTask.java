@@ -137,7 +137,7 @@ public final class DownloadFileTask extends AsyncTask<Void, Void, DocumentData> 
 		}
 
 		new SaveFileTask(
-				documentData.getDataIs(), filename, this, this.activity
+				documentData.getDataIs(), filename, this.extDir, this, this.activity
 				).execute();
 	}
 

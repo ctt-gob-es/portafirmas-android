@@ -16,6 +16,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.security.KeyChainException;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -37,6 +38,8 @@ import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.security.KeyStore.PrivateKeyEntry;
 import java.security.KeyStoreException;
 import java.security.PrivateKey;
@@ -79,6 +82,7 @@ import es.gob.afirma.android.signfolder.tasks.LoadSelectedPrivateKeyTask;
 import es.gob.afirma.android.signfolder.tasks.LogoutRequestTask;
 import es.gob.afirma.android.signfolder.tasks.OpenHelpDocumentTask;
 import es.gob.afirma.android.signfolder.tasks.RejectRequestsTask;
+import es.gob.afirma.android.signfolder.tasks.SaveFileTask;
 import es.gob.afirma.android.signfolder.tasks.SignRequestTask;
 import es.gob.afirma.android.signfolder.tasks.VerifyRequestsTask;
 import es.gob.afirma.android.user.configuration.ConfigurationConstants;
@@ -483,42 +487,42 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
     }
 
     private void downloadDocument(final String docId, final String filename, final String mimetype, final int docType) {
-        final OnClickListener listener = new OnClickListener() {
-            @Override
-            public void onClick(final DialogInterface dlg, final int which) {
-                final DownloadFileTask dlfTask =
-                        new DownloadFileTask(docId, docType,
-                                filename,
-                                mimetype,
-                                true,
-                                CommManager.getInstance(), PetitionDetailsActivity.this, PetitionDetailsActivity.this);
-                dlfTask.execute();
-                showProgressDialogDownloadFile(getString(R.string.loading_doc), dlfTask);
-            }
-        };
 
-        String dialogTitle;
-        String dialogMessage;
+        // Para las firmas, avisaremos de que unicamente se van a descargar, mientras que el resto
+        // de documentos se descargaran directamente para luego abrirse
         if (docType == DownloadFileTask.DOCUMENT_TYPE_SIGN) {
-            dialogMessage = getString(R.string.dialog_msg_confirm_save_sign);
-            dialogTitle = getString(R.string.dialog_msg_confirm_save_sign_title);
+            final OnClickListener listener = new OnClickListener() {
+                @Override
+                public void onClick(final DialogInterface dlg, final int which) {
+                    download(docId, docType, filename, mimetype, true);
+                }
+            };
+            final MessageDialog confirmPreviewDialog = new MessageDialog();
+            confirmPreviewDialog.setMessage(getString(R.string.dialog_msg_confirm_save_sign));
+            confirmPreviewDialog.setTitle(getString(R.string.dialog_msg_confirm_save_sign_title));
+            confirmPreviewDialog.setListeners(listener, null);
+            confirmPreviewDialog.setContext(this);
+
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    confirmPreviewDialog.show(getSupportFragmentManager(), "ConfirmDialog"); //$NON-NLS-1$;
+                }
+            });
         } else {
-            dialogMessage = getString(R.string.dialog_msg_confirm_preview);
-            dialogTitle = getString(R.string.dialog_msg_confirm_preview_title);
+            download(docId, docType, filename, mimetype, false);
         }
+    }
 
-        final MessageDialog confirmPreviewDialog = new MessageDialog();
-        confirmPreviewDialog.setMessage(dialogMessage);
-        confirmPreviewDialog.setTitle(dialogTitle);
-        confirmPreviewDialog.setListeners(listener, null);
-        confirmPreviewDialog.setContext(this);
-
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                confirmPreviewDialog.show(getSupportFragmentManager(), "ConfirmDialog"); //$NON-NLS-1$;
-            }
-        });
+    void download(final String docId, final int docType, final String filename, final String mimetype, boolean publicDir) {
+        final DownloadFileTask dlfTask =
+                new DownloadFileTask(docId, docType,
+                        filename,
+                        mimetype,
+                        publicDir,
+                        CommManager.getInstance(), this, this);
+        dlfTask.execute();
+        showProgressDialogDownloadFile(getString(R.string.loading_doc), dlfTask);
     }
 
     private void requestStoragePerm() {
@@ -653,8 +657,18 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
             this.startActivity(intent);
         } catch (final ActivityNotFoundException e) {
 
-            PfLog.w(SFConstants.LOG_TAG, "No se pudo abrir el fichero guardado: " + e); //$NON-NLS-1$
-            e.printStackTrace();
+            PfLog.w(SFConstants.LOG_TAG, "No se pudo abrir el fichero guardado. Se copiara al directorio de Descargas.", e); //$NON-NLS-1$
+
+            // Copiamos el documento descargado al directorio de descargas (el fujo de datos se
+            // cierra dentro de la tarea de copia)
+            try {
+                FileInputStream docFis = new FileInputStream(documentFile);
+                SaveFileTask copyTask = new SaveFileTask(docFis, selectedDocItem.name, true, null, this);
+                copyTask.execute();
+            }
+            catch (Exception e2) {
+                PfLog.w(SFConstants.LOG_TAG, "No se pudo copiar el fichero descargado al directorio de externo", e2);
+            }
 
             final MessageDialog md = new MessageDialog();
             md.setMessage(getString(R.string.error_file_not_support));

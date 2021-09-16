@@ -18,18 +18,21 @@ public class SaveFileTask extends AsyncTask<Void, Void, File> {
 
 	private final InputStream dataIs;
 	private final String filename;
+	private final boolean extDir;
 	private final SaveFileListener listener;
 	private final Activity activity;
 
 	/** Crea una tarea para descarga de fichero en segundo plano.
 	 * @param dataIs Flujo de lectura de los datos del fichero.
 	 * @param filename Nombre del fichero a guardar.
+	 * @param extDir Indica si se deberia guardar en un directorio externo o interno de la aplicación.
 	 * @param listener Clase a la que notificar el sesultado de la tarea.
 	 * @param activity Actividad que invoca a la tarea.
 	 */
-	public SaveFileTask(final InputStream dataIs, final String filename, final SaveFileListener listener, final Activity activity) {
+	public SaveFileTask(final InputStream dataIs, final String filename, final boolean extDir, final SaveFileListener listener, final Activity activity) {
 		this.dataIs = dataIs;
 		this.filename = filename;
+		this.extDir = extDir;
 		this.listener = listener;
 		this.activity = activity;
 	}
@@ -37,13 +40,21 @@ public class SaveFileTask extends AsyncTask<Void, Void, File> {
 	@Override
 	protected File doInBackground(final Void... arg0) {
 
-        File outFile = null;
+        File outFile;
         int i = 0;
         do {
-            outFile = new File(
-					this.activity.getFilesDir(),
-                    generateFileName(this.filename, i++)
-            );
+        	if (this.extDir) {
+				outFile = new File(
+						Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+						generateFileName(this.filename, i++)
+				);
+			}
+        	else {
+				outFile = new File(
+						this.activity.getFilesDir(),
+						generateFileName(this.filename, i++)
+				);
+			}
         } while (outFile.exists());
 
         PfLog.i(SFConstants.LOG_TAG, "Se intenta guardar en disco el fichero: " + outFile.getAbsolutePath()); //$NON-NLS-1$
@@ -71,7 +82,7 @@ public class SaveFileTask extends AsyncTask<Void, Void, File> {
 	 * @throws IOException Cuando ocurre un error.
 	 */
 	private static void writeData(final InputStream is, final OutputStream os) throws IOException {
-		int n = -1;
+		int n;
 		final byte[] buffer = new byte[1024];
 		while ((n = is.read(buffer)) > 0) {
 			os.write(buffer, 0, n);
@@ -80,12 +91,12 @@ public class SaveFileTask extends AsyncTask<Void, Void, File> {
 
 	@Override
 	protected void onPostExecute(final File result) {
-
-		if (result == null) {
-			this.listener.saveFileError(this.filename);
-		}
-		else {
-			this.listener.saveFileSuccess(result);
+		if (this.listener != null) {
+			if (result == null) {
+				this.listener.saveFileError(this.filename);
+			} else {
+				this.listener.saveFileSuccess(result);
+			}
 		}
 	}
 

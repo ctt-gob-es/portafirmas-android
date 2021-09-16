@@ -14,6 +14,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.security.KeyChain;
 import android.security.KeyChainException;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -23,6 +24,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -256,7 +258,7 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
         if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
             intent.addCategory(Intent.CATEGORY_OPENABLE);
-            intent.setType("*/*"); //$NON-NLS-1$
+            intent.setTypeAndNormalize("application/x-pkcs12"); //$NON-NLS-1$
         }
         else {
             intent = new Intent(Intent.ACTION_GET_CONTENT);
