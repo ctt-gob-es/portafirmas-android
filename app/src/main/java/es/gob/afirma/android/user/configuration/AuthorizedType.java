@@ -6,40 +6,50 @@ import java.io.Serializable;
  * Enumerado que define los tipos de autorizaciones.
  */
 public enum AuthorizedType implements Serializable {
-    DELEGATE("Delegado"),
-    SUBSTITUTE("Sustituto");
+    DELEGATE("DELEGADO", "1"),
+    SUBSTITUTE("SUSTITUTO", "2");
 
     /**
      * Atributo que representa el valor del enumerado.
      */
     private String value;
 
+    private String id;
+
     /**
      * Constructor por defecto.
-     * @param value Nuevo valor del atributo.
+     * @param value Texto descriptivo del tipo.
+     * @param id Identificador del tipo.
      */
-    AuthorizedType(String value){
+    AuthorizedType(String value, String id) {
         this.value = value;
+        this.id = id;
+    }
+
+    public String getValue() {
+        return this.value;
+    }
+
+    public String getId() {
+        return this.id;
     }
 
     /**
-     * Método que transforma un string en un objeto del tipo AuthorizedType.
-     * @param value String a transformar.
+     * Obtiene el tipo de autorizaci&oacute;n a partir de su identificador.
+     * @param type Tipo de autorizaci&oacute;n.
      * @return un objeto de tipo AuthorizedType que representa el tipo pasado como parámetro o
      * nulo si no es posible parsear el valor.
      */
-    public static AuthorizedType getAuthorizedType(String value){
-        if(value == null){
+    public static AuthorizedType parse(String type) {
+        if (type == null) {
             return null;
         }
-        String val = value.toUpperCase();
-        switch (val){
-            case "Delegado":
-                return AuthorizedType.DELEGATE;
-            case "Sustituto":
-                return AuthorizedType.SUBSTITUTE;
-            default:
-                return null;
+
+        for (AuthorizedType authType : AuthorizedType.values()) {
+            if (authType.value.equals(type)) {
+                return authType;
+            }
         }
+        return null;
     }
 }

@@ -10,15 +10,22 @@ public enum ConfigurationRole {
     /**
      * Atributo que representa el valor del enumerado.
      */
-    public final String value;
+    public final String name;
 
     /**
-     * Constructor por defecto.
-     *
-     * @param value Valor del rol.
+     * Construye el rol con su nombre.
+     * @param name Nombre del rol.
      */
-    ConfigurationRole(String value) {
-        this.value = value;
+    ConfigurationRole(String name) {
+        this.name = name;
+    }
+
+    /**
+     * Obtiene el nombre del rol.
+     * @return Nombre del rol.
+     */
+    public String getName() {
+        return this.name;
     }
 
     /**
@@ -31,15 +38,12 @@ public enum ConfigurationRole {
         if (value == null) {
             return null;
         }
-        switch (value.toUpperCase()) {
-            case "AUTORIZADO":
-                return ConfigurationRole.AUTHORIZED;
-            case "VALIDADOR":
-                return ConfigurationRole.VERIFIER;
-            default:
-                return null;
-
+        for (ConfigurationRole role : values()) {
+            if (value.equalsIgnoreCase(role.name()) || value.equalsIgnoreCase(role.getName())) {
+                return role;
+            }
         }
+        return null;
     }
 }
 

@@ -9,6 +9,9 @@ import java.util.List;
  */
 public class UserConfig implements Serializable {
 
+    /** C&oacute;digo de versi&oacute;n del servicio proxy. */
+    private int proxyVersion = 0;
+
     /**
      * Lista de roles asociados al usuario logeado.
      */
@@ -59,6 +62,22 @@ public class UserConfig implements Serializable {
         this.userWithVerifiers = userWithVerifiers;
         this.pushActivated = pushActivated;
         this.userFilers = userFilers;
+    }
+
+    /**
+     * Establece el c&oacute;digo de versi&oacute;n del servicio proxy.
+     * @param proxyVersion C&oacute;digo de versi&oacute;n del servicio proxy.
+     */
+    public void setProxyVersion(int proxyVersion) {
+        this.proxyVersion = proxyVersion;
+    }
+
+    /**
+     * Recupera el c&oacute;digo de versi&oacute;n del servicio proxy.
+     * @return C&oacute;digo de versi&oacute;n del servicio proxy.
+     */
+    public int getProxyVersion() {
+        return this.proxyVersion;
     }
 
     /**

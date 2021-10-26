@@ -21,6 +21,7 @@ import es.gob.afirma.android.signfolder.R;
 import es.gob.afirma.android.signfolder.adapter.AppAdapter;
 import es.gob.afirma.android.signfolder.proxy.RequestAppConfiguration;
 import es.gob.afirma.android.user.configuration.ConfigurationConstants;
+import es.gob.afirma.android.user.configuration.GenericUser;
 import es.gob.afirma.android.user.configuration.UserInfo;
 
 /**
@@ -28,10 +29,8 @@ import es.gob.afirma.android.user.configuration.UserInfo;
  */
 public class CreateNewVerifierActivity extends Activity {
 
-    /**
-     * Atributo que representa el usuario seleccionado para la creación del rol.
-     */
-    private UserInfo user;
+    /** Resultado de error por no haber indicado el usuario al que se le desea la autorización. */
+    public static final int RESULT_NO_USER = 1;
 
     /**
      * Atributo que representa la lista de aplicaciones.
@@ -57,15 +56,15 @@ public class CreateNewVerifierActivity extends Activity {
         Intent intent = getIntent();
 
         // Recuperamos la información del usuario seleccionado.
-        String[] userParams = intent.getStringArrayExtra(ConfigurationConstants.EXTRA_RESOURCE_USER_INFO);
-        if (userParams == null || userParams.length != 4) {
-            throw new IllegalArgumentException("No ha sido posible recuperar el usuario seleccionado previamente.");
+        Bundle userBundle = intent.getBundleExtra(ConfigurationConstants.EXTRA_RESOURCE_USER_INFO);
+        GenericUser user = GenericUser.fromBundle(userBundle);
+
+        // Si no se ha proporcionado el usuario la que dar de alta, se cancela la operacion
+        if (user == null) {
+            setResult(RESULT_NO_USER);
+            finish();
+            return;
         }
-        user = new UserInfo();
-        user.setID(userParams[0]);
-        user.setName(userParams[1]);
-        user.setSurname(userParams[2]);
-        user.setSecondSurname(userParams[3]);
 
         // Recuperamos la lista de aplicaciones.
         if (intent.getStringArrayListExtra(PetitionListActivity.EXTRA_RESOURCE_APP_IDS) != null) {
@@ -85,13 +84,8 @@ public class CreateNewVerifierActivity extends Activity {
         setContentView(R.layout.activity_create_new_verifier);
 
         // Mostramos el usuario seleccionado.
-        String userRepresentation = CreateNewAuthorizedActivity.buildUserRepresentation(user);
-        ((TextView) findViewById(R.id.nameFieldValueId)).setText(userRepresentation);
-        if (user.getID() != null) {
-            ((TextView) findViewById(R.id.identifierFieldValueId)).setText(user.getID());
-        } else {
-            ((TextView) findViewById(R.id.identifierFieldValueId)).setText(R.string.empty_field_value);
-        }
+        String name = user.getName() != null ? user.getName() : "-";
+        ((TextView) findViewById(R.id.nameFieldValueId)).setText(name);
 
         // Configuramos el comportamiento de los botones de la actividad.
         setupButtons();

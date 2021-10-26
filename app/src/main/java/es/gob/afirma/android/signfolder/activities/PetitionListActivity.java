@@ -62,6 +62,7 @@ import es.gob.afirma.android.signfolder.ErrorManager;
 import es.gob.afirma.android.signfolder.R;
 import es.gob.afirma.android.signfolder.RequestSigner;
 import es.gob.afirma.android.signfolder.SFConstants;
+import es.gob.afirma.android.signfolder.SignfolderApp;
 import es.gob.afirma.android.signfolder.listeners.DialogFragmentListener;
 import es.gob.afirma.android.signfolder.listeners.OperationRequestListener;
 import es.gob.afirma.android.signfolder.proxy.CommManager;
@@ -352,8 +353,6 @@ public final class PetitionListActivity extends WebViewParentActivity implements
         }
         String userId = this.dni != null ? this.dni : "";
         this.filterConfig.setUserId(userId);
-        String userRole = this.roleSelected != null ? this.roleSelected.value : "";
-        this.filterConfig.setUserRole(userRole);
         String ownerId = this.roleSelectedInfo != null ? this.roleSelectedInfo.getOwnerDni() : "";
         this.filterConfig.setOwnerId(ownerId);
     }
@@ -649,10 +648,10 @@ public final class PetitionListActivity extends WebViewParentActivity implements
                 countSigned++;
             }
         }
-        final TextView tvMsg = view.findViewById(R.id.tvMsg);
 
         // Peticiones de firma
         if (countSigned > 0) {
+            final TextView tvMsg = view.findViewById(R.id.tvNumSigns);
             tvMsg.setVisibility(View.VISIBLE);
             if (requests.length - countApproved == 1) {
                 tvMsg.setText(R.string.dialog_msg_sign_petition_1);
@@ -662,6 +661,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
         }
         // Peticiones de visto bueno
         if (countApproved > 0) {
+            final TextView tvMsg = view.findViewById(R.id.tvNumVB);
             tvMsg.setVisibility(View.VISIBLE);
             if (countApproved == 1) {
                 tvMsg.setText(R.string.dialog_msg_approve_petition_1);
@@ -672,6 +672,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
 
         // Peticiones de validación
         if (countVerified > 0) {
+            final TextView tvMsg = view.findViewById(R.id.tvNumValidations);
             tvMsg.setVisibility(View.VISIBLE);
             if (countVerified == 1) {
                 tvMsg.setText(R.string.dialog_msg_verify_petition_1);
@@ -767,19 +768,25 @@ public final class PetitionListActivity extends WebViewParentActivity implements
             }
         }
 
-        // Si el rol con el que se ha accedido a la plataforma no es el de firmante,
-        // se deshabilita la opción de acceder a la configuración de roles.
-//        if (this.roleSelected != null && menu.findItem(R.id.setting) != null) {
-//            menu.findItem(R.id.setting).setEnabled(false);
-//            menu.findItem(R.id.setting).setVisible(false);
-//        }
+        // Si se utiliza el viejo proxy o si el actual tiene una version inferior a la 25, el
+        // servicio proxy no permite la gestion de autorizaciones y validadores
+        if (CommManager.getInstance().isOldProxy() || this.userConfig.getProxyVersion() < SignfolderApp.PROXY_VERSION_25) {
+            menu.findItem(R.id.setting).setEnabled(false);
+            menu.findItem(R.id.setting).setVisible(false);
+        }
+
+        // Si el rol es distinto del de firmante, tampoco permitiremos el acceso a la pantalla
+        // de configuracion
+        if (this.roleSelected != null && menu.findItem(R.id.setting) != null) {
+            menu.findItem(R.id.setting).setEnabled(false);
+            menu.findItem(R.id.setting).setVisible(false);
+        }
 
         // Si solo existe el rol de firmante, no mostramos la opción de cambiar de rol.
         if (this.userConfig.getRoles().size() < 1) {
             menu.findItem(R.id.changeRole).setEnabled(false);
             menu.findItem(R.id.changeRole).setVisible(false);
         }
-
 
         // Si no hemos podido recuperar nuestro token de notificaciones,
         // no podemos dar la opcion de activarlas/desactivarlas
@@ -897,18 +904,13 @@ public final class PetitionListActivity extends WebViewParentActivity implements
             }
         }
         // Configuración de usuario
-//        else if (item.getItemId() == R.id.setting) {
-//            Intent intent = new Intent(this, UserConfigurationActivity.class);
-//            intent.putExtra(ConfigurationConstants.EXTRA_RESOURCE_ROLE_SELECTED, roleSelected);
-//            intent.putStringArrayListExtra(EXTRA_RESOURCE_APP_IDS, new ArrayList<>(appIds));
-//            intent.putStringArrayListExtra(EXTRA_RESOURCE_APP_NAMES, new ArrayList<>(appNames));
-//            intent.putExtra(ConfigurationConstants.EXTRA_RESOURCE_USER_CONFIG, this.userConfig);
-//            intent.putExtra(SIGN_REQUEST_STATE_KEY, currentState);
-//            intent.putExtra(EXTRA_RESOURCE_DNI, dni);
-//            intent.putExtra(EXTRA_RESOURCE_CERT_B64, certB64);
-//            intent.putExtra(EXTRA_RESOURCE_CERT_ALIAS, certAlias);
-//            startActivityForResult(intent, ConfigurationConstants.ACTIVITY_REQUEST_CODE_ROLE_VIEW);
-//        }
+        else if (item.getItemId() == R.id.setting) {
+            Intent intent = new Intent(this, UserConfigurationActivity.class);
+            intent.putExtra(ConfigurationConstants.EXTRA_RESOURCE_ROLE_SELECTED, roleSelected);
+            intent.putExtra(ConfigurationConstants.EXTRA_RESOURCE_USER_CONFIG, this.userConfig);
+            intent.putExtra(SIGN_REQUEST_STATE_KEY, currentState);
+            startActivityForResult(intent, UserConfigurationActivity.REQUEST_CODE);
+        }
         // Cambiar de rol.
         else if (item.getItemId() == R.id.changeRole) {
             Intent intent = new Intent(this, LoginWithRoleActivity.class);
@@ -1410,7 +1412,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
                 // TODO: Diferenciar segun tipo de error
                 showToastMessage(getString(R.string.toast_msg_fire_comunication_ko));
             }
-        } else if (requestCode == ConfigurationConstants.ACTIVITY_REQUEST_CODE_ROLE_VIEW) {
+        } else if (requestCode == UserConfigurationActivity.REQUEST_CODE) {
             if (resultCode == ConfigurationConstants.ACTIVITY_RESULT_CODE_ACCESS_DENEGATED) {
                 Toast toast = Toast.makeText(this, R.string.toast_error_access_denegated, Toast.LENGTH_LONG);
                 toast.show();

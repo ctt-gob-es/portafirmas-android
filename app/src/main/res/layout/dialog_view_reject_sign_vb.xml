@@ -18,13 +18,13 @@
         android:id="@+id/tvQuestionView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/tvMsg"
+        android:layout_below="@+id/tvNumValidations"
         android:text="@string/dialog_msg_confirm_question_sign_approve"
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:textColor="@color/black" />
 
     <TextView
-        android:id="@+id/tvMsg"
+        android:id="@+id/tvNumSigns"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@+id/tvDescriptionView"
@@ -34,7 +34,33 @@
         android:drawablePadding="10dp"
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:textColor="@color/black"
-        android:visibility="invisible" />
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/tvNumVB"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/tvNumSigns"
+        android:layout_marginTop="10dp"
+        android:drawableStart="@drawable/icon_vb"
+        android:drawableLeft="@drawable/icon_vb"
+        android:drawablePadding="10dp"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textColor="@color/black"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/tvNumValidations"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/tvNumVB"
+        android:layout_marginTop="10dp"
+        android:drawableStart="@drawable/icon_vb"
+        android:drawableLeft="@drawable/icon_vb"
+        android:drawablePadding="10dp"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textColor="@color/black"
+        android:visibility="gone" />
 
 
 </RelativeLayout>

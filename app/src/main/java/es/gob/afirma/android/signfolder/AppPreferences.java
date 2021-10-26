@@ -1,6 +1,5 @@
 package es.gob.afirma.android.signfolder;
 
-import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
@@ -76,7 +75,7 @@ public final class AppPreferences {
 
 	private static SharedPreferences sharedPref;
 
-	private AppPreferences(){ }
+	private AppPreferences() { }
 
 	public static AppPreferences getInstance(){
 		if (mInstance == null) {
@@ -85,25 +84,24 @@ public final class AppPreferences {
 		return mInstance;
 	}
 
-	/** Inicializa las preferencias a partir de su fichero de propiedades.
-	 * @param activity Actividad padre. */
-	public void init(final Context activity) {
-		if (config ==  null) {
+	private static SharedPreferences getSharedPreference() {
+		if (sharedPref == null) {
+			sharedPref = PreferenceManager.getDefaultSharedPreferences(SignfolderApp.getAppContext());
+		}
+		return sharedPref;
+	}
+
+	private static Properties getConfig () {
+		if (config == null) {
 			config = new Properties();
 			try {
-				config.load(activity.getAssets().open(CONFIG_PROPERTIES));
+				config.load(SignfolderApp.getAppContext().getAssets().open(CONFIG_PROPERTIES));
 			} catch (final Exception e) {
 				// Esto no deberia ocurrir nunca
 				throw new RuntimeException("No se encuentra el fichero de configuracion " + CONFIG_PROPERTIES, e); //$NON-NLS-1$
 			}
 		}
-		if (sharedPref == null) {
-			sharedPref = PreferenceManager.getDefaultSharedPreferences(activity);
-		}
-	}
-
-	public boolean isInitialized() {
-		return config != null && sharedPref != null;
+		return config;
 	}
 
 	/**
@@ -132,22 +130,14 @@ public final class AppPreferences {
 	}
 
 	/**
-	 * Recupera el ultimo certificado con el que se accedio.
-	 * @return Certificado del usuario.
-	 */
-	public String getLastCertificate() {
-		return getPreference(LAST_CERT, "");
-	}
-
-	/**
 	 * Recupera el tiempo de TimeOut configurado para las conexiones de red.
 	 * @return Milisegundos de espera.
 	 */
 	public int getConnectionReadTimeout() {
 
-		if (config.containsKey(KEY_CONNECTION_READ_TIMEOUT)) {
+		if (getConfig().containsKey(KEY_CONNECTION_READ_TIMEOUT)) {
 			try {
-				return Integer.parseInt(config.getProperty(KEY_CONNECTION_READ_TIMEOUT));
+				return Integer.parseInt(getConfig().getProperty(KEY_CONNECTION_READ_TIMEOUT));
 			}
 			catch (final NumberFormatException e) {
 				PfLog.w(SFConstants.LOG_TAG,
@@ -160,57 +150,57 @@ public final class AppPreferences {
 	/** Recupera el listado de formatos soportados.
 	 * @return Listado de formatos soportados. */
 	public String[] getSupportedFormats() {
-		return config.getProperty(KEY_FORMATS_SUPPORTED).split(CONFIG_SEPARATOR);
+		return getConfig().getProperty(KEY_FORMATS_SUPPORTED).split(CONFIG_SEPARATOR);
 	}
 
 	/** Recupera la URL del documento de ayuda de la aplicaci&oacute;n.
 	 * @return URL del documento. */
 	public String getHelpUrl() {
-		return config.getProperty(KEY_HELP_URL);
+		return getConfig().getProperty(KEY_HELP_URL);
 	}
 
 	private String getPreference(final String key) {
-		return sharedPref.getString(key.trim(), ""); //$NON-NLS-1$
+		return getPreference(key, ""); //$NON-NLS-1$
 	}
 
 	public String getPreference(final String key, final String defaultValue) {
-		return sharedPref.getString(key.trim(), defaultValue);
+		return getSharedPreference().getString(key.trim(), defaultValue);
 	}
 
 	public void setPreference(final String key, final String value) {
-		final SharedPreferences.Editor editor = sharedPref.edit();
+		final SharedPreferences.Editor editor = getSharedPreference().edit();
 		editor.putString(key.trim(), value);
 		editor.apply();
 	}
 
 	public void setPreference(final String key, final Set<String> value) {
-		final SharedPreferences.Editor editor = sharedPref.edit();
+		final SharedPreferences.Editor editor = getSharedPreference().edit();
 		editor.putStringSet(key.trim(), value);
 		editor.apply();
 	}
 
 	public int getPreferenceInt(final String key, final int defaultValue) {
-		return sharedPref.getInt(key.trim(), defaultValue);
+		return getSharedPreference().getInt(key.trim(), defaultValue);
 	}
 
 	public void setPreferenceInt(final String key, final int value) {
-		final SharedPreferences.Editor editor = sharedPref.edit();
+		final SharedPreferences.Editor editor = getSharedPreference().edit();
 		editor.putInt(key.trim(), value);
 		editor.apply();
 	}
 
 	public boolean getPreferenceBool(final String key, final boolean defaultValue) {
-		return sharedPref.getBoolean(key.trim(), defaultValue);
+		return getSharedPreference().getBoolean(key.trim(), defaultValue);
 	}
 
 	public void setPreferenceBool(final String key, final boolean value) {
-		final SharedPreferences.Editor editor = sharedPref.edit();
+		final SharedPreferences.Editor editor = getSharedPreference().edit();
 		editor.putBoolean(key.trim(), value);
 		editor.apply();
 	}
 
 	private void removePreference(final String key) {
-		final SharedPreferences.Editor editor = sharedPref.edit();
+		final SharedPreferences.Editor editor = getSharedPreference().edit();
 		editor.remove(key.trim());
 		editor.apply();
 	}
@@ -268,7 +258,7 @@ public final class AppPreferences {
 	@NonNull
 	public List<String> getServersList() {
 		ArrayList<String> servers = new ArrayList<>();
-		Map<String, ?> allPrefs = sharedPref.getAll();
+		Map<String, ?> allPrefs = getSharedPreference().getAll();
 	    Set<String> set = allPrefs.keySet();
 	    for(String s : set){
 	    	if (s.startsWith(PREFERENCES_KEY_PREFIX_SERVER)) {
@@ -279,9 +269,10 @@ public final class AppPreferences {
 	}
 
 	public void addTrustedCertificate(X509Certificate cert) {
-		Set<String> trustedCerts = sharedPref.getStringSet(PREFERENCES_KEY_TRUSTED_CERTS, null);
-		if (trustedCerts == null) {
-			trustedCerts = new HashSet<>();
+		Set<String> trustedCertsSaved = getSharedPreference().getStringSet(PREFERENCES_KEY_TRUSTED_CERTS, null);
+		Set<String> trustedCerts = new HashSet<>();
+		if (trustedCertsSaved != null) {
+			trustedCerts.addAll(trustedCertsSaved);
 		}
 		try {
 			MessageDigest md = MessageDigest.getInstance("SHA-256");
@@ -306,7 +297,7 @@ public final class AppPreferences {
 			return false;
 		}
 
-		Set<String> trustedCerts = sharedPref.getStringSet(PREFERENCES_KEY_TRUSTED_CERTS, null);
+		Set<String> trustedCerts = getSharedPreference().getStringSet(PREFERENCES_KEY_TRUSTED_CERTS, null);
 		return trustedCerts != null && trustedCerts.contains(certKey);
 	}
 

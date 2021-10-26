@@ -1,6 +1,7 @@
 package es.gob.afirma.android.signfolder.tasks;
 
 import android.app.Activity;
+import android.content.Context;
 import android.os.AsyncTask;
 
 import java.io.File;
@@ -25,7 +26,7 @@ public final class DownloadFileTask extends AsyncTask<Void, Void, DocumentData> 
 	private final String mimetype;
 	private final CommManager commManager;
 	private final DownloadDocumentListener listener;
-	private final Activity activity;
+	private final Context context;
 
 	/** Documento de datos. */
 	public static final int DOCUMENT_TYPE_DATA = 1;
@@ -66,9 +67,11 @@ public final class DownloadFileTask extends AsyncTask<Void, Void, DocumentData> 
 	 * @param extDir Descargar en directorio de descargas externo ({@code true}) o en el directorio de datos interno ({@code false}).
 	 * @param commManager Manejador de los servicios de comunicaci&oacute;n con el portafirmas.
 	 * @param listener Listener que procesa las notificaciones con el resultado de la operaci&oacute;n.
-	 * @param activity Actividad sobre la que mostrar las notificaciones.
+	 * @param context Contexto sobre el que mostrar las notificaciones.
 	 */
-	public DownloadFileTask(final String documentId, final int type, final String proposedName, final String mimetype, final boolean extDir, final CommManager commManager, final DownloadDocumentListener listener, final Activity activity) {
+	public DownloadFileTask(final String documentId, final int type, final String proposedName,
+							final String mimetype, final boolean extDir, final CommManager commManager,
+							final DownloadDocumentListener listener, final Context context) {
 		this.documentId = documentId;
 		this.type = type;
 		this.proposedName = proposedName;
@@ -76,11 +79,7 @@ public final class DownloadFileTask extends AsyncTask<Void, Void, DocumentData> 
 		this.extDir = extDir;
 		this.commManager = commManager;
 		this.listener = listener;
-		this.activity = activity;
-	}
-
-	Activity getActivity() {
-		return this.activity;
+		this.context = context;
 	}
 
 	@Override
@@ -137,7 +136,7 @@ public final class DownloadFileTask extends AsyncTask<Void, Void, DocumentData> 
 		}
 
 		new SaveFileTask(
-				documentData.getDataIs(), filename, this.extDir, this, this.activity
+				documentData.getDataIs(), filename, this.extDir, this, this.context
 				).execute();
 	}
 

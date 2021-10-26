@@ -520,7 +520,7 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
                         filename,
                         mimetype,
                         publicDir,
-                        CommManager.getInstance(), this, this);
+                        CommManager.getInstance(), this, getApplicationContext());
         dlfTask.execute();
         showProgressDialogDownloadFile(getString(R.string.loading_doc), dlfTask);
     }

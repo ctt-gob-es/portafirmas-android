@@ -3,9 +3,14 @@ package es.gob.afirma.android.signfolder.proxy;
 import java.io.IOException;
 import java.util.List;
 
+import es.gob.afirma.android.signfolder.CommonsUtils;
+import es.gob.afirma.android.signfolder.DateTimeFormatter;
+import es.gob.afirma.android.user.configuration.Authorization;
 import es.gob.afirma.android.user.configuration.AuthorizedUser;
 import es.gob.afirma.android.user.configuration.ConfigurationRole;
+import es.gob.afirma.android.user.configuration.GenericUser;
 import es.gob.afirma.android.user.configuration.UserInfo;
+import es.gob.afirma.android.user.configuration.Validator;
 import es.gob.afirma.android.util.Base64;
 import es.gob.afirma.android.util.PfLog;
 
@@ -408,104 +413,92 @@ final class XmlRequestsFactory {
     }
 
     /**
-     * Método que crea una petición para obtener la lista de autorizaciones o de validadores.
-     *
-     * @param role     Filtro a usar en la búsqueda. Puede tener 2 valores: "authorized" o "verifier".
-     * @param numPage  Número de la página requerída.
-     * @param pageSize Tamaño de cada página.
-     * @return una lista de usuarios que coinciden con el rol proporcionado.
+     * Método que crea una petición parabuscar usuarios validos para ser autorizados o validadores
+     * del usuario actual.
+     * @param role     Rol para el que se quiere al usuario (autorizado o validador).
+     * @param text     Texo de búsqueda del usuario..
+     * @return XML     XML para la solicitud de búsqueda de usuarios.
      */
-    public static String createRequestListRoles(final ConfigurationRole role, final int numPage, final int pageSize) {
+    public static String createFindUsersRequest(final ConfigurationRole role, final String text) {
+
+        String mode = ConfigurationRole.VERIFIER == role ? "validadores" : "autorizados";
+
         final StringBuffer sb = new StringBuffer(XML_HEADER);
-        sb.append("<rqrolels"); //$NON-NLS-1$
-        sb.append(" pg=\""); //$NON-NLS-1$
-        sb.append(numPage);
-        sb.append("\""); //$NON-NLS-1$
-        sb.append(" sz=\""); //$NON-NLS-1$
-        sb.append(pageSize);
-        sb.append("\">"); //$NON-NLS-1$
-        sb.append("<role>"); //$NON-NLS-1$
-        sb.append(role.value);
-        sb.append("</role>"); //$NON-NLS-1$
-        sb.append("</rqrolels>"); //$NON-NLS-1$
+        sb.append("<rqfinduser mode=\"").append(mode).append("\">")
+                .append(text)
+                .append("</rqfinduser>"); //$NON-NLS-1$
         return sb.toString();
     }
 
     /**
-     * Método que crea una nueva petición para obtener la lista de usuarios a partir de filtros.
-     *
+     * Crea el XML para la solicitud del una nueva petición para obtener la lista de usuarios a partir de filtros.
      * @param numPage  Número de la página solicitada.
      * @param pageSize Tamaño de cada página.
      * @param filter   Filtro del usuario.
      * @return la petición construida.
      */
-    public static String createRequestListUsers(final int numPage, final int pageSize, String filter) {
+    public static String createListUsersRequest() {
+        return "<rqt/>";
+    }
+
+    /**
+     * Crea una nueva petición para el guardado de una autorización.
+     * @param auth Autorización.
+     * @return Petición construida.
+     */
+    public static String createSaveAuthorizationRequest(final Authorization auth) {
         final StringBuffer sb = new StringBuffer(XML_HEADER);
-        sb.append("<rquserls"); //$NON-NLS-1$
-        sb.append(" pg=\""); //$NON-NLS-1$
-        sb.append(numPage);
-        sb.append("\""); //$NON-NLS-1$
-        sb.append(" sz=\""); //$NON-NLS-1$
-        sb.append(pageSize);
-        sb.append("\">"); //$NON-NLS-1$
-        sb.append("<filter>"); //$NON-NLS-1$
-        sb.append(filter);
-        sb.append("</filter>"); //$NON-NLS-1$
-        sb.append("</rquserls>"); //$NON-NLS-1$
+        sb.append("<rqsaveauth type=\"").append(auth.getType().getValue()).append("\">");
+        sb.append("<authuser dni=\"").append(auth.getAuthoricedUser().getDni()).append("\" id=\"")
+                .append(auth.getAuthoricedUser().getId()).append("\">")
+                .append(auth.getAuthoricedUser().getName()).append("</authuser>");
+        if (auth.getStartDate() != null) {
+            sb.append("<startdate>").append(DateTimeFormatter.getAppFormatterInstance().format(auth.getStartDate())).append("</startdate>");
+        }
+        if (auth.getRevDate() != null) {
+            sb.append("<expdate>").append(DateTimeFormatter.getAppFormatterInstance().format(auth.getRevDate())).append("</expdate>");
+        }
+        if (auth.getObservations() != null) {
+            sb.append("<observations>").append(CommonsUtils.protectTextWithCDATA(auth.getObservations())).append("</observations>");
+        }
+        sb.append("</rqsaveauth>");
         return sb.toString();
     }
 
     /**
-     * Método que create una nueva petición para la creación de un nuevo rol.
-     *
-     * @param user   Usuario seleccionado para proporcionarle el rol.
-     * @param role   Tipo de rol seleccionado.
-     * @param appIds Lista de identificadores de aplicación.
-     * @return la petición construida.
+     * Crea una nueva petición para la aceptación, cancelación o rechazo de una autorización.
+     * @param auth Autorización.
+     * @return Petición construida.
      */
-    public static String createRequestCreateRole(final UserInfo user, final ConfigurationRole role, final AuthorizedUser authUser, final List<String> appIds) {
+    public static String createChangeStateAuthorizationRequest(final Authorization auth) {
         final StringBuffer sb = new StringBuffer(XML_HEADER);
-        sb.append("<rqCrtRole>"); //$NON-NLS-1$
-        sb.append("<userId>"); //$NON-NLS-1$
-        sb.append(user.getID());
-        sb.append("</userId>"); //$NON-NLS-1$
-        sb.append("<role>"); //$NON-NLS-1$
-        sb.append(role.name());
-        sb.append("</role>"); //$NON-NLS-1$
-        if (appIds != null && !appIds.isEmpty()) {
-            sb.append("<apps>"); //$NON-NLS-1$
-            for (String appId : appIds) {
-                sb.append("<appId>"); //$NON-NLS-1$
-                sb.append(appId);
-                sb.append("</appId>"); //$NON-NLS-1$
-            }
-            sb.append("</apps>"); //$NON-NLS-1$
-        }
-        if (authUser != null) {
-            sb.append("<authParams>"); //$NON-NLS-1$
-            if (authUser.getInitDate() != null) {
-                sb.append("<initDate>"); //$NON-NLS-1$
-                sb.append(authUser.getInitDate().getTime());
-                sb.append("</initDate>"); //$NON-NLS-1$
-            }
-            if (authUser.getEndDate() != null) {
-                sb.append("<endDate>"); //$NON-NLS-1$
-                sb.append(authUser.getEndDate().getTime());
-                sb.append("</endDate>"); //$NON-NLS-1$
-            }
-            if (authUser.getType() != null) {
-                sb.append("<authType>"); //$NON-NLS-1$
-                sb.append(authUser.getType());
-                sb.append("</authType>"); //$NON-NLS-1$
-            }
-            if (authUser.getObservations() != null && !authUser.getObservations().isEmpty()) {
-                sb.append("<obs>"); //$NON-NLS-1$
-                sb.append(authUser.getObservations());
-                sb.append("</obs>"); //$NON-NLS-1$
-            }
-            sb.append("</authParams>"); //$NON-NLS-1$
-        }
-        sb.append("</rqCrtRole>"); //$NON-NLS-1$
+        sb.append("<rquserauth id=\"").append(auth.getId()).append("\"/>");
+        return sb.toString();
+    }
+
+    /**
+     * Da de alta un nuevo validador para le usuario.
+     * @param validator Nuevo usuario validador.
+     * @return Petición construida.
+     */
+    public static String createSaveValidatorRequest(final GenericUser validator) {
+        final StringBuffer sb = new StringBuffer(XML_HEADER);
+        sb.append("<rqsavevalid>");
+        sb.append("<validator dni=\"").append(validator.getDni()).append("\" id=\"")
+                .append(validator.getId()).append("\">")
+                .append(validator.getName()).append("</validator>");
+        sb.append("</rqsavevalid>");
+        return sb.toString();
+    }
+
+    /**
+     * Da de baja a un usuario validador.
+     * @param validator Validador al que dar de baja.
+     * @return Petición construida.
+     */
+    public static String createRemoveValidatorRequest(final Validator validator) {
+        final StringBuffer sb = new StringBuffer(XML_HEADER);
+        sb.append("<rqrevvalidator id=\"").append(validator.getUser().getId()).append("\"/>");
         return sb.toString();
     }
 

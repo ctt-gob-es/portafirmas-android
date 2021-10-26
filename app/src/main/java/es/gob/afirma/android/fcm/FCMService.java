@@ -66,9 +66,6 @@ public class FCMService extends FirebaseMessagingService {
         // Cargamos las preferencias de la aplicacion
         Context context = getApplicationContext();
         AppPreferences prefs = AppPreferences.getInstance();
-        if (!prefs.isInitialized()) {
-            prefs.init(context);
-        }
 
         // Solo se mostrara la notificacion si la emitio uno de los servidores configurados, asi
         // que se comprueba que haya servidores configurados y que se encuentre entre ellos
@@ -243,11 +240,6 @@ public class FCMService extends FirebaseMessagingService {
     public void onNewToken(@Nullable String token) {
 
         PfLog.i(SFConstants.LOG_TAG, "Generacion de nuevo token de notificaciones: " + token);
-
-        AppPreferences prefs = AppPreferences.getInstance();
-        if (!prefs.isInitialized()) {
-            prefs.init(getApplicationContext());
-        }
 
         if (token != null && !token.isEmpty()) {
             PfLog.i(SFConstants.LOG_TAG, "Token para notificaciones: " + token);

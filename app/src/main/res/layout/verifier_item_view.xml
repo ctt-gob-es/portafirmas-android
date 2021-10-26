@@ -18,24 +18,4 @@
         android:textAppearance="?android:attr/textAppearanceMedium"
         android:textIsSelectable="false" />
 
-    <TextView
-        android:id="@+id/idView"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/nameView"
-        android:layout_alignStart="@id/nameView"
-        android:layout_alignLeft="@id/nameView"
-        android:layout_alignEnd="@id/nameView"
-        android:layout_alignRight="@id/nameView"
-        android:singleLine="true"
-        android:text="@string/identifier"
-        android:textIsSelectable="false" />
-
-    <View
-        android:id="@+id/divider5"
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:layout_below="@+id/idView"
-        android:background="?android:attr/listDivider" />
-
 </RelativeLayout>

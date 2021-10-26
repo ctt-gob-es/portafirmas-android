@@ -105,7 +105,6 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
 
         // Inicializamos si es necesario el listado de servidores proxy por defecto
         AppPreferences prefs = AppPreferences.getInstance();
-        prefs.init(getApplicationContext());
         List<String> servers = prefs.getServersList();
         if (servers.size() == 0) {
             prefs.setDefaultServers();

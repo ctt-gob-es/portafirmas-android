@@ -43,7 +43,6 @@ public final class ConfigureFilterDialogBuilder {
     static final String FILTERS_SHOW_UNVERIFIED = "filters_show_unverified"; //$NON-NLS-1$
     static final String FILTERS_USER_WITH_VERIFIERS = "filters_user_with_verifiers"; //$NON-NLS-1$
     static final String FILTERS_USER_ID = "filters_user_ID"; //$NON-NLS-1$
-    static final String FILTERS_USER_ROLE = "filters_user_role"; //$NON-NLS-1$
     static final String FILTERS_OWNER_ID = "filter_owner_id"; //$NON-NLS-1$
     static final String FILTERS_APP_TYPE = "filters_app_type"; //$NON-NLS-1$
     static final String FILTERS_MONTH = "filters_month"; //$NON-NLS-1$
@@ -87,7 +86,6 @@ public final class ConfigureFilterDialogBuilder {
     private static final String KEY_FILTER_VERIFIER_DNI = "dniValidadorFilter="; //$NON-NLS-1$
     private static final String KEY_FILTER_SHOW_UNVERIFIED = "showUnverified="; //$NON-NLS-1$
     private static final String KEY_FILTER_USER_ID = "userId="; //$NON-NLS-1$
-    private static final String KEY_FILTER_USER_ROLE = "userRole="; //$NON-NLS-1$
 
     /**
      * Static attribute that represents the set of applications showed in the filter spiner of applications.
@@ -228,8 +226,6 @@ public final class ConfigureFilterDialogBuilder {
 
         final String userId = bundle.getString(FILTERS_USER_ID) != null ? bundle.getString(FILTERS_USER_ID) : "";
         this.filterConfig.setUserId(userId);
-        final String userRole = bundle.getString(FILTERS_USER_ROLE) != null ? bundle.getString(FILTERS_USER_ROLE) : "";
-        this.filterConfig.setUserRole(userRole);
         final boolean userWithVerifiers = bundle.getBoolean(FILTERS_USER_WITH_VERIFIERS);
         this.filterConfig.setUserWitVerifiers(userWithVerifiers);
 
@@ -451,7 +447,6 @@ public final class ConfigureFilterDialogBuilder {
         private String year;
         private boolean showUnverified;
         private String userId;
-        private String userRole;
         private String ownerId;
         private boolean userWitVerifiers;
 
@@ -566,14 +561,6 @@ public final class ConfigureFilterDialogBuilder {
             this.userId = userId;
         }
 
-        public String getUserRole() {
-            return userRole;
-        }
-
-        public void setUserRole(String userRole) {
-            this.userRole = userRole;
-        }
-
         public String getOwnerId() {
             return ownerId;
         }
@@ -628,7 +615,6 @@ public final class ConfigureFilterDialogBuilder {
             newBundle.putString(FILTERS_YEAR, this.year);
             newBundle.putBoolean(FILTERS_SHOW_UNVERIFIED, this.showUnverified);
             newBundle.putString(FILTERS_USER_ID, this.userId);
-            newBundle.putString(FILTERS_USER_ROLE, this.userRole);
             newBundle.putString(FILTERS_OWNER_ID, this.ownerId);
             newBundle.putBoolean(FILTERS_USER_WITH_VERIFIERS, this.userWitVerifiers);
 
@@ -684,7 +670,7 @@ public final class ConfigureFilterDialogBuilder {
     final class FilterOptionCheckedListener implements CompoundButton.OnCheckedChangeListener {
 
         final View parentView;
-        private final int[] DIALOG_ENABLED_RESOURCE_IDS = new int[]{
+        private final int[] filterStringIds = new int[]{
                 R.id.lb_filter_subject,
                 R.id.lb_filter_apps,
                 R.id.lb_filter_type,
@@ -704,7 +690,7 @@ public final class ConfigureFilterDialogBuilder {
         @Override
         public void onCheckedChanged(final CompoundButton buttonView, final boolean checked) {
 
-            for (final int id : this.DIALOG_ENABLED_RESOURCE_IDS) {
+            for (final int id : this.filterStringIds) {
                 final View view = this.parentView.findViewById(id);
                 if (view != null) {
                     view.setEnabled(checked);

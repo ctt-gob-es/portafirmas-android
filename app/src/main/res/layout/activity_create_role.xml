@@ -21,7 +21,8 @@
             android:paddingHorizontal="5sp"
             android:hint="@string/searchUserInputField"
             android:textSize="15sp"
-            android:inputType="textNoSuggestions"/>
+            android:inputType="textNoSuggestions"
+            android:imeOptions="actionSearch" />
 
         <ImageButton
             android:id="@+id/searchImgBtn"

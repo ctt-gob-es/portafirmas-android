@@ -15,7 +15,6 @@ import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
-import java.util.ArrayList;
 import java.util.List;
 
 import es.gob.afirma.android.network.AndroidUrlHttpManager;
@@ -25,8 +24,12 @@ import es.gob.afirma.android.signfolder.SFConstants;
 import es.gob.afirma.android.signfolder.proxy.parsers.ApplicationListResponseParser;
 import es.gob.afirma.android.signfolder.proxy.parsers.ApproveResponseParser;
 import es.gob.afirma.android.signfolder.proxy.parsers.ClaveLoginRequestResponseParser;
+import es.gob.afirma.android.signfolder.proxy.parsers.FindUserResponseParser;
 import es.gob.afirma.android.signfolder.proxy.parsers.FireLoadDataResponseParser;
 import es.gob.afirma.android.signfolder.proxy.parsers.FireSignResponseParser;
+import es.gob.afirma.android.signfolder.proxy.parsers.GenericResponseParser;
+import es.gob.afirma.android.signfolder.proxy.parsers.ListAuthorizationsResponseParser;
+import es.gob.afirma.android.signfolder.proxy.parsers.ListValidatorsResponseParser;
 import es.gob.afirma.android.signfolder.proxy.parsers.LoginTokenResponseParser;
 import es.gob.afirma.android.signfolder.proxy.parsers.LoginValidationResponseParser;
 import es.gob.afirma.android.signfolder.proxy.parsers.LogoutResponseParser;
@@ -39,8 +42,11 @@ import es.gob.afirma.android.signfolder.proxy.parsers.RequestListResponseParser;
 import es.gob.afirma.android.signfolder.proxy.parsers.UpdatePushNotsResponseParser;
 import es.gob.afirma.android.signfolder.proxy.parsers.UserConfigurationResponseParser;
 import es.gob.afirma.android.signfolder.proxy.parsers.VerifyResponseParser;
+import es.gob.afirma.android.user.configuration.Authorization;
 import es.gob.afirma.android.user.configuration.ConfigurationRole;
+import es.gob.afirma.android.user.configuration.GenericUser;
 import es.gob.afirma.android.user.configuration.UserConfig;
+import es.gob.afirma.android.user.configuration.Validator;
 import es.gob.afirma.android.util.AOUtil;
 import es.gob.afirma.android.util.Base64;
 import es.gob.afirma.android.util.PfLog;
@@ -80,8 +86,8 @@ public final class CommManager extends CommManagerOldVersion {
     private static final String OPERATION_POSTSIGN_CLAVE_FIRMA = "17"; //$NON-NLS-1$
     private static final String OPERATION_GET_USER_CONFIG = "18"; //$NON-NLS-1$
 
-    // TODO: Identificador de servicio no habilitado aún. Servicio de busqueda de usuario.
-    private static final String OPERATION_GET_USERS = "19"; //$NON-NLS-1$
+    // Servicio de busqueda de usuario
+    private static final String OPERATION_FIND_USERS = "19"; //$NON-NLS-1$
 
     private static final String OPERATION_VERIFY = "20"; //$NON-NLS-1$
 
@@ -89,6 +95,21 @@ public final class CommManager extends CommManagerOldVersion {
 //    private static final String OPERATION_CREATE_ROLE = "21"; //$NON-NLS-1$
 
     private static final String OPERATION_UPDATE_PUSH_NOTIFICATIONS = "23";
+
+    // Servicio de listado de autorizaciones
+    private static final String OPERATION_LIST_AUTHORIZATIONS = "24"; //$NON-NLS-1$
+    // Servicio de guardado de una autorizacion
+    private static final String OPERATION_SAVE_AUTHORIZATION = "25"; //$NON-NLS-1$
+    // Servicio de cancelacion de una autorizacion
+    private static final String OPERATION_REVOKE_AUTHORIZATION = "26"; //$NON-NLS-1$
+    // Servicio de aceptacion de una autorizacion
+    private static final String OPERATION_ACCEPT_AUTHORIZATION = "27"; //$NON-NLS-1$
+    // Servicio de listado de validadores
+    private static final String OPERATION_LIST_VALIDATORS = "28"; //$NON-NLS-1$
+    // Servicio de guardado de un validador
+    private static final String OPERATION_SAVE_VALIDATOR = "29"; //$NON-NLS-1$
+    // Servicio de cancelacion de un validador
+    private static final String OPERATION_REVOKE_VALIDATOR = "30"; //$NON-NLS-1$
 
     private static final int BUFFER_SIZE = 1024;
 
@@ -633,7 +654,7 @@ public final class CommManager extends CommManagerOldVersion {
 
         if (!PfLog.isProduction) {
             PfLog.i(SFConstants.LOG_TAG, "PETICION AL PROXY NUEVO");
-            PfLog.i(SFConstants.LOG_TAG, url);
+            PfLog.i(SFConstants.LOG_TAG, "URL de peticion: " + url);
         }
 
         if (url.startsWith(HTTPS)) {
@@ -686,31 +707,123 @@ public final class CommManager extends CommManagerOldVersion {
     }
 
     /**
+     * Obtiene el listado de autorizaciones emitidas o recibidas por el usuario.
+     * @return Lista de autorizaciones.
+     * @throws IOException               Si algo falla en el proceso.
+     * @throws SAXException              Si algo falla en el proceso.
+     * @throws ServerControlledException Si hay algún error en la comunicación con el proxy.
+     */
+    public List<Authorization> getAuthorizations()
+            throws IOException, SAXException, ServerControlledException {
+        String xml = XmlRequestsFactory.createListUsersRequest();
+        String url = this.signFolderProxyUrl + createUrlParams(OPERATION_LIST_AUTHORIZATIONS, xml);
+
+        return ListAuthorizationsResponseParser.parse(getRemoteDocument(url));
+    }
+
+    /**
+     * Guarda una autorización.
+     * @param auth Autorización.
+     * @return Resultado de la operacion.
+     * @throws IOException               Si algo falla en el proceso.
+     * @throws SAXException              Si algo falla en el proceso.
+     */
+    public GenericResponse saveAuthorization(Authorization auth)
+            throws IOException, SAXException {
+
+        String xml = XmlRequestsFactory.createSaveAuthorizationRequest(auth);
+        String url = this.signFolderProxyUrl + createUrlParams(OPERATION_SAVE_AUTHORIZATION, xml);
+
+        return GenericResponseParser.parse(getRemoteDocument(url));
+    }
+
+
+    /**
+     * Da de alta un validador.
+     * @param user Usuario validador.
+     * @return Resultado de la operacion.
+     * @throws IOException     Si algo falla en el proceso.
+     * @throws SAXException    Si algo falla en el proceso.
+     */
+    public GenericResponse saveValidator(GenericUser user)
+            throws IOException, SAXException {
+
+        String xml = XmlRequestsFactory.createSaveValidatorRequest(user);
+        String url = this.signFolderProxyUrl + createUrlParams(OPERATION_SAVE_VALIDATOR, xml);
+
+        return GenericResponseParser.parse(getRemoteDocument(url));
+    }
+
+    /**
+     * Aprueba una autorización.
+     * @return Resultado de la operacion.
+     * @throws IOException               Si algo falla en el proceso.
+     * @throws SAXException              Si algo falla en el proceso.
+     */
+    public GenericResponse approveAuthorization(Authorization auth)
+            throws IOException, SAXException {
+
+        String xml = XmlRequestsFactory.createChangeStateAuthorizationRequest(auth);
+        String url = this.signFolderProxyUrl + createUrlParams(OPERATION_ACCEPT_AUTHORIZATION, xml);
+
+        return GenericResponseParser.parse(getRemoteDocument(url));
+    }
+
+    /**
+     * Cancela o rechaza una autorización.
+     * @return Resultado de la operacion.
+     * @throws IOException               Si algo falla en el proceso.
+     * @throws SAXException              Si algo falla en el proceso.
+     */
+    public GenericResponse revokeAuthorization(Authorization auth)
+            throws IOException, SAXException {
+
+        String xml = XmlRequestsFactory.createChangeStateAuthorizationRequest(auth);
+        String url = this.signFolderProxyUrl + createUrlParams(OPERATION_REVOKE_AUTHORIZATION, xml);
+
+        return GenericResponseParser.parse(getRemoteDocument(url));
+    }
+
+
+    public GenericResponse removeValidator(Validator validator) throws IOException, SAXException {
+
+        String xml = XmlRequestsFactory.createRemoveValidatorRequest(validator);
+        String url = this.signFolderProxyUrl + createUrlParams(OPERATION_REVOKE_VALIDATOR, xml);
+
+        return GenericResponseParser.parse(getRemoteDocument(url));
+    }
+
+    /**
+     * Obtiene el listado de validadores del usuario.
+     * @return Lista de autorizaciones.
+     * @throws IOException               Si algo falla en el proceso.
+     * @throws SAXException              Si algo falla en el proceso.
+     * @throws ServerControlledException Si hay algún error en la comunicación con el proxy.
+     */
+    public List<Validator> getValidators()
+            throws IOException, SAXException, ServerControlledException {
+
+        String xml = XmlRequestsFactory.createListUsersRequest();
+        String url = this.signFolderProxyUrl + createUrlParams(OPERATION_LIST_VALIDATORS, xml);
+
+        return ListValidatorsResponseParser.parse(getRemoteDocument(url));
+    }
+
+    /**
      * Método que obtiene la lista de usuarios con un determinado rol del portafirmas-proxy.
-     *
      * @param role     Rol a usar en el filtro.
-     * @param numPage  Número de página.
-     * @param pageSize Tamaño de página.
+     * @param text Texto de búsqueda.
      * @return una lista de usuarios del tipo AuthorizedUser (si el rol proporcionado es Authorized)
      * o VerifierUser (si el rol proporcionado es Verifier).
      * @throws IOException               Si algo falla en el proceso.
      * @throws SAXException              Si algo falla en el proceso.
      * @throws ServerControlledException Si hay algún error en la comunicación con el proxy.
      */
-    public List<?> getUsers(final ConfigurationRole role, final int numPage, final int pageSize)
+    public List<GenericUser> findUsers(final ConfigurationRole role, final String text)
             throws IOException, SAXException, ServerControlledException {
-
-        PartialResponseRolesList partialResult;
-        String xml = XmlRequestsFactory.createRequestListRoles(role, numPage, pageSize);
-        String url = this.signFolderProxyUrl + createUrlParams(OPERATION_GET_USERS, xml);
-
-        partialResult = RequestListResponseParser.parseRolesReq(getRemoteDocument(url));
-        if (role.equals(ConfigurationRole.AUTHORIZED)) {
-            return partialResult.getAuthorizedList();
-        } else if (role.equals(ConfigurationRole.VERIFIER)) {
-            return partialResult.getVerifierList();
-        }
-        return new ArrayList<Object>();
+        String xml = XmlRequestsFactory.createFindUsersRequest(role, text);
+        String url = this.signFolderProxyUrl + createUrlParams(OPERATION_FIND_USERS, xml);
+        return FindUserResponseParser.parse(getRemoteDocument(url));
     }
 
     public UserConfig getUserConfig() throws IOException, SAXException, ServerControlledException {
@@ -733,12 +846,13 @@ public final class CommManager extends CommManagerOldVersion {
      */
     public boolean updatePushNotifications(boolean activePushNots) throws IOException, SAXException {
 
-        Log.i(SFConstants.LOG_TAG, " ============== Cambio de estado en las notificaciones. Activar: " + activePushNots);
+        Log.i(SFConstants.LOG_TAG, "Se van a activar las notificaciones: " + activePushNots);
 
         String xml = XmlRequestsFactory.createUpdatePushNotsRequest(activePushNots);
         String url = this.signFolderProxyUrl + createUrlParams(OPERATION_UPDATE_PUSH_NOTIFICATIONS, xml);
         return UpdatePushNotsResponseParser.parse(getRemoteDocument(url));
     }
+
 
     //TODO: Método deshabilitado. Pendiente de la implementación de la parte servidora. Servicio de creación de nuevo rol.
 //    /**

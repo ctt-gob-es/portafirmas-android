@@ -81,7 +81,7 @@ public interface ConfigurationConstants {
      * Constante que representa el identificador del parámetro del Intent
      * asociado a mostrar la información del rol "autorizado".
      */
-    String EXTRA_RESOURCE_AUTH_ROLE_INFO = "authRoleInfo";
+    String EXTRA_RESOURCE_AUTHORIZATION = "authRoleInfo";
 
     /**
      * Constante que representa el identificador del parámetro del Intent

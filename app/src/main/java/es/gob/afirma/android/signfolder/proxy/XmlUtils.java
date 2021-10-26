@@ -35,10 +35,7 @@ public final class XmlUtils {
 	 * Sustituto para JME de {@code Boolean.parseBoolean()}.
 	 */
 	public static boolean parseBoolean(final String bool) {
-		if ("true".equalsIgnoreCase(bool)) { //$NON-NLS-1$
-			return true;
-		}
-		return false;
+		return "true".equalsIgnoreCase(bool); //$NON-NLS-1$
 	}
 
 	/**
@@ -49,15 +46,15 @@ public final class XmlUtils {
 	 */
 	public static String getTextContent(final Node node) {
 		Node child;
-		String sContent = node.getNodeValue() != null ? node.getNodeValue() : ""; //$NON-NLS-1$
+		StringBuilder buffer = new StringBuilder(node.getNodeValue() != null ? node.getNodeValue() : ""); //$NON-NLS-1$
 		final NodeList nodes = node.getChildNodes();
-		for(int i = 0; i < nodes.getLength(); i++) {
+		for (int i = 0; i < nodes.getLength(); i++) {
 			child = nodes.item(i);
-			sContent += child.getNodeValue() != null ? child.getNodeValue() : ""; //$NON-NLS-1$
-			if(nodes.item(i).getChildNodes().getLength() > 0) {
-				sContent += getTextContent(nodes.item(i));
+			buffer.append(child.getNodeValue() != null ? child.getNodeValue() : "");
+			if (nodes.item(i).getChildNodes().getLength() > 0) {
+				buffer.append(getTextContent(nodes.item(i)));
 			}
 		}
-		return sContent.trim();
+		return buffer.toString().trim();
 	}
 }

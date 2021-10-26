@@ -22,7 +22,7 @@ public final class CommonsUtils {
     }
 
     /**
-     * Method that transforms the string representation of an order attribute into an intenger.
+     * Method that transforms the string representation of an order attribute into an integer.
      *
      * @param orderAttr String representation of the order attribute.
      * @return the asigned integer value to the order attribute.
@@ -54,5 +54,14 @@ public final class CommonsUtils {
             res = ConfigureFilterDialogBuilder.mApps.get(applicationAttr);
         }
         return res;
+    }
+
+    /**
+     * Limpia un texto de caracteres peligrosos para un texto XML.
+     * @param text Texto a limpiar.
+     * @return Texto limpio.
+     */
+    public static String protectTextWithCDATA(final String text) {
+        return "<![CDATA[" + text.replace("]]>", "").trim() + "]]>";
     }
 }

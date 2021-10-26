@@ -1,5 +1,8 @@
 package es.gob.afirma.android.signfolder.proxy.parsers;
 
+import android.content.Intent;
+import android.util.Log;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -8,6 +11,7 @@ import org.w3c.dom.NodeList;
 import java.util.ArrayList;
 import java.util.List;
 
+import es.gob.afirma.android.signfolder.SFConstants;
 import es.gob.afirma.android.signfolder.proxy.ServerControlledException;
 import es.gob.afirma.android.signfolder.proxy.XmlUtils;
 import es.gob.afirma.android.user.configuration.ApplicationFilter;
@@ -16,6 +20,7 @@ import es.gob.afirma.android.user.configuration.RoleInfo;
 import es.gob.afirma.android.user.configuration.TagFilter;
 import es.gob.afirma.android.user.configuration.UserConfig;
 import es.gob.afirma.android.user.configuration.UserFilters;
+import es.gob.afirma.android.util.PfLog;
 
 /**
  * Analizador de XML para la generaci&oacute;n de la configuración de usuario.
@@ -24,6 +29,8 @@ public final class UserConfigurationResponseParser {
 
     private static final String USER_CONFIG_RESPONSE_NODE = "rsgtsrcg"; //$NON-NLS-1$
     private static final String ERROR_NODE = "err"; //$NON-NLS-1$
+
+    private static final String ATTR_PROXY_VERSION = "v"; //$NON-NLS-1$
     private static final String TAG_NAME_ROLES = "rls"; //$NON-NLS-1$
     private static final String TAG_NAME_SIM_PARAMS = "smcg"; //$NON-NLS-1$
     private static final String TAG_NAME_USER_WITH_VERIFIERS = "srvrf"; //$NON-NLS-1$
@@ -57,6 +64,19 @@ public final class UserConfigurationResponseParser {
         if (docElement.getElementsByTagName(ERROR_NODE).item(0) != null) {
             final String errorCode = docElement.getElementsByTagName(ERROR_NODE).item(0).getTextContent();
             throw new ServerControlledException(errorCode, XmlUtils.getTextContent(docElement));
+        }
+
+        // Version del servicio proxy. Se transmite desde la version 25. Si es una version inferior.
+        // se tomara como la 0.
+        int proxyVersion;
+        try {
+            String version = docElement.getAttribute(ATTR_PROXY_VERSION);
+            proxyVersion = version != null && !version.isEmpty() ?
+                Integer.parseInt(version) : 0;
+        }
+        catch (Exception e) {
+            PfLog.w(SFConstants.LOG_TAG, "No se ha podido identificar la version del servicio proxy:");
+            proxyVersion = 0;
         }
 
         // Objetos necesarios para la creación de la configuración de usuario.
@@ -120,7 +140,10 @@ public final class UserConfigurationResponseParser {
         NodeList filtersNodeList = docElement.getElementsByTagName(TAG_NAME_USER_FILTERS);
         parseFilters(filtersNodeList, filters);
 
-        return new UserConfig(rolesList, simParams, userWithVerifiers, pushStatus, filters);
+        final UserConfig config = new UserConfig(rolesList, simParams, userWithVerifiers, pushStatus, filters);
+        config.setProxyVersion(proxyVersion);
+
+        return config;
     }
 
     /**

@@ -2,7 +2,7 @@
 <resources>
 
     <string name="app_name">Port@firmas</string>
-    <string name="app_title">Port@firmas v1.6.2</string>
+    <string name="app_title">Port@firmas v1.7</string>
     <string name="close">Cerrar</string>
     <string name="error">Error</string>
     <string name="server_select">Servidores Portafirmas</string>
@@ -64,11 +64,6 @@
     <string name="label_presentation_text">Portafirmas es el aplicativo m\u00F3vil de las administraciones p\u00FAblicas para acceder a sus servicios de portafirmas. Para poder acceder al servicio deber\u00E1n haberle dado de alta en el sistema y disponer del certificado digital necesario para su autenticaci\u00F3n importado en su dispositivo.</string>
     <string name="label_presentation_text_mini">Portafirmas es el aplicativo m\u00F3vil de las administraciones p\u00FAblicas para acceder a sus servicios de portafirmas. Para acceder al servicio deber\u00E1n haberle dado de alta en el sistema y disponer del certificado digital necesario para su autenticaci\u00F3n importado en su dispositivo.</string>
     <string name="signline_header">L\u00EDnea %1$d de</string>
-    <string name="sign_dialog_sign">Se va a firmar 1 petici\u00F3n.</string>
-    <string name="sign_dialog_signs">Se van a firmar %d peticiones.</string>
-    <string name="sign_dialog_approve">Se va a aprobar 1 petici\u00F3n.</string>
-    <string name="sign_dialog_approves">Se van a aprobar %d peticiones.</string>
-    <string name="sign_dialog_sign_approve">Se van a procesar %1$d %2$s de firma y %3$d de visto bueno.</string>
     <string name="request_notification">Tiene una petici\u00F3n pendiente</string>
     <string name="requests_notification">Tiene %d peticiones pendientes</string>
     <string name="sign_dialog_question">¿Desea continuar con la operaci\u00F3n?</string>
@@ -108,6 +103,9 @@
     <string name="rejected">Rechazada</string>
     <string name="dni">DNI</string>
     <string name="change_role">Cambiar rol</string>
+    <string name="dialog_msg_confirm_new_valitor">¿Desea dar de alta a %1s como su nuevo validador?</string>
+    <string name="dialog_msg_confirm_remove_validator">¿Desea dar de baja a %1s como validador?</string>
+    <string name="dialog_msg_pending_authorizations">Tiene autorizaciones pendientes de aceptar o rechazar.</string>
 
     <string name="button_import_cert">Importar certificado</string>
     <string name="button_login">Acceder</string>
@@ -162,7 +160,8 @@
     <string name="error_msg_verifing_requests">Ocurri\u00F3 un error al validar alguna de las peticiones seleccionadas.</string>
     <string name="error_msg_verifing_request">Ocurri\u00F3 un error al validar la petici\u00F3n.</string>
     <string name="error_msg_unsupported_device">Dispositivo no soportado.</string>
-    <string name="error_msg_get_users_by_rol">Error: No ha sido posible recuperar la lista de usuarios.</string>
+    <string name="error_msg_get_authorizations">Error: No ha sido posible recuperar la lista de autorizaciones.</string>
+    <string name="error_msg_get_validators">Error: No ha sido posible recuperar la lista de validadores.</string>
     <string name="error_msg_verifier_list_empty">No existen registros de validadores.</string>
 
     <string name="error_loading_keystore">Error al cargar el almacen de claves</string>
@@ -185,16 +184,21 @@
     <string name="toast_msg_gcm_connection_ko">Error al conectar con el servidor de notificaciones.</string>
     <string name="toast_msg_fire_comunication_ko">No se ha podido establecer la comunicaci\u00F3n con Cl@ve Firma.</string>
     <string name="toast_msg_creation_auth_role_ok">Autorizaci\u00F3n creada correctamente</string>
-    <string name="toast_msg_creation_auth_role_ko">Error creando Autorizaci\u00F3n</string>
-    <string name="toast_msg_creation_verifier_role_ok">validador creado correctamente</string>
+    <string name="toast_msg_creation_auth_role_ko">Error creando autorizaci\u00F3n</string>
+    <string name="toast_msg_creation_verifier_role_ok">Validador creado correctamente</string>
     <string name="toast_msg_creation_verifier_role_ko">Error creando validador</string>
+    <string name="toast_msg_remove_validator_ok">Se ha dado de baja al validador</string>
+    <string name="toast_msg_remove_validator_ko">Error dando de baja al validador</string>
     <string name="toast_error_access_denegated">No tiene permiso para acceder al recurso</string>
-    <string name="toast_msg_list_updated">Lista actualizada</string>
+    <string name="toast_msg_list_updating">Actualizando lista...</string>
     <string name="toast_msg_update_push_nots_error">Error al actualizar el estado de las notificaciones push.</string>
     <string name="toast_msg_push_activated">Notificaciones activadas</string>
     <string name="toast_msg_push_deactivated">Notificaciones desactivadas</string>
     <string name="toast_msg_push_error_changing_state">No se ha podido actualizar el estado de las notificaciones</string>
     <string name="toast_msg_directory_doesnt_exists">No se tiene acceso a este directorio</string>
+
+    <string name="toast_msg_change_auth_state_ok">Se ha actualizado el estado de la autorizaci\u00F3n</string>
+    <string name="toast_msg_change_auth_state_error">Error al cambiar el estado de la autorizaci\u00F3n</string>
 
     <string name="title_activity_cert_chooser">Importar certificado</string>
     <string name="title_clave_login">Autenticaci\u00F3n con Cl@ve</string>
@@ -235,6 +239,11 @@
     <string name="allow">Permitir</string>
     <string name="select">Seleccionar</string>
     <string name="finish">Finalizar</string>
+
+    <string name="auth_button_create">Crear autorización</string>
+    <string name="auth_button_cancel">Cancelar autorización</string>
+    <string name="auth_button_reject">Rechazar</string>
+    <string name="auth_button_accept">Aceptar</string>
 
     <string name="dialog_msg_accessing_keystore">Accediendo al almac\u00E9n\u002E\u002E\u002E</string>
     <string name="dialog_msg_connecting">Estableciendo conexi\u00F3n\u2026</string>
@@ -307,7 +316,7 @@
     <string name="megabytes">MB</string>
     <string name="error_title_openning_file">Error al abrir el fichero</string>
     <string name="error_loading_selected_file">Ocurri\u00F3 un error cargando el fichero \"%s\"</string>
-    <string name="error_file_not_support">No se ha encontrado una aplicaci\u00F3n que soporte el tipo de fichero descargado. Se copiar\u00E1 al directorio de descargas.</string>
+    <string name="error_file_not_support">No se ha encontrado una aplicaci\u00F3n que soporte el tipo de fichero descargado. Se ha copiado a su directorio de descargas.</string>
     <string name="error_loading_app_configuration">No se pudo conectar con el servidor. Compruebe la URL del servicio de Portafirmas. </string>
     <string name="error_account_not_validated">El certificado de acceso seleccionado no es v\u00E1lido.</string>
 

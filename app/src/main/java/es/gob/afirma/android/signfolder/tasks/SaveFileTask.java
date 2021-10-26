@@ -1,6 +1,7 @@
 package es.gob.afirma.android.signfolder.tasks;
 
 import android.app.Activity;
+import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Environment;
 
@@ -20,21 +21,21 @@ public class SaveFileTask extends AsyncTask<Void, Void, File> {
 	private final String filename;
 	private final boolean extDir;
 	private final SaveFileListener listener;
-	private final Activity activity;
+	private final Context context;
 
 	/** Crea una tarea para descarga de fichero en segundo plano.
 	 * @param dataIs Flujo de lectura de los datos del fichero.
 	 * @param filename Nombre del fichero a guardar.
 	 * @param extDir Indica si se deberia guardar en un directorio externo o interno de la aplicación.
 	 * @param listener Clase a la que notificar el sesultado de la tarea.
-	 * @param activity Actividad que invoca a la tarea.
+	 * @param context Contexto que invoca a la tarea.
 	 */
-	public SaveFileTask(final InputStream dataIs, final String filename, final boolean extDir, final SaveFileListener listener, final Activity activity) {
+	public SaveFileTask(final InputStream dataIs, final String filename, final boolean extDir, final SaveFileListener listener, final Context context) {
 		this.dataIs = dataIs;
 		this.filename = filename;
 		this.extDir = extDir;
 		this.listener = listener;
-		this.activity = activity;
+		this.context = context;
 	}
 
 	@Override
@@ -51,7 +52,7 @@ public class SaveFileTask extends AsyncTask<Void, Void, File> {
 			}
         	else {
 				outFile = new File(
-						this.activity.getFilesDir(),
+						this.context.getFilesDir(),
 						generateFileName(this.filename, i++)
 				);
 			}

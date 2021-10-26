@@ -1,7 +1,9 @@
 package es.gob.afirma.android.signfolder.tasks;
 
+import android.content.Context;
 import android.os.AsyncTask;
 
+import java.io.File;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -36,7 +38,8 @@ public final class LogoutRequestTask extends AsyncTask<Void, Void, Void> {
 
 	@Override
 	protected Void doInBackground(final Void... args) {
-		// Se realiza la peticion para realizar el login
+
+		// Se realiza la peticion para realizar el logout
 		Timer timer = new Timer();
 		timer.schedule(new TaskKiller(this), 10000);
 		try {
