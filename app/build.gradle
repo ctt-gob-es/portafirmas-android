@@ -11,6 +11,7 @@ android {
         targetSdkVersion 30
         versionCode 20
         versionName "1.7"
+        vectorDrawables.useSupportLibrary = true
     }
 
     buildTypes {
@@ -48,5 +49,7 @@ dependencies {
         exclude group: 'es.gob.afirma.lib', module: 'afirma-lib-jmimemagic'
     }
     implementation 'android.arch.lifecycle:extensions:1.1.1'
+    implementation "androidx.swiperefreshlayout:swiperefreshlayout:1.1.0"
+
     apply plugin: 'com.google.gms.google-services'
 }

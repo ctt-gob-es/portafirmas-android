@@ -1,6 +1,16 @@
 <resources xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <style name="AppTheme" parent="android:Theme.Light" />
+    <style name="SplashTheme" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <item name="colorPrimary">@color/lightGrey</item>
+        <item name="colorPrimaryDark">@color/darkGrey</item>
+        <item name="colorAccent">@color/red</item>
+    </style>
+
+    <style name="AppTheme" parent="android:Theme.Holo.Light.DarkActionBar">
+        <!-- Habilitamos expresamente la barra de accion -->
+        <item name="android:windowActionBar">true</item>
+        <item name="android:windowNoTitle">false</item>
+    </style>
 
     <!-- Estilo de la barra de arriba de la app. (ActionBar) -->
     <style name="Dialog" parent="android:style/Theme.Holo.Light">
@@ -28,6 +38,10 @@
 
     <style name="ReadedRequestSecondaryText">
         <item name="android:textColor">@color/darkGrey</item>
+    </style>
+
+    <style name="Hyperlink">
+        <item name="android:textColor">@color/darkBlue</item>
     </style>
 
     <style name="ButtonText">

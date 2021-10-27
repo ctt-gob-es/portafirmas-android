@@ -22,6 +22,8 @@ public final class LoadSignRequestsTask extends AsyncTask<Void, Void, PartialSig
 	private final int numPage;
 	private final int pageSize;
 
+	private boolean running;
+
 	/**
 	 * Crea la tarea asincrona para la carga de peticiones de firma.
 	 *
@@ -39,10 +41,13 @@ public final class LoadSignRequestsTask extends AsyncTask<Void, Void, PartialSig
 		this.listener = listener;
 		this.numPage = numPage;
 		this.pageSize = pageSize;
+		this.running = false;
 	}
 
     @Override
     protected PartialSignRequestsList doInBackground(final Void... arg) {
+
+		this.running = true;
 
     	// Aqui se carga la lista de peticiones de documentos
     	PartialSignRequestsList signRequests;
@@ -55,6 +60,7 @@ public final class LoadSignRequestsTask extends AsyncTask<Void, Void, PartialSig
     	}
     	catch (final ServerControlledException e) {
 			signRequests = null;
+			this.running = false;
 			PfLog.e(SFConstants.LOG_TAG, "Ocurrio un error controlado al recuperar las peticiones de firma", e); //$NON-NLS-1$
 			// Si se ha perdido la sesion o el certificado de autenticacion no es valido vuelve a la pantalla de login
 			if (ServerErrors.ERROR_AUTHENTICATING_REQUEST.equals(e.getErrorCode())) {
@@ -68,6 +74,7 @@ public final class LoadSignRequestsTask extends AsyncTask<Void, Void, PartialSig
 		}
     	catch (final Exception e) {
     		signRequests = null;
+			this.running = false;
     		PfLog.e(SFConstants.LOG_TAG, "Ocurrio un error al recuperar las peticiones de firma", e); //$NON-NLS-1$
 			// Si se ha perdido la sesion o el certificado de autenticacion no es valido vuelve a la pantalla de login
 			if(e.getMessage().contains(ServerErrors.ERROR_AUTHENTICATING_REQUEST)) {
@@ -82,6 +89,7 @@ public final class LoadSignRequestsTask extends AsyncTask<Void, Void, PartialSig
     	catch (final Throwable t) {
     		t.printStackTrace();
     		signRequests = null;
+			this.running = false;
     		PfLog.e(SFConstants.LOG_TAG, "Problema grave al listar las peticiones: " + t); //$NON-NLS-1$
     	}
 
@@ -90,6 +98,8 @@ public final class LoadSignRequestsTask extends AsyncTask<Void, Void, PartialSig
 
     @Override
 	protected void onPostExecute(final PartialSignRequestsList partialSignRequests) {
+
+		this.running = false;
 
     	// Si se cancela la operacion, no se actualiza el listado
     	if (isCancelled()) {
@@ -105,6 +115,14 @@ public final class LoadSignRequestsTask extends AsyncTask<Void, Void, PartialSig
 				(partialSignRequests.getTotalSignRequests() % this.pageSize == 0 ? 0 : 1);
 		this.listener.loadedSignRequest(partialSignRequests.getCurrentSignRequests(), this.numPage, numPages);
     }
+
+	/**
+	 * Inidica si la tarea se esta procesando actualmente.
+	 * @return {@code true} si la tarea se est&aacute; procesando, {@code false} en caso contrario.
+	 */
+	public boolean isRunning() {
+		return this.running;
+	}
 
     /** Interfaz que gestiona la respuesta a las solicitudes de carga de peticiones de firma. */
 	public interface LoadSignRequestListener {

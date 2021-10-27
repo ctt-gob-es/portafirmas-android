@@ -61,8 +61,7 @@
     <string name="action_settings">Settings</string>
     <string name="hello_world">Hello world!</string>
     <string name="signfolder_logo">Logo del portafirmas</string>
-    <string name="label_presentation_text">Portafirmas es el aplicativo m\u00F3vil de las administraciones p\u00FAblicas para acceder a sus servicios de portafirmas. Para poder acceder al servicio deber\u00E1n haberle dado de alta en el sistema y disponer del certificado digital necesario para su autenticaci\u00F3n importado en su dispositivo.</string>
-    <string name="label_presentation_text_mini">Portafirmas es el aplicativo m\u00F3vil de las administraciones p\u00FAblicas para acceder a sus servicios de portafirmas. Para acceder al servicio deber\u00E1n haberle dado de alta en el sistema y disponer del certificado digital necesario para su autenticaci\u00F3n importado en su dispositivo.</string>
+    <string name="label_presentation_text">Portafirmas es el aplicativo m\u00F3vil de las administraciones p\u00FAblicas para acceder a sus servicios de portafirmas. Para poder acceder al servicio deber\u00E1n haberle dado de alta en el sistema y disponer del certificado digital necesario para su autenticaci\u00F3n.</string>
     <string name="signline_header">L\u00EDnea %1$d de</string>
     <string name="request_notification">Tiene una petici\u00F3n pendiente</string>
     <string name="requests_notification">Tiene %d peticiones pendientes</string>
@@ -384,5 +383,26 @@
     <string name="end_date_text">Fecha fin</string>
     <string name="authorization_type">Tipo de autorizaci\u00F3n</string>
     <string name="accessibility_check_uncheck_apps">Marcar/desmarcar todas las aplicaciones</string>
+
+    <!-- Recursos asistente -->
+    <string name="wizard_button_omit">Omitir</string>
+    <string name="wizard_option_arrow">〉</string>
+
+    <string name="wizard_signfolder_title">¿Qué portafirmas usará principalmente?</string>
+    <string name="wizard_signfolder_option1_title">Portafirmas DTIC</string>
+    <string name="wizard_signfolder_option1_body">Este portafirmas se configurará automáticamente.</string>
+    <string name="wizard_signfolder_option2_title">Portafirmas RedSara</string>
+    <string name="wizard_signfolder_option2_body">Este portafirmas se configurará automáticamente.</string>
+    <string name="wizard_signfolder_option3_title">Otro Portafirmas</string>
+    <string name="wizard_signfolder_option3_body">Deberá dar de alta su servidor portafirmas desde el menú principal de la aplicación. Consulte la URL de acceso con el responsable del portafirmas.</string>
+    <string name="wizard_signfolder_footnote1">Recuerde que debe estar dado de alta en su sistema portafirmas para tener acceso.</string>
+
+    <string name="wizard_certorigin_title">¿Qué tipo de certificado desea utilizar?</string>
+    <string name="wizard_certorigin_option1_title">Certificado local</string>
+    <string name="wizard_certorigin_option1_body">Copie el certificado a su dispositivo e importelo mediante la opción "Importar certificado" de la pantalla principal.</string>
+    <string name="wizard_certorigin_option2_title">Certificado remoto</string>
+    <string name="wizard_certorigin_option2_body">Utilice sus certificados de autenticación y firma de Cl@ve Permanente. Deberá haberse dado de alta en Cl@ve con el nivel avanzado y activado su usuario de Cl@ve Permanente.</string>
+    <string name="wizard_certorigin_footnote1">Más información sobre Cl@ve:</string>
+    <string name="wizard_certorigin_hyperlink"><a href="https://clave.gob.es/clave_Home/registro.html">https://clave.gob.es/clave_Home/registro.html</a></string>
 
 </resources>

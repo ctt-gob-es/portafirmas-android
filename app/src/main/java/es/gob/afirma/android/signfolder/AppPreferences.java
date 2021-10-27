@@ -37,6 +37,9 @@ public final class AppPreferences {
 	/** Indicador de si se quiere autenticar y firmar con certificado en la nube. */
 	private static final String CLOUD_CERT_ENABLED = "enabledCloudCert"; //$NON-NLS-1$
 
+	/** Clave con la que se almacena el indicador de que esta es la primera ejecuci&oacute;n. */
+	private static final String FIRST_EXECUTION = "firstExecution"; //$NON-NLS-1$
+
 	/** Clave de preferencia de la URL del Proxy. */
 	private static final String PREFERENCES_KEY_SELECTED_PROXY_URL = "URL_PROXY"; //$NON-NLS-1$
 
@@ -61,13 +64,13 @@ public final class AppPreferences {
 	private static final String CONFIG_SEPARATOR = ";"; //$NON-NLS-1$
 
 	/** Alias del portafirmas por defecto de la AGE. */
-	private static final String DEFAULT_PROXY_GOB_ALIAS = "Portafirmas General AGE";
+	public static final String DEFAULT_PROXY_GOB_ALIAS = "Portafirmas General AGE";
 	/** URL del portafirmas por defecto de la AGE. */
-	private static final String DEFAULT_PROXY_GOB_URL = "https://servicios.seap.minhap.es/pfmovil/signfolder";
+	public static final String DEFAULT_PROXY_GOB_URL = "https://servicios.seap.minhap.es/pfmovil/signfolder";
 	/** Alias del portafirmas por defecto de RedSARA. */
-	private static final String DEFAULT_PROXY_REDSARA_ALIAS = "Portafirmas RedSARA";
+	public static final String DEFAULT_PROXY_REDSARA_ALIAS = "Portafirmas RedSARA";
 	/** URL del portafirmas por defecto de RedSARA. */
-	private static final String DEFAULT_PROXY_REDSARA_URL = "https://portafirmas.redsara.es/pfmovil/pf";
+	public static final String DEFAULT_PROXY_REDSARA_URL = "https://portafirmas.redsara.es/pfmovil/pf";
 
 	private static Properties config;
 
@@ -115,10 +118,29 @@ public final class AppPreferences {
 
 	/**
 	 * Recupera si se ha habilitado la firma con Cl@ve Firma.
-	 * @return Certificado del usuario.
+	 * @return {@code true} si está habilitado el uso del certificado en la nube, {@code false}
+	 * en caso contrario.
 	 */
 	public boolean isCloudCertEnabled() {
 		return getPreferenceBool(CLOUD_CERT_ENABLED, false);
+	}
+
+	/**
+	 * Define el que se trate la próxima ejecución de la aplicación como si fuese la primera.
+	 * @param  firstExecution {@code true} para que se considere la próxima ejecución como la primera,
+	 * {@code false} para que se considere que la aplicación se ha ejecutado previamente.
+	 */
+	public void setFirstExecution(boolean firstExecution) {
+		setPreferenceBool(FIRST_EXECUTION, firstExecution);
+	}
+
+	/**
+	 * Recupera si esta ejecución de la aplicación debe considerarse como la primera.
+	 * @return {@code true} si se considera esta la primera ejecución de la aplicación,
+	 * {@code false} en caso contrario.
+	 */
+	public boolean isFirstExecution() {
+		return getPreferenceBool(FIRST_EXECUTION, true);
 	}
 
 	/**

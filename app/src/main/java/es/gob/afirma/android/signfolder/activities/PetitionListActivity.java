@@ -38,6 +38,7 @@ import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -342,6 +343,14 @@ public final class PetitionListActivity extends WebViewParentActivity implements
             // Comprobamos que los filtros tienen valores correctos.
             configureDefaultFilters();
         }
+
+        // Establecemos la accion asociada a la actualizacion de la lista
+        ((SwipeRefreshLayout) findViewById(R.id.swiperefresh)).setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                updateCurrentList(FIRST_PAGE);
+            }
+        });
     }
 
     /**
@@ -514,6 +523,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
         super.onStart();
 
         if (this.needReload || this.forceReload) {
+            setVisibilityLoadingMessage(true, null, this.loadingTask);
             updateCurrentList(FIRST_PAGE);
             this.needReload = false;
             this.forceReload = false;
@@ -851,6 +861,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
         }
         // Actualizar listado actual
         else if (item.getItemId() == R.id.refresh) {
+            ((SwipeRefreshLayout) findViewById(R.id.swiperefresh)).setRefreshing(true);
             updateCurrentList(FIRST_PAGE);
         }
         // Cambiar al listado de peticiones firmadas
@@ -879,6 +890,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
             setFilterConfig(this.filterConfig.reset(this.roleSelected, this.userConfig.isUserWithVerifiers()));
             this.filterDialogBuilder.resetLayout();
             invalidateOptionsMenu();
+            setVisibilityLoadingMessage(true, null, this.loadingTask);
             updateCurrentList(FIRST_PAGE);
         }
         // Habilitar/deshabilitar notificaciones
@@ -972,7 +984,6 @@ public final class PetitionListActivity extends WebViewParentActivity implements
         }
     }
 
-
     /**
      * Abre el fichero de ayuda de la aplicaci&oacute;n.
      */
@@ -989,7 +1000,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
         // Comprobamos que el usuario tiene permisos para realizar la operación.
         checkOperationPermissions(this.currentState, this.roleSelected);
 
-        if (!this.loadingRequests) {
+        if (this.loadingTask == null || !this.loadingTask.isRunning()) {
             this.currentPage = page;
 
             // Configuramos los filtros
@@ -998,7 +1009,6 @@ public final class PetitionListActivity extends WebViewParentActivity implements
             this.loadingTask = new LoadSignRequestsTask(
                     this.currentState, page, PAGE_SIZE, filters,
                     CommManager.getInstance(), this);
-            setVisibilityLoadingMessage(true, null, this.loadingTask);
             this.loadingTask.execute();
 
             // Se reinicia el contador de notificaciones para el servidor cargado
@@ -1095,6 +1105,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
                 if (anyError) {
                     showProcessingError(operation);
                 } else {
+                    setVisibilityLoadingMessage(true, null, this.loadingTask);
                     updateCurrentList(FIRST_PAGE);
                 }
             }
@@ -1217,6 +1228,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
 
         // Se termina la carga
         setVisibilityLoadingMessage(false, null, null);
+        ((SwipeRefreshLayout) findViewById(R.id.swiperefresh)).setRefreshing(false);
 
         // Mostramos u ocultamos el texto de "No hay resultados" segun
         // corresponda
@@ -1233,7 +1245,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
         this.numPages = numOfPages;
 
         // Mostramos el listado de peticiones
-        ((ListView) findViewById(R.id.userList)).setAdapter(preparePetitionList(signRequests,
+        getListView().setAdapter(preparePetitionList(signRequests,
                 this.currentState, numOfPages > 1));
     }
 
@@ -1377,6 +1389,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
             if (resultCode == PetitionDetailsActivity.RESULT_SIGN_OK
                     || resultCode == PetitionDetailsActivity.RESULT_REJECT_OK
                     || resultCode == PetitionDetailsActivity.RESULT_VERIFY_OK) {
+                setVisibilityLoadingMessage(true, null, this.loadingTask);
                 updateCurrentList(FIRST_PAGE);
             }
             // Si ha caducado la sesion vuelve a la actividad principal
@@ -1445,6 +1458,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
 
         // Se termina la carga
         setVisibilityLoadingMessage(false, null, null);
+        ((SwipeRefreshLayout) findViewById(R.id.swiperefresh)).setRefreshing(false);
 
         // Ya no tenemos que recargar el listado
         this.needReload = false;
@@ -1543,6 +1557,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
                     public void onClick(final DialogInterface dialog, final int identifier) {
                         setFilterConfig(getFilterDialogBuilder().getFilterConfig());
                         invalidateOptionsMenu();
+                        setVisibilityLoadingMessage(true, null, PetitionListActivity.this.loadingTask);
                         updateCurrentList(FIRST_PAGE);
                     }
                 });
@@ -1659,6 +1674,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
         // Dialogo de error procesando peticiones
         else if (dialogId == DIALOG_ERROR_PROCESSING) {
             // Actualizamos el listado
+            setVisibilityLoadingMessage(true, null, this.loadingTask);
             updateCurrentList(FIRST_PAGE);
         }
     }
@@ -1838,6 +1854,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
                 if (allResultOk) {
                     // Una vez finalizada una operacion, recargamos el listado por
                     // la primera pagina
+                    setVisibilityLoadingMessage(true, null, this.loadingTask);
                     updateCurrentList(FIRST_PAGE);
                 } else {
                     final String errorMsg = getString(R.string.error_msg_procesing_requests);
@@ -2095,6 +2112,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
                         @Override
                         public void onClick(final View v) {
                             v.setSelected(true);
+                            setVisibilityLoadingMessage(true, null, PetitionListActivity.this.loadingTask);
                             updateCurrentList(FIRST_PAGE);
                         }
                     });
@@ -2106,6 +2124,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
                         @Override
                         public void onClick(final View v) {
                             v.setSelected(true);
+                            setVisibilityLoadingMessage(true, null, PetitionListActivity.this.loadingTask);
                             updateCurrentList(PanelPaginationElement.this.page - 1);
                         }
                     });
@@ -2117,6 +2136,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
                         @Override
                         public void onClick(final View v) {
                             v.setSelected(true);
+                            setVisibilityLoadingMessage(true, null, PetitionListActivity.this.loadingTask);
                             updateCurrentList(PanelPaginationElement.this.page + 1);
                         }
                     });
@@ -2128,6 +2148,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
                         @Override
                         public void onClick(final View v) {
                             v.setSelected(true);
+                            setVisibilityLoadingMessage(true, null, PetitionListActivity.this.loadingTask);
                             updateCurrentList(PanelPaginationElement.this.nPages);
                         }
                     });

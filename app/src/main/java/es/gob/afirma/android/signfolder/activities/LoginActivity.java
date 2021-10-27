@@ -352,8 +352,7 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
         }
     }
 
-    // Definimos el menu de opciones de la aplicacion, cuyas opciones estan definidas
-    // en el fichero activity_petition_list_options_menu.xml
+    // Definimos el menu de opciones de la aplicacion
     @Override
     public boolean onCreateOptionsMenu(final Menu menu) {
         getMenuInflater().inflate(R.menu.activity_login_options_menu, menu);

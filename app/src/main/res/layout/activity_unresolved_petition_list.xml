@@ -47,12 +47,19 @@
         android:paddingRight="30dp"
         android:text="@string/no_request_avaible"
         android:textAppearance="?android:attr/textAppearanceLarge" />
-     
-    <ListView
-        android:id="@+id/userList"
+
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swiperefresh"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/separator_top"
-        android:choiceMode="multipleChoice" />
-    
+        android:layout_below="@id/separator_top">
+
+        <ListView
+            android:id="@+id/userList"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:choiceMode="multipleChoice" />
+
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
 </RelativeLayout>

@@ -13,13 +13,19 @@
         android:paddingRight="30dp"
         android:text="@string/no_request_avaible"
         android:textAppearance="?android:attr/textAppearanceLarge" />
-     
+
+
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swiperefresh"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentTop="true">
+
     <ListView
         android:id="@+id/userList"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_alignParentTop="true" >
+        android:layout_height="match_parent" />
 
-    </ListView>
-    
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
 </RelativeLayout>

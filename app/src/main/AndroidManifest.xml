@@ -51,9 +51,11 @@
                 android:resource="@xml/provider_paths" />
         </provider>
 
+
         <activity
-            android:name=".activities.LoginActivity"
-            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:name=".activities.SplashScreenActivity"
+            android:theme="@style/SplashTheme"
+            android:configChanges="orientation|screenSize"
             android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -61,6 +63,18 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        <activity
+            android:name=".activities.WizardActivity"
+            android:theme="@style/SplashTheme"
+            android:configChanges="keyboardHidden|orientation|screenSize">
+
+        </activity>
+
+        <activity
+            android:name=".activities.LoginActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:label="@string/app_name" >
         </activity>
         <activity
             android:name=".activities.PetitionListActivity"
