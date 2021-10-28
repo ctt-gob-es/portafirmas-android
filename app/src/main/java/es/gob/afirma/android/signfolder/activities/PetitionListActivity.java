@@ -248,9 +248,14 @@ public final class PetitionListActivity extends WebViewParentActivity implements
         if (!newFilterConfig.isEnabled()) {
             if (this.filterConfig != null) {
                 this.filterConfig.reset(this.roleSelected, this.userConfig.isUserWithVerifiers());
+                this.filterConfig.setOrderAttribute(newFilterConfig.getOrderAttribute());
             }
             if (this.filterDialogBuilder != null) {
-                this.filterDialogBuilder.resetLayout();
+                if (this.filterConfig != null) {
+                    this.filterDialogBuilder.resetLayout(this.filterConfig);
+                } else {
+                    this.filterDialogBuilder.resetLayout();
+                }
             }
         } else {
             this.filterConfig = newFilterConfig;
