@@ -15,8 +15,8 @@
 
         <ImageView
             android:id="@+id/imageView2"
-            android:layout_width="186dp"
-            android:layout_height="186dp"
+            android:layout_width="250dp"
+            android:layout_height="250dp"
             android:contentDescription="@string/signfolder_icon"
             app:srcCompat="@drawable/icono_portafirmas" />
     </LinearLayout>
@@ -26,14 +26,14 @@
         android:layout_height="wrap_content"
         android:gravity="bottom|center"
         android:orientation="horizontal"
-        android:padding="50dp">
+        android:padding="20dp">
 
         <ImageView
             android:id="@+id/imageView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:srcCompat="@drawable/logo_portafirmas"
-            android:contentDescription="@string/signfolder_logo" />
+            android:contentDescription="@string/signfolder_logo"
+            app:srcCompat="@drawable/logo_portafirmas" />
     </LinearLayout>
 
 </LinearLayout>

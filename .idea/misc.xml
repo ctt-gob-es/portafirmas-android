@@ -9,8 +9,12 @@
         <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/drawable/button_shape_pressed.xml" value="0.25052083333333336" />
         <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/drawable/ic_launcher_background.xml" value="0.25052083333333336" />
         <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/drawable/ic_launcher_foreground.xml" value="0.25052083333333336" />
+        <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/drawable/icon_logo.xml" value="0.199609375" />
         <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/drawable/tab_selector.xml" value="0.25052083333333336" />
+        <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout-large/activity_splash_screen.xml" value="0.1991869918699187" />
         <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout-large/activity_wizard_signfolder.xml" value="0.67" />
+        <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout-medium/activity_splash_screen.xml" value="0.5125" />
+        <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout-xlarge/activity_splash_screen.xml" value="0.1" />
         <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout-xlarge/activity_wizard_signfolder.xml" value="0.216796875" />
         <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout/activity_auth_role_info.xml" value="0.1953125" />
         <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout/activity_choose_role.xml" value="0.1734375" />
@@ -18,7 +22,7 @@
         <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout/activity_create_new_verifier.xml" value="0.18958333333333333" />
         <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout/activity_login.xml" value="0.22447916666666667" />
         <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout/activity_resolved_petition_list.xml" value="0.23564814814814813" />
-        <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout/activity_splash_screen.xml" value="0.22447916666666667" />
+        <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout/activity_splash_screen.xml" value="0.176" />
         <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout/activity_unresolved_petition_list.xml" value="0.23564814814814813" />
         <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout/activity_user_configuration.xml" value="0.24166666666666667" />
         <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout/activity_wizard_certorigin.xml" value="0.25" />

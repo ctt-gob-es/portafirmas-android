@@ -60,7 +60,8 @@
     <string name="toast_error_previewing">No se ha podido previsualizar el documento</string>
     <string name="action_settings">Settings</string>
     <string name="hello_world">Hello world!</string>
-    <string name="signfolder_logo">Logo del portafirmas</string>
+    <string name="signfolder_icon">Logo</string>
+    <string name="signfolder_logo">Portafirmas</string>
     <string name="label_presentation_text">Portafirmas es el aplicativo m\u00F3vil de las administraciones p\u00FAblicas para acceder a sus servicios de portafirmas. Para poder acceder al servicio deber\u00E1n haberle dado de alta en el sistema y disponer del certificado digital necesario para su autenticaci\u00F3n.</string>
     <string name="signline_header">L\u00EDnea %1$d de</string>
     <string name="request_notification">Tiene una petici\u00F3n pendiente</string>
@@ -189,7 +190,7 @@
     <string name="toast_msg_remove_validator_ok">Se ha dado de baja al validador</string>
     <string name="toast_msg_remove_validator_ko">Error dando de baja al validador</string>
     <string name="toast_error_access_denegated">No tiene permiso para acceder al recurso</string>
-    <string name="toast_msg_list_updating">Actualizando lista...</string>
+    <string name="toast_msg_list_updating">Actualizando lista…</string>
     <string name="toast_msg_update_push_nots_error">Error al actualizar el estado de las notificaciones push.</string>
     <string name="toast_msg_push_activated">Notificaciones activadas</string>
     <string name="toast_msg_push_deactivated">Notificaciones desactivadas</string>
