@@ -390,7 +390,7 @@
     <string name="wizard_option_arrow">〉</string>
 
     <string name="wizard_signfolder_title">¿Qué portafirmas usará principalmente?</string>
-    <string name="wizard_signfolder_option1_title">Portafirmas DTIC</string>
+    <string name="wizard_signfolder_option1_title">Portafirmas general AGE</string>
     <string name="wizard_signfolder_option1_body">Este portafirmas se configurará automáticamente.</string>
     <string name="wizard_signfolder_option2_title">Portafirmas RedSara</string>
     <string name="wizard_signfolder_option2_body">Este portafirmas se configurará automáticamente.</string>
