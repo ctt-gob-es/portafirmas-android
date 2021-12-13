@@ -87,10 +87,9 @@ public final class LoadSignRequestsTask extends AsyncTask<Void, Void, PartialSig
 			}
     	}
     	catch (final Throwable t) {
-    		t.printStackTrace();
     		signRequests = null;
 			this.running = false;
-    		PfLog.e(SFConstants.LOG_TAG, "Problema grave al listar las peticiones: " + t); //$NON-NLS-1$
+    		PfLog.e(SFConstants.LOG_TAG, "Problema grave al listar las peticiones", t); //$NON-NLS-1$
     	}
 
     	return signRequests;

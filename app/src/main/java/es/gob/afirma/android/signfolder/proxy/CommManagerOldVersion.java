@@ -63,8 +63,7 @@ public class CommManagerOldVersion {
 			this.db = DocumentBuilderFactory.newInstance().newDocumentBuilder();
 		} catch (final ParserConfigurationException e) {
 			PfLog.e(SFConstants.LOG_TAG,
-					"No se ha podido cargar un manejador de XML: " + e.toString()); //$NON-NLS-1$
-			e.printStackTrace();
+					"No se ha podido cargar un manejador de XML", e); //$NON-NLS-1$
 			this.db = null;
 		}
 	}

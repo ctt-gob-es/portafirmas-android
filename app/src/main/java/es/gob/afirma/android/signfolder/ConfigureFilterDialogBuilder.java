@@ -385,8 +385,7 @@ public final class ConfigureFilterDialogBuilder {
                 try {
                     getFilterConfig().setSubject(value);
                 } catch (final Exception e) {
-                    PfLog.w(SFConstants.LOG_TAG, "No se ha podido configurar el valor del filtro con el metodo: " + methodName); //$NON-NLS-1$
-                    e.printStackTrace();
+                    PfLog.w(SFConstants.LOG_TAG, "No se ha podido configurar el valor del filtro con el metodo: " + methodName, e); //$NON-NLS-1$
                 }
             }
 
@@ -409,8 +408,7 @@ public final class ConfigureFilterDialogBuilder {
                     getFilterConfig().getClass().getDeclaredMethod(methodName, String.class)
                             .invoke(getFilterConfig(), ((KeyValuePair) spnr.getItemAtPosition(position)).getKey());
                 } catch (final Exception e) {
-                    PfLog.w(SFConstants.LOG_TAG, "No se ha podido configurar el valor del filtro correspondiente al spinner: " + spnr.getId()); //$NON-NLS-1$
-                    e.printStackTrace();
+                    PfLog.w(SFConstants.LOG_TAG, "No se ha podido configurar el valor del filtro correspondiente al spinner: " + spnr.getId(), e); //$NON-NLS-1$
                 }
             }
 
@@ -701,8 +699,7 @@ public final class ConfigureFilterDialogBuilder {
                 getFilterConfig().getClass().getDeclaredMethod("setEnabled", Boolean.TYPE) //$NON-NLS-1$
                         .invoke(getFilterConfig(), checked);
             } catch (final Exception e) {
-                PfLog.w(SFConstants.LOG_TAG, "No se ha podido configurar el valor de la propiedad de activacion de filtros"); //$NON-NLS-1$
-                e.printStackTrace();
+                PfLog.w(SFConstants.LOG_TAG, "No se ha podido configurar el valor de la propiedad de activacion de filtros", e); //$NON-NLS-1$
             }
         }
     }

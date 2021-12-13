@@ -561,7 +561,12 @@ public final class PetitionListActivity extends WebViewParentActivity implements
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                dialog.show(getSupportFragmentManager(), DIALOG_TAG);
+                try {
+                    dialog.show(getSupportFragmentManager(), DIALOG_TAG);
+                }
+                catch (Exception e) {
+                    PfLog.w(SFConstants.LOG_TAG, "No se pudo mostrar el dialogo para confirmar el rechazo de la peticion", e); //$NON-NLS-1$
+                }
             }
         });
     }
@@ -576,7 +581,12 @@ public final class PetitionListActivity extends WebViewParentActivity implements
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    dialog.show(getSupportFragmentManager(), DIALOG_TAG);
+                    try {
+                        dialog.show(getSupportFragmentManager(), DIALOG_TAG);
+                    }
+                    catch (Exception e) {
+                        PfLog.w(SFConstants.LOG_TAG, "No se pudo mostrar el dialogo de error de elementos no seleccionados", e); //$NON-NLS-1$
+                    }
                 }
             });
         } catch (final Exception e) {
@@ -595,13 +605,17 @@ public final class PetitionListActivity extends WebViewParentActivity implements
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    dialog.show(PetitionListActivity.this.getSupportFragmentManager(), DIALOG_TAG);
+                    try {
+                        dialog.show(PetitionListActivity.this.getSupportFragmentManager(), DIALOG_TAG);
+                    }
+                    catch (Exception e) {
+                        PfLog.w(SFConstants.LOG_TAG, "No se pudo mostrar el mensaje de error", e); //$NON-NLS-1$
+                    }
                 }
             });
         } catch (final Throwable e) {
             PfLog.w(SFConstants.LOG_TAG,
-                    "No se ha podido mostrar el dialogo de error con el mensaje: " + message + ": " + e); //$NON-NLS-1$ //$NON-NLS-2$
-            e.printStackTrace();
+                    "No se ha podido mostrar el dialogo de error con el mensaje: " + message, e); //$NON-NLS-1$ //$NON-NLS-2$
         }
     }
 
@@ -631,7 +645,12 @@ public final class PetitionListActivity extends WebViewParentActivity implements
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                dialog.show(getSupportFragmentManager(), DIALOG_TAG);
+                try {
+                    dialog.show(getSupportFragmentManager(), DIALOG_TAG);
+                }
+                catch (Exception e) {
+                    PfLog.w(SFConstants.LOG_TAG, "No se pudo mostrar el dialogo de confirmacion de firma", e); //$NON-NLS-1$
+                }
             }
         });
 
@@ -1223,7 +1242,12 @@ public final class PetitionListActivity extends WebViewParentActivity implements
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                dialog.show(getSupportFragmentManager(), DIALOG_TAG);
+                try {
+                    dialog.show(getSupportFragmentManager(), DIALOG_TAG);
+                }
+                catch (Exception e) {
+                    PfLog.w(SFConstants.LOG_TAG, "No se pudo mostrar el dialogo de confirmacion de cierre de sesion", e); //$NON-NLS-1$
+                }
             }
         });
     }

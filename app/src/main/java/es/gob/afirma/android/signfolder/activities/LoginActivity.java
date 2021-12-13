@@ -14,7 +14,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.security.KeyChain;
 import android.security.KeyChainException;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -24,7 +23,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.core.content.FileProvider;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -145,7 +143,6 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
         this.progressDialog = pd;
     }
 
-
     /**
      * @param v Vista sobre la que se hace clic.
      */
@@ -162,6 +159,13 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
     }
 
     public void onClickAccessButton() {
+        access();
+    }
+
+    /**
+     * Inicia el acceso de usuario.
+     */
+    private void access() {
         // Reiniciamos la conexion con el servicio proxy
         // y comprobamos que tenemos conexion con el
         CommManager.resetConfig();
@@ -451,41 +455,6 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
         }
     }
 
-
-//	/** Muestra un di&aacute;logo de espera con un mensaje. */
-//	private void showProgressDialog(final String message, final LoadKeyStoreManagerTask lksmt,
-//								final LoginRequestValidationTask lcdt) {
-//		runOnUiThread(new Runnable() {
-//			@Override
-//			public void run() {
-//				try {
-//					setProgressDialog(ProgressDialog.show(LoginActivity.this, null, message, true));
-//					getProgressDialog().setOnKeyListener(new OnKeyListener() {
-//						@Override
-//						public boolean onKey(final DialogInterface dialog, final int keyCode, final KeyEvent event) {
-//							if (keyCode == KeyEvent.KEYCODE_BACK) {
-//								if(lksmt != null){
-//									lksmt.cancel(true);
-//								}else if(lcdt != null){
-//									lcdt.cancel(true);
-//									if (lcdt.timer != null) {
-//										lcdt.timer.cancel();
-//									}
-//								}
-//								dismissProgressDialog();
-//								return true;
-//							}
-//							return false;
-//						}
-//					});
-//
-//				}catch (final Exception e) {
-//					PfLog.e(SFConstants.LOG_TAG, "No se ha podido mostrar el dialogo de progreso: " + e); //$NON-NLS-1$
-//				}
-//			}
-//		});
-//	}
-
     /**
      * Muestra un di&aacute;logo de espera con un mensaje.
      */
@@ -644,8 +613,7 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
                 }
             });
         } catch (final Exception e) {
-            PfLog.e(SFConstants.LOG_TAG, "No se ha podido mostrar el mensaje de error por configuracion incorrecta: " + e); //$NON-NLS-1$
-            e.printStackTrace();
+            PfLog.e(SFConstants.LOG_TAG, "No se ha podido mostrar el mensaje de error por configuracion incorrecta", e); //$NON-NLS-1$
         }
     }
 

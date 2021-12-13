@@ -10,6 +10,8 @@ import java.security.cert.X509Certificate;
 
 import es.gob.afirma.android.crypto.MobileKeyStoreManager.KeySelectedEvent;
 import es.gob.afirma.android.crypto.MobileKeyStoreManager.PrivateKeySelectionListener;
+import es.gob.afirma.android.signfolder.SFConstants;
+import es.gob.afirma.android.util.PfLog;
 
 public final class LoadSelectedPrivateKeyTask extends AsyncTask<Void, Void, PrivateKey> {
 
@@ -33,7 +35,7 @@ public final class LoadSelectedPrivateKeyTask extends AsyncTask<Void, Void, Priv
 			pk = KeyChain.getPrivateKey(this.context, this.selectedAlias);
 			this.certChain = KeyChain.getCertificateChain(this.context, this.selectedAlias);
 		} catch (final Exception e) {
-			e.printStackTrace();
+			PfLog.e(SFConstants.LOG_TAG, "No se pudo cargar la clave del certificado seleccionado", e);
 			this.t = e;
 			return null;
 		}

@@ -600,8 +600,7 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
                     }
                 });
             } catch (final Exception e) {
-                PfLog.w(SFConstants.LOG_TAG, "No se pudo informar de que la firma se guardo correctamente: " + e); //$NON-NLS-1$
-                e.printStackTrace();
+                PfLog.w(SFConstants.LOG_TAG, "No se pudo informar de que la firma se guardo correctamente", e); //$NON-NLS-1$
             }
         }
     }
@@ -622,7 +621,12 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                dlg.show(getSupportFragmentManager(), DIALOG_TAG);
+                try {
+                    dlg.show(getSupportFragmentManager(), DIALOG_TAG);
+                }
+                catch (Exception e) {
+                    PfLog.w(SFConstants.LOG_TAG, "No se pudo mostrar el mensaje de error", e); //$NON-NLS-1$
+                }
             }
         });
     }
@@ -677,7 +681,12 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    md.show(getSupportFragmentManager(), "ErrorDialog"); //$NON-NLS-1$
+                    try {
+                        md.show(getSupportFragmentManager(), "ErrorDialog"); //$NON-NLS-1$
+                    }
+                    catch (Exception e) {
+                        PfLog.w(SFConstants.LOG_TAG, "No se pudo mostrar el mensaje de error", e); //$NON-NLS-1$
+                    }
                 }
             });
         }
@@ -717,7 +726,12 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                dlg.show(getSupportFragmentManager(), DIALOG_TAG);
+                try {
+                    dlg.show(getSupportFragmentManager(), DIALOG_TAG);
+                }
+                catch (Exception e) {
+                    PfLog.w(SFConstants.LOG_TAG, "No se pudo mostrar el mensaje de error", e); //$NON-NLS-1$
+                }
             }
         });
     }
@@ -1214,7 +1228,12 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                dialog.show(getSupportFragmentManager(), DIALOG_TAG);
+                try {
+                    dialog.show(getSupportFragmentManager(), DIALOG_TAG);
+                }
+                catch (Exception e) {
+                    PfLog.w(SFConstants.LOG_TAG, "Error al mostrar la consulta de cierre de la sesion", e); //$NON-NLS-1$
+                }
             }
         });
     }

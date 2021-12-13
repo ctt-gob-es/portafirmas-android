@@ -60,40 +60,32 @@ public final class SignRequestTask extends AsyncTask<Void, Void, RequestResult>{
 			result = TriSigner.sign(this.signRequest, this.pk, this.certificateChain, this.comm);
 		}
 		catch (final CertificateEncodingException e) {
-			PfLog.e(SFConstants.LOG_TAG, "Error al codificar el certificado de firma: " + e); //$NON-NLS-1$
+			PfLog.e(SFConstants.LOG_TAG, "Error al codificar el certificado de firma", e); //$NON-NLS-1$
 			this.t = e;
-			e.printStackTrace();
 		}
 		catch (final IOException e) {
-			PfLog.e(SFConstants.LOG_TAG, "Error en la comunicacion con el servidor: " + e); //$NON-NLS-1$
+			PfLog.e(SFConstants.LOG_TAG, "Error en la comunicacion con el servidor", e); //$NON-NLS-1$
 			this.t = e;
-			e.printStackTrace();
 		}
 		catch (final SAXException e) {
-			PfLog.e(SFConstants.LOG_TAG, "Error en las respuesta devuelta por el servicio de firma: " + e); //$NON-NLS-1$
+			PfLog.e(SFConstants.LOG_TAG, "Error en las respuesta devuelta por el servicio de firma", e); //$NON-NLS-1$
 			this.t = e;
-			e.printStackTrace();
 		}
 		catch (final Exception e) {
-
-			e.printStackTrace();
-
 			// Solo se dara este error (hasta la fecha) cuando se intente cargar el dialogo de PIN de
 			// una tarjeta criptografica
 			if (e.getCause() != null && e.getCause() instanceof AOException && e.getCause().getCause() instanceof ActivityNotFoundException) {
-				PfLog.e(SFConstants.LOG_TAG, "Error al intentar cargar el dialogo de PIN de una tarjeta criptografica: " + e); //$NON-NLS-1$
+				PfLog.e(SFConstants.LOG_TAG, "Error al intentar cargar el dialogo de PIN de una tarjeta criptografica", e); //$NON-NLS-1$
 				this.t = e;
 			}
 			else {
-				PfLog.e(SFConstants.LOG_TAG, "Error durante la operacion de firma: " + e); //$NON-NLS-1$
+				PfLog.e(SFConstants.LOG_TAG, "Error durante la operacion de firma", e); //$NON-NLS-1$
 				this.t = e;
 			}
 		}
 		catch (final Throwable e) {
-			PfLog.e(SFConstants.LOG_TAG, "Error grave durante la operacion de firma: " + e); //$NON-NLS-1$
+			PfLog.e(SFConstants.LOG_TAG, "Error grave durante la operacion de firma", e); //$NON-NLS-1$
 			this.t = e;
-
-			e.printStackTrace();
 		}
 
 		return result;

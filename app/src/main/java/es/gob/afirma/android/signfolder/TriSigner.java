@@ -70,8 +70,7 @@ public final class TriSigner {
 					signPhase2(docRequests, pk, certificateChain);
 				}
 				catch(final Exception e) {
-					PfLog.w(SFConstants.LOG_TAG, "Error en la fase de FIRMA: " + e); //$NON-NLS-1$
-					e.printStackTrace();
+					PfLog.w(SFConstants.LOG_TAG, "Error en la fase de FIRMA", e); //$NON-NLS-1$
 
 					// Si un documento falla en firma toda la peticion se da por fallida
 					return new RequestResult(request.getId(), false);
