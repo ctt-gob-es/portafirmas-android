@@ -58,7 +58,8 @@ public final class LoginOptionsDialogBuilder {
 		// Ordenamos por alias
 		Collections.sort(servers);
 		this.items = servers.toArray(new CharSequence[servers.size()]);
-		this.selectedServer = servers.indexOf(AppPreferences.getInstance().getSelectedProxyAlias());
+		String selectedProxyAlias = AppPreferences.getInstance().getSelectedProxyAlias();
+		this.selectedServer = servers.indexOf(selectedProxyAlias);
 
 		// Si no hay ningun servidor marcado como por defecto, marcamos el primero
 		if (this.selectedServer == -1) {

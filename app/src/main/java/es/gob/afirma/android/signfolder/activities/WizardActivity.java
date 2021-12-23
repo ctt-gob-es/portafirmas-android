@@ -20,11 +20,19 @@ public class WizardActivity extends AppCompatActivity {
 
     private int currentLayout = -1;
 
+    private AppPreferences preferences = null;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (currentLayout == -1) {
             changeActivityLayout(R.layout.activity_wizard_signfolder);
+        }
+
+        // Inicializamos las preferencias y establecemos los valores que deben existir de inicio
+        if (preferences == null) {
+            preferences = AppPreferences.getInstance();
+            preferences.setDefaultServers();
         }
     }
 
