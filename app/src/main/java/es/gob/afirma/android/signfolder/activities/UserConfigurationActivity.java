@@ -32,11 +32,13 @@ import es.gob.afirma.android.signfolder.CryptoConfiguration;
 import es.gob.afirma.android.signfolder.MessageDialog;
 import es.gob.afirma.android.signfolder.R;
 import es.gob.afirma.android.signfolder.SFConstants;
+import es.gob.afirma.android.signfolder.SignfolderApp;
 import es.gob.afirma.android.signfolder.adapter.AuthorizerAdapter;
 import es.gob.afirma.android.signfolder.adapter.VerifierAdapter;
 import es.gob.afirma.android.signfolder.proxy.CommManager;
 import es.gob.afirma.android.signfolder.proxy.GenericResponse;
 import es.gob.afirma.android.signfolder.proxy.RequestAppConfiguration;
+import es.gob.afirma.android.signfolder.tasks.CleanTempFilesTask;
 import es.gob.afirma.android.signfolder.tasks.CreateVerifierTask;
 import es.gob.afirma.android.signfolder.tasks.LoadDelegationsTask;
 import es.gob.afirma.android.signfolder.tasks.LogoutRequestTask;
@@ -218,6 +220,13 @@ public final class UserConfigurationActivity extends FragmentActivity implements
             public void onClick(final DialogInterface dialog, final int id) {
                 CryptoConfiguration.setCertificateAlias(null);
                 CryptoConfiguration.setCertificatePrivateKeyEntry(null);
+                try {
+                    CleanTempFilesTask cleanTask = new CleanTempFilesTask(SignfolderApp.getInternalTempDir());
+                    cleanTask.execute();
+                } catch (Exception e) {
+                    PfLog.e(SFConstants.LOG_TAG,
+                            "No se ha podido ejecutar la tarea de borrado de temporales", e); //$NON-NLS-1$
+                }
                 try {
                     LogoutRequestTask lrt = new LogoutRequestTask(CommManager.getInstance());
                     lrt.execute();

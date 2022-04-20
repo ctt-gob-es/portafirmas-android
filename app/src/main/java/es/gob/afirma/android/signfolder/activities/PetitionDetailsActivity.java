@@ -59,6 +59,7 @@ import es.gob.afirma.android.signfolder.ErrorManager;
 import es.gob.afirma.android.signfolder.MessageDialog;
 import es.gob.afirma.android.signfolder.R;
 import es.gob.afirma.android.signfolder.SFConstants;
+import es.gob.afirma.android.signfolder.SignfolderApp;
 import es.gob.afirma.android.signfolder.listeners.DialogFragmentListener;
 import es.gob.afirma.android.signfolder.listeners.OperationRequestListener;
 import es.gob.afirma.android.signfolder.proxy.CommManager;
@@ -72,6 +73,7 @@ import es.gob.afirma.android.signfolder.proxy.SignRequest;
 import es.gob.afirma.android.signfolder.proxy.SignRequest.RequestType;
 import es.gob.afirma.android.signfolder.proxy.SignRequestDocument;
 import es.gob.afirma.android.signfolder.tasks.ApproveRequestsTask;
+import es.gob.afirma.android.signfolder.tasks.CleanTempFilesTask;
 import es.gob.afirma.android.signfolder.tasks.DownloadFileTask;
 import es.gob.afirma.android.signfolder.tasks.DownloadFileTask.DownloadDocumentListener;
 import es.gob.afirma.android.signfolder.tasks.FireLoadDataTask;
@@ -667,7 +669,7 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
             // cierra dentro de la tarea de copia)
             try {
                 FileInputStream docFis = new FileInputStream(documentFile);
-                SaveFileTask copyTask = new SaveFileTask(docFis, selectedDocItem.name, true, null, this);
+                SaveFileTask copyTask = new SaveFileTask(docFis, selectedDocItem.name, true, false,null, this);
                 copyTask.execute();
             }
             catch (Exception e2) {
@@ -1048,6 +1050,13 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
         if (dialogId == DIALOG_CONFIRM_EXIT) {
             CryptoConfiguration.setCertificateAlias(null);
             CryptoConfiguration.setCertificatePrivateKeyEntry(null);
+            try {
+                CleanTempFilesTask cleanTask = new CleanTempFilesTask(SignfolderApp.getInternalTempDir());
+                cleanTask.execute();
+            } catch (Exception e) {
+                PfLog.e(SFConstants.LOG_TAG,
+                        "No se ha podido ejecutar la tarea de borrado de temporales", e); //$NON-NLS-1$
+            }
             try {
                 LogoutRequestTask lrt = new LogoutRequestTask(CommManager.getInstance());
                 lrt.execute();

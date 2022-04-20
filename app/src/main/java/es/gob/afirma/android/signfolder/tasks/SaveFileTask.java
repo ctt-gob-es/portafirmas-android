@@ -12,6 +12,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import es.gob.afirma.android.signfolder.SFConstants;
+import es.gob.afirma.android.signfolder.SignfolderApp;
 import es.gob.afirma.android.util.PfLog;
 
 /** Tarea para descarga de fichero en segundo plano. */
@@ -20,6 +21,7 @@ public class SaveFileTask extends AsyncTask<Void, Void, File> {
 	private final InputStream dataIs;
 	private final String filename;
 	private final boolean extDir;
+	private final boolean tempDir;
 	private final SaveFileListener listener;
 	private final Context context;
 
@@ -27,13 +29,15 @@ public class SaveFileTask extends AsyncTask<Void, Void, File> {
 	 * @param dataIs Flujo de lectura de los datos del fichero.
 	 * @param filename Nombre del fichero a guardar.
 	 * @param extDir Indica si se deberia guardar en un directorio externo o interno de la aplicación.
+	 * @param tempDir Cuando se pida guardar en un directorio interno, indica si sera un guardado temporal o no.
 	 * @param listener Clase a la que notificar el sesultado de la tarea.
 	 * @param context Contexto que invoca a la tarea.
 	 */
-	public SaveFileTask(final InputStream dataIs, final String filename, final boolean extDir, final SaveFileListener listener, final Context context) {
+	public SaveFileTask(final InputStream dataIs, final String filename, final boolean extDir, final boolean tempDir, final SaveFileListener listener, final Context context) {
 		this.dataIs = dataIs;
 		this.filename = filename;
 		this.extDir = extDir;
+		this.tempDir = tempDir;
 		this.listener = listener;
 		this.context = context;
 	}
@@ -51,8 +55,14 @@ public class SaveFileTask extends AsyncTask<Void, Void, File> {
 				);
 			}
         	else {
+        		File outputDir = this.tempDir
+						? SignfolderApp.getInternalTempDir()
+						: this.context.getFilesDir();
+        		if (!outputDir.exists()) {
+        			outputDir.mkdirs();
+				}
 				outFile = new File(
-						this.context.getFilesDir(),
+						outputDir,
 						generateFileName(this.filename, i++)
 				);
 			}

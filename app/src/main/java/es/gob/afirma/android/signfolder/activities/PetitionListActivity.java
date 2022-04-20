@@ -72,6 +72,7 @@ import es.gob.afirma.android.signfolder.proxy.RequestResult;
 import es.gob.afirma.android.signfolder.proxy.SignRequest;
 import es.gob.afirma.android.signfolder.proxy.SignRequest.RequestType;
 import es.gob.afirma.android.signfolder.tasks.ApproveRequestsTask;
+import es.gob.afirma.android.signfolder.tasks.CleanTempFilesTask;
 import es.gob.afirma.android.signfolder.tasks.FireLoadDataTask;
 import es.gob.afirma.android.signfolder.tasks.FireSignTask;
 import es.gob.afirma.android.signfolder.tasks.LoadSignRequestsTask;
@@ -1621,6 +1622,13 @@ public final class PetitionListActivity extends WebViewParentActivity implements
             CryptoConfiguration.setCertificateAlias(null);
             CryptoConfiguration.setCertificatePrivateKeyEntry(null);
             try {
+                CleanTempFilesTask cleanTask = new CleanTempFilesTask(SignfolderApp.getInternalTempDir());
+                cleanTask.execute();
+            } catch (Exception e) {
+                PfLog.e(SFConstants.LOG_TAG,
+                        "No se ha podido ejecutar la tarea de borrado de temporales", e); //$NON-NLS-1$
+            }
+            try {
                 LogoutRequestTask lrt = new LogoutRequestTask(CommManager.getInstance());
                 lrt.execute();
             } catch (Exception e) {
@@ -1787,7 +1795,12 @@ public final class PetitionListActivity extends WebViewParentActivity implements
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    getProgressDialog().dismiss();
+                    try {
+                        getProgressDialog().dismiss();
+                    }
+                    catch (Exception e) {
+                        PfLog.w(SFConstants.LOG_TAG, "El dialogo de espera no estaba abierto o fallo al cerrarse: " + e);
+                    }
                 }
             });
         }
@@ -1945,7 +1958,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
      * paginaci&oacute;n).
      */
     private enum PetitionListItemType {
-        PETITION_ITEM, PAGINATION_PANEL
+        PETITION_ITEM, TITLE_ITEM, PAGINATION_PANEL
     }
 
     /**
@@ -2135,55 +2148,66 @@ public final class PetitionListActivity extends WebViewParentActivity implements
             }
 
             View pagButton = paginationView.findViewById(R.id.arrowFirst);
-            pagButton.setVisibility(this.page == FIRST_PAGE ? View.INVISIBLE : View.VISIBLE);
-            pagButton.setOnClickListener(
-                    new OnClickListener() {
-                        @Override
-                        public void onClick(final View v) {
-                            v.setSelected(true);
-                            setVisibilityLoadingMessage(true, null, PetitionListActivity.this.loadingTask);
-                            updateCurrentList(FIRST_PAGE);
-                        }
-                    });
+            if (pagButton != null) {
+                pagButton.setVisibility(this.page == FIRST_PAGE ? View.INVISIBLE : View.VISIBLE);
+                pagButton.setOnClickListener(
+                        new OnClickListener() {
+                            @Override
+                            public void onClick(final View v) {
+                                v.setSelected(true);
+                                setVisibilityLoadingMessage(true, null, PetitionListActivity.this.loadingTask);
+                                updateCurrentList(FIRST_PAGE);
+                            }
+                        });
+            }
 
             pagButton = paginationView.findViewById(R.id.arrowLeft);
-            pagButton.setVisibility(this.page == FIRST_PAGE ? View.INVISIBLE : View.VISIBLE);
-            pagButton.setOnClickListener(
-                    new OnClickListener() {
-                        @Override
-                        public void onClick(final View v) {
-                            v.setSelected(true);
-                            setVisibilityLoadingMessage(true, null, PetitionListActivity.this.loadingTask);
-                            updateCurrentList(PanelPaginationElement.this.page - 1);
-                        }
-                    });
+            if (pagButton != null) {
+                pagButton.setVisibility(this.page == FIRST_PAGE ? View.INVISIBLE : View.VISIBLE);
+                pagButton.setOnClickListener(
+                        new OnClickListener() {
+                            @Override
+                            public void onClick(final View v) {
+                                v.setSelected(true);
+                                setVisibilityLoadingMessage(true, null, PetitionListActivity.this.loadingTask);
+                                updateCurrentList(PanelPaginationElement.this.page - 1);
+                            }
+                        });
+            }
 
             pagButton = paginationView.findViewById(R.id.arrowRigth);
-            pagButton.setVisibility(this.page == this.nPages ? View.INVISIBLE : View.VISIBLE);
-            pagButton.setOnClickListener(
-                    new OnClickListener() {
-                        @Override
-                        public void onClick(final View v) {
-                            v.setSelected(true);
-                            setVisibilityLoadingMessage(true, null, PetitionListActivity.this.loadingTask);
-                            updateCurrentList(PanelPaginationElement.this.page + 1);
-                        }
-                    });
+            if (pagButton != null) {
+                pagButton.setVisibility(this.page == this.nPages ? View.INVISIBLE : View.VISIBLE);
+                pagButton.setOnClickListener(
+                        new OnClickListener() {
+                            @Override
+                            public void onClick(final View v) {
+                                v.setSelected(true);
+                                setVisibilityLoadingMessage(true, null, PetitionListActivity.this.loadingTask);
+                                updateCurrentList(PanelPaginationElement.this.page + 1);
+                            }
+                        });
+            }
 
             pagButton = paginationView.findViewById(R.id.arrowLast);
-            pagButton.setVisibility(this.page == this.nPages ? View.INVISIBLE : View.VISIBLE);
-            pagButton.setOnClickListener(
-                    new OnClickListener() {
-                        @Override
-                        public void onClick(final View v) {
-                            v.setSelected(true);
-                            setVisibilityLoadingMessage(true, null, PetitionListActivity.this.loadingTask);
-                            updateCurrentList(PanelPaginationElement.this.nPages);
-                        }
-                    });
+            if (pagButton != null) {
+                pagButton.setVisibility(this.page == this.nPages ? View.INVISIBLE : View.VISIBLE);
+                pagButton.setOnClickListener(
+                        new OnClickListener() {
+                            @Override
+                            public void onClick(final View v) {
+                                v.setSelected(true);
+                                setVisibilityLoadingMessage(true, null, PetitionListActivity.this.loadingTask);
+                                updateCurrentList(PanelPaginationElement.this.nPages);
+                            }
+                        });
+            }
 
-            ((TextView) paginationView.findViewById(R.id.paginationText)).setText(
-                    getString(R.string.pagination_separator, this.page, this.nPages));
+            TextView pagText = ((TextView) paginationView.findViewById(R.id.paginationText));
+            if (pagText != null) {
+                pagText.setText(
+                        getString(R.string.pagination_separator, this.page, this.nPages));
+            }
 
             return paginationView;
         }
@@ -2201,23 +2225,22 @@ public final class PetitionListActivity extends WebViewParentActivity implements
 
         @Override
         public int getViewType() {
-            return PetitionListItemType.PAGINATION_PANEL.ordinal();
+            return PetitionListItemType.TITLE_ITEM.ordinal();
         }
 
         @Override
         public View getView(final LayoutInflater inflater, final View convertView, final int position) {
 
-            View paginationView = convertView;
-            if (paginationView == null) {
-                paginationView = ((LayoutInflater) this.context
+            View titleView = convertView;
+            if (titleView == null) {
+                titleView = ((LayoutInflater) this.context
                         .getSystemService(Context.LAYOUT_INFLATER_SERVICE))
                         .inflate(R.layout.array_adapter_header, null);
             }
 
-            ((TextView) paginationView.findViewById(R.id.header)).setText(this.text);/*
-					getString(R.string.pagination_separator, Integer.valueOf(this.page), Integer.valueOf(this.nPages)));*/
+            ((TextView) titleView.findViewById(R.id.header)).setText(this.text);
 
-            return paginationView;
+            return titleView;
         }
     }
 
