@@ -5,6 +5,7 @@ import android.content.Context;
 import android.os.AsyncTask;
 
 import java.io.File;
+import java.util.Locale;
 
 import es.gob.afirma.android.signfolder.SFConstants;
 import es.gob.afirma.android.signfolder.tasks.SaveFileTask.SaveFileListener;
@@ -18,6 +19,7 @@ public final class DownloadFileTask extends AsyncTask<Void, Void, DocumentData> 
 	private static final String DEFAULT_TEMP_DOCUMENT_PREFIX = "temp";  //$NON-NLS-1$
 
 	private static final String PDF_MIMETYPE = "application/pdf"; //$NON-NLS-1$
+	private static final String PDF_FILE_EXTS = ".pdf"; //$NON-NLS-1$
 
 	private final String documentId;
 	private final int type;
@@ -135,8 +137,19 @@ public final class DownloadFileTask extends AsyncTask<Void, Void, DocumentData> 
 			}
 		}
 
+		// Adobe Reader parece tener problemas para abrir documentos PDF que no tienen
+		// extension .pdf, asi que, cuando se vaya a guardar un documento para abrirlo despues,
+		// nos asegiraremos de que tiene esa extension
+		if (!this.extDir
+				&& PDF_MIMETYPE.equalsIgnoreCase(this.mimetype)
+				&& !filename.toLowerCase(Locale.ROOT).endsWith(PDF_FILE_EXTS)) {
+			filename += PDF_FILE_EXTS;
+		}
+
+		// Guardamos el documento. En caso de guardarse en un directorio interno, se guardara como
+		// temporal, ya que sera un documento que unicamente se va a visualizar para consulta
 		new SaveFileTask(
-				documentData.getDataIs(), filename, this.extDir, this, this.context
+				documentData.getDataIs(), filename, this.extDir, !this.extDir, this, this.context
 				).execute();
 	}
 
