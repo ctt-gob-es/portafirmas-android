@@ -8,7 +8,7 @@ import es.gob.afirma.android.signfolder.SFConstants;
 import es.gob.afirma.android.util.PfLog;
 
 /** Actividad de la que deberán heredar aquellas actividades que deseen utilizar un formulario web
- * a trav&eacute;s de un WebViewpara para la autenticaci&oacute;n/autorizaci&oacute;n del usuario. */
+ * a trav&eacute;s de un WebView para la autenticaci&oacute;n/autorizaci&oacute;n del usuario. */
 public class WebViewParentActivity extends FragmentActivity {
 
     public static final int WEBVIEW_REQUEST_CODE = 20;

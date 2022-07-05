@@ -3,10 +3,19 @@
             android:alphabeticShortcut="C"
             android:title="@string/server_select"></item>
 
-    <item android:id="@+id/clavefirma"
+    <group android:id="@+id/group_certorigin" android:checkableBehavior="single">
+
+        <item android:id="@+id/local_keystore"
+                android:title="@string/enable_localrepository"
+                android:alphabeticShortcut="L"
+                android:checked="true"></item>
+        <item android:id="@+id/clavefirma"
             android:title="@string/enable_clavefirma"
-            android:visible="true"
-            android:checkable="true"></item>
+            android:alphabeticShortcut="F"></item>
+        <item android:id="@+id/dnie"
+            android:title="@string/enable_dnie"
+            android:alphabeticShortcut="D"></item>
+    </group>
 
     <item android:id="@+id/help" android:alphabeticShortcut="H" android:title="@string/help"></item>
 

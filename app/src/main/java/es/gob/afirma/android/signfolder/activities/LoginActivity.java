@@ -4,7 +4,6 @@ import android.Manifest;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.DialogInterface.OnKeyListener;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
@@ -35,11 +34,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import es.gob.afirma.android.crypto.AuthenticationResult;
+import es.gob.afirma.android.crypto.KeyStoreManagerListener;
 import es.gob.afirma.android.crypto.LoadKeyStoreManagerTask;
-import es.gob.afirma.android.crypto.LoadKeyStoreManagerTask.KeystoreManagerListener;
-import es.gob.afirma.android.crypto.MobileKeyStoreManager;
 import es.gob.afirma.android.crypto.MobileKeyStoreManager.KeySelectedEvent;
 import es.gob.afirma.android.crypto.MobileKeyStoreManager.PrivateKeySelectionListener;
+import es.gob.afirma.android.crypto.NfcHelper;
 import es.gob.afirma.android.fcm.NotificationUtilities;
 import es.gob.afirma.android.signfolder.AppPreferences;
 import es.gob.afirma.android.signfolder.ConfigureFilterDialogBuilder;
@@ -49,12 +49,8 @@ import es.gob.afirma.android.signfolder.LoginOptionsDialogBuilder.LoginOptionsLi
 import es.gob.afirma.android.signfolder.MessageDialog;
 import es.gob.afirma.android.signfolder.R;
 import es.gob.afirma.android.signfolder.SFConstants;
-import es.gob.afirma.android.signfolder.listeners.LoginListener;
-import es.gob.afirma.android.signfolder.proxy.ClaveLoginResult;
 import es.gob.afirma.android.signfolder.proxy.CommManager;
 import es.gob.afirma.android.signfolder.proxy.RequestAppConfiguration;
-import es.gob.afirma.android.signfolder.proxy.ValidationLoginResult;
-import es.gob.afirma.android.signfolder.tasks.ClaveLoginTask;
 import es.gob.afirma.android.signfolder.tasks.LoadConfigurationDataTask;
 import es.gob.afirma.android.signfolder.tasks.LoadUserConfigTask;
 import es.gob.afirma.android.signfolder.tasks.LoginRequestValidationTask;
@@ -68,12 +64,9 @@ import es.gob.afirma.android.util.PfLog;
 /**
  * Actividad para entrada con usuario y contraseña al servicio de Portafirmas.
  */
-public final class LoginActivity extends WebViewParentActivity implements KeystoreManagerListener,
-        PrivateKeySelectionListener,
+public final class LoginActivity extends AuthenticationFragmentActivity implements PrivateKeySelectionListener,
         LoginOptionsListener,
         LoadConfigurationDataTask.LoadConfigurationListener,
-        ClaveLoginTask.ClaveLoginRequestListener,
-        LoginListener,
         LoadUserConfigTask.LoadUserConfigListener {
 
     private final static String EXTRA_RESOURCE_TITLE = "es.gob.afirma.signfolder.title"; //$NON-NLS-1$
@@ -87,13 +80,15 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
 
     private final static int PERMISSION_TO_OPEN_HELP = 22;
 
-    /**
-     * Dialogo para mostrar mensajes al usuario
-     */
+    /** Di&aacute;logo para mostrar mensajes al usuario. */
     private MessageDialog messageDialog = null;
+    /** Di&aacute;logo de espera. */
     private ProgressDialog progressDialog = null;
 
     private boolean notificationTokenChecked = false;
+
+
+    boolean nfcAvailable = true;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -116,6 +111,9 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
             //Error en la conexion
             showErrorDialog(getString(R.string.error_msg_check_connection));
         }
+
+        // Comprobamos si el dispositivo cuenta con NFC
+        nfcAvailable = NfcHelper.isNfcServiceAvailable(this);
 
         // Una vez, tras el inicio de la aplicacion, obtenemos el token para el envio de
         // notificaciones a la aplicacion y lo registramos
@@ -144,21 +142,10 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
     }
 
     /**
+     * M&eacute;todo ejecutado al hacer clic sobre el bot&oacute;n Acceder.
      * @param v Vista sobre la que se hace clic.
      */
-    public void onClick(final View v) {
-
-        //Boton Acceder
-        if (v.getId() == R.id.button_acceder) {
-            onClickAccessButton();
-        }
-        // Boton importar certificados
-        else {
-            onClickImportCertButton();
-        }
-    }
-
-    public void onClickAccessButton() {
+    public void onClickAccessButton(final View v) {
         access();
     }
 
@@ -174,21 +161,14 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
             return;
         }
 
-        // Acceso con certificado local
-        if (!AppPreferences.getInstance().isCloudCertEnabled()) {
-            // Iniciamos la carga del certificado
-            loadKeyStore();
-        }
-        // Acceso con certificado en la nube
-        else {
-            // Ejecutamos la tarea de conexion con Clave
-            ClaveLoginTask loginTask = new ClaveLoginTask(this);
-            showProgressDialog(getString(R.string.dialog_msg_clave), this, loginTask);
-            loginTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-        }
+        authenticate();
     }
 
-    public void onClickImportCertButton() {
+    /**
+     * M&eacute;todo ejecutado al hacer clic sobre el bot&oacute;n Acceder.
+     * @param v Vista sobre la que se hace clic.
+     */
+    public void onClickImportCertButton(final View v) {
         // Comprobamos si tenemos permisos para cargar el almacen de certificados en disco
         boolean storagePerm = (
                 ContextCompat.checkSelfPermission(
@@ -273,65 +253,7 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
     }
 
     @Override
-    public void setKeyStoreManager(final MobileKeyStoreManager msm) {
-
-        dismissProgressDialog();
-
-        if (msm == null) {
-            PfLog.w(SFConstants.LOG_TAG, "Error al establecer el almacen de certificados. Es posible que el usuario cancelase la operacion."); //$NON-NLS-1$
-            showErrorDialog(ErrorManager.getErrorMessage(ErrorManager.ERROR_ESTABLISHING_KEYSTORE));
-        } else {
-            msm.getPrivateKeyEntryAsynchronously(this);
-        }
-    }
-
-    @Override
-    public void onErrorLoadingKeystore(final String msg, final Throwable t) {
-        showErrorDialog(ErrorManager.getErrorMessage(ErrorManager.ERROR_ESTABLISHING_KEYSTORE));
-    }
-
-    @Override
-    public synchronized void keySelected(final KeySelectedEvent kse) {
-
-        showProgressDialog(getString(R.string.dialog_msg_authenticating), this);
-
-        final String alias;
-        final byte[] certEncoded;
-        final KeyStore.PrivateKeyEntry keyEntry;
-
-        try {
-            alias = kse.getCertificateAlias();
-            certEncoded = kse.getCertificateEncoded();
-            AppPreferences.getInstance().setLastCertificate(Base64.encode(certEncoded));
-            keyEntry = kse.getPrivateKeyEntry();
-        } catch (final KeyChainException e) {
-            if ("4.1.1".equals(Build.VERSION.RELEASE) || "4.1.0".equals(Build.VERSION.RELEASE) || "4.1".equals(Build.VERSION.RELEASE)) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                PfLog.e(SFConstants.LOG_TAG, "Error al obtener la clave privada del certificado en Android 4.1.X (asegurese de que no contiene caracteres no validos en el alias): " + e); //$NON-NLS-1$
-                showErrorDialog(ErrorManager.getErrorMessage(ErrorManager.ERROR_PKE_ANDROID_4_1));
-            } else {
-                PfLog.e(SFConstants.LOG_TAG, "Error al obtener la clave privada del certificado: " + e); //$NON-NLS-1$
-                showErrorDialog(ErrorManager.getErrorMessage(ErrorManager.ERROR_PKE));
-            }
-            return;
-        } catch (final KeyStoreException e) {
-            // Este caso se da cuando el usuario cancela el acceso al almacen o la seleccion de
-            // un certificado. En el primer caso es posible que la activity se considere cerrada
-            // asi que no se puede mostrar un dialogo de error. Nos limitamos a quitar el de espera.
-            PfLog.e(SFConstants.LOG_TAG, "El usuario no selecciono un certificado: " + e); //$NON-NLS-1$
-            dismissProgressDialog();
-            onErrorLoginOptions(ErrorManager.getErrorMessage(ErrorManager.ERROR_NO_CERT_SELECTED));
-            return;
-        }
-        // Cuando se instala el certificado desde el dialogo de seleccion, Android da a elegir certificado
-        // en 2 ocasiones y en la segunda se produce un "java.lang.AssertionError". Se ignorara este error.
-        catch (final Throwable e) {
-            PfLog.e(SFConstants.LOG_TAG, "Error al obtener el certificado para la autenticacion: " + e, e); //$NON-NLS-1$
-            showErrorDialog(ErrorManager.getErrorMessage(ErrorManager.ERROR_PKE));
-            return;
-        }
-
-        dismissProgressDialog();
-
+    protected void authenticateWithCertificate(String alias, byte[] certEncoded, KeyStore.PrivateKeyEntry keyEntry) {
         try {
             // Proxy nuevo (v2.2)
             final LoginRequestValidationTask lrvt = new LoginRequestValidationTask(
@@ -341,16 +263,16 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
                     this,
                     keyEntry);
             showProgressDialog(getString(R.string.dialog_msg_connecting), this, lrvt);
-
             lrvt.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
         } catch (IllegalArgumentException e) {
             // Proxy antiguo sin autenticacion (se valida cada peticion independiente)
             CommManager.getInstance().setOldProxy();
-            final ValidationLoginResult loginResult = new ValidationLoginResult(true);
-            loginResult.setCertificateB64(Base64.encode(certEncoded));
-            loginResult.setCertAlias(alias);
-            loadConfiguration(loginResult);
+            final AuthenticationResult authResult = new AuthenticationResult(true);
+            authResult.setCertificateB64(Base64.encode(certEncoded));
+            authResult.setCertAlias(alias);
+            loadConfiguration(authResult);
         } catch (Exception e) {
+            PfLog.e(SFConstants.LOG_TAG, "Error al autenticar al usuario", e);
             // Error al conectar con el servidor
             showErrorDialog(getString(R.string.error_msg_communicating_server));
         }
@@ -360,9 +282,36 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
     @Override
     public boolean onCreateOptionsMenu(final Menu menu) {
         getMenuInflater().inflate(R.menu.activity_login_options_menu, menu);
-        MenuItem item = menu.findItem(R.id.clavefirma);
-        boolean cloudCertEnabled = AppPreferences.getInstance().isCloudCertEnabled();
-        item.setChecked(cloudCertEnabled);
+
+        // Comprobamos que origen de certificados esta configurado
+        String certKeyStore = AppPreferences.getInstance().getCertKeyStore();
+
+        // Si el dispositivo no tuviese NFC, desactivamos la opcion de DNIe. Ademas, si estuviese
+        // configurado el uso de DNIe (cosa que no deberia ocurrir), se cambiaria para el uso de
+        // certificados locales
+        if (!nfcAvailable) {
+
+            MenuItem item = menu.findItem(R.id.dnie);
+            item.setVisible(false);
+
+            if (AppPreferences.KEYSTORE_DNIE.equals(certKeyStore)) {
+                certKeyStore = AppPreferences.KEYSTORE_LOCAL;
+                AppPreferences.getInstance().setCertKeyStore(certKeyStore);
+            }
+        }
+
+        // Activamos el almacen de claves configurado
+        if (AppPreferences.KEYSTORE_CLOUD.equals(certKeyStore)) {
+            MenuItem item = menu.findItem(R.id.clavefirma);
+            item.setChecked(true);
+        }
+        else if (AppPreferences.KEYSTORE_DNIE.equals(certKeyStore)) {
+            MenuItem item = menu.findItem(R.id.dnie);
+            item.setChecked(true);
+        } else {
+            MenuItem item = menu.findItem(R.id.local_keystore);
+            item.setChecked(true);
+        }
         return true;
     }
 
@@ -376,11 +325,25 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
             dialogBuilder.show();
         }
         // Configurar el uso de Clave/FIRe
+        else if (item.getItemId() == R.id.local_keystore) {
+            if (!item.isChecked()) {
+                item.setChecked(true);
+            }
+            AppPreferences.getInstance().setCertKeyStore(AppPreferences.KEYSTORE_LOCAL);
+        }
+        // Configurar el uso de Clave/FIRe
         else if (item.getItemId() == R.id.clavefirma) {
-            // Activamos/desactivamos la propiedad
-            boolean cloudCertEnabled = AppPreferences.getInstance().isCloudCertEnabled();
-            AppPreferences.getInstance().setCloudCertEnabled(!cloudCertEnabled);
-            item.setChecked(!cloudCertEnabled);
+            if (!item.isChecked()) {
+                item.setChecked(true);
+            }
+            AppPreferences.getInstance().setCertKeyStore(AppPreferences.KEYSTORE_CLOUD);
+        }
+        // Configurar el uso de DNIe
+        else if (item.getItemId() == R.id.dnie) {
+            if (!item.isChecked()) {
+                item.setChecked(true);
+            }
+            AppPreferences.getInstance().setCertKeyStore(AppPreferences.KEYSTORE_DNIE);
         }
         // Abrir ayuda
         else if (item.getItemId() == R.id.help) {
@@ -458,7 +421,8 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
     /**
      * Muestra un di&aacute;logo de espera con un mensaje.
      */
-    private void showProgressDialog(final String message, final Context ctx, final AsyncTask<?, ?, ?>... tasks) {
+    @Override
+    protected void showProgressDialog(final String message, final Context ctx, final AsyncTask<?, ?, ?>... tasks) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -470,7 +434,7 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
                 }
 
                 // Definimos el comportamiento para cancelar los dialogos de espera
-                getProgressDialog().setOnKeyListener(new OnKeyListener() {
+                getProgressDialog().setOnKeyListener(new DialogInterface.OnKeyListener() {
                     @Override
                     public boolean onKey(final DialogInterface dialog, final int keyCode, final KeyEvent event) {
                         if (keyCode == KeyEvent.KEYCODE_BACK) {
@@ -491,11 +455,8 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
         });
     }
 
-
-    /**
-     * Cierra el di&aacute;logo de espera en caso de estar abierto.
-     */
-    void dismissProgressDialog() {
+    @Override
+    protected void dismissProgressDialog() {
         if (getProgressDialog() != null) {
             runOnUiThread(new Runnable() {
                 @Override
@@ -511,7 +472,6 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
         super.onActivityResult(requestCode, resultCode, data);
 
         if (requestCode == SELECT_CERT_REQUEST_CODE && resultCode == RESULT_OK && data != null) {
-
 
             byte[] certContent;
             String filename = null;
@@ -535,40 +495,6 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
             final Intent intent = KeyChain.createInstallIntent();
             intent.putExtra(KeyChain.EXTRA_PKCS12, certContent);
             startActivity(intent);
-        } else if (requestCode == WEBVIEW_REQUEST_CODE) {
-
-            if (resultCode == RESULT_OK) {
-                PfLog.e(SFConstants.LOG_TAG, "Acceso correcto con Cl@ve"); //$NON-NLS-1$
-
-                // Recuperamos el DNI para poder utilizarlo en futuras operaciones
-                String dni = data != null ? data.getStringExtra("dni") : null; //$NON-NLS-1$
-                if (dni == null) {
-                    showErrorDialog(getString(R.string.error_logging_no_dni));
-                } else {
-                    ValidationLoginResult loginResult = new ValidationLoginResult(true);
-                    loginResult.setDni(dni);
-                    loadConfiguration(loginResult);
-                }
-            } else if (resultCode == RESULT_CANCELED) {
-                PfLog.i(SFConstants.LOG_TAG, "Operacion de firma cancelada por el usuario");
-                dismissProgressDialog();
-            } else {
-                PfLog.e(SFConstants.LOG_TAG, "Error al acceder con Cl@ve"); //$NON-NLS-1$
-                String errorType = data != null ? data.getStringExtra("type") : null; //$NON-NLS-1$
-                String errorErrorMsg = data != null ? data.getStringExtra("msg") : null; //$NON-NLS-1$
-
-                PfLog.e(SFConstants.LOG_TAG, "Tipo de error: " + errorType);
-                PfLog.e(SFConstants.LOG_TAG, "Mensaje de error: " + errorErrorMsg);
-
-                // Mostramos un mensaje u otro segun el tipo de error
-                if ("validation".equals(errorType)) {
-                    showErrorDialog(getString(R.string.error_logging_with_clave));
-                } else if ("claveerror".equals(errorType)) {
-                    showErrorDialog(getString(R.string.error_logging_clave_connection));
-                } else {
-                    showErrorDialog(getString(R.string.error_logging_with_clave));
-                }
-            }
         }
     }
 
@@ -576,7 +502,7 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
         int n;
         final byte[] buffer = new byte[1024];
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        try (final InputStream is = new FileInputStream(dataFile);) {
+        try (final InputStream is = new FileInputStream(dataFile)) {
             while ((n = is.read(buffer)) > 0) {
                 baos.write(buffer, 0, n);
             }
@@ -588,7 +514,7 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
         int n;
         final byte[] buffer = new byte[1024];
         final ByteArrayOutputStream baos;
-        try (InputStream is = getContentResolver().openInputStream(uri);) {
+        try (InputStream is = getContentResolver().openInputStream(uri)) {
             baos = new ByteArrayOutputStream();
             while ((n = is.read(buffer)) > 0) {
                 baos.write(buffer, 0, n);
@@ -599,7 +525,7 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
 
     //metodo vacio para evitar bugs en versiones superiores al api11
     @Override
-    protected void onSaveInstanceState(final Bundle outState) {
+    protected void onSaveInstanceState(@NonNull final Bundle outState) {
         //No call for super(). Bug on API Level > 11.
         super.onSaveInstanceState(outState);
     }
@@ -618,54 +544,76 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
     }
 
     @Override
-    public void claveLoginRequestResult(ClaveLoginResult loginResult) {
-        // Si fallo la conexion, mostramos un error
-        if (!loginResult.isStatusOk()) {
-            showErrorDialog(loginResult.getErrorMsg());
-            return;
-        }
-
-        // Abrimos un WebView que carga la URL recibida y desde la que el usuario
-        // podra autenticarse
-        openWebViewActivity(
-                ClaveWebViewActivity.class,
-                loginResult.getRedirectionUrl(),
-                loginResult.getCookieId(),
-                R.string.title_clave_login,
-                true);
-    }
-
-    @Override
-    public void loginResult(ValidationLoginResult result) {
+    public void processAuthenticationResult(AuthenticationResult result) {
 
         if (result.isStatusOk()) {
             // Cargamos la configuracion
             loadConfiguration(result);
-        } else {
+        }
+        else if (!result.isCancelled()) {
             String errMsg = result.getErrorMsg();
             if (errMsg == null || errMsg.isEmpty()) {
                 errMsg = getString(R.string.error_loading_app_configuration);
             }
             // Si la aplicacion contiene un mensaje de excepcion o si trata de mostrar una URL
             // nos aseguramos de no mostrarselo a los usuarios
-            else if (errMsg.contains("Exception:") || errMsg.toLowerCase(Locale.US).contains("://")) {
+            else if (errMsg.contains("Exception:") || errMsg.toLowerCase(Locale.US).contains(SCHEME_SEPARATOR)) {
                 errMsg = getString(R.string.error_loading_app_configuration);
             }
             showErrorDialog(errMsg);
         }
     }
 
+    private static final String SCHEME_SEPARATOR = "://";
 
     /**
      * @param loginResult Resultado del proceso de login.
      */
-    public void loadConfiguration(ValidationLoginResult loginResult) {
+    public void loadConfiguration(AuthenticationResult loginResult) {
         LoadUserConfigTask task = new LoadUserConfigTask(loginResult,this);
         task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
 
     @Override
-    public void userConfigLoadSuccess(UserConfig userConfig, ValidationLoginResult loginResult) {
+    protected void autheticateWithClave(int resultCode, Intent data) {
+
+        dismissProgressDialog();
+
+        if (resultCode == RESULT_OK) {
+            PfLog.e(SFConstants.LOG_TAG, "Cl@ve autentico correctamente al usuario"); //$NON-NLS-1$
+
+            // Recuperamos el DNI para poder utilizarlo en futuras operaciones
+            String dni = data != null ? data.getStringExtra("dni") : null; //$NON-NLS-1$
+            if (dni == null) {
+                showErrorDialog(getString(R.string.error_logging_no_dni));
+            } else {
+                AuthenticationResult authResult = new AuthenticationResult(true);
+                authResult.setDni(dni);
+                loadConfiguration(authResult);
+            }
+        } else if (resultCode == RESULT_CANCELED) {
+            PfLog.i(SFConstants.LOG_TAG, "Operacion de autenticacion con Cl@ve cancelada por el usuario");
+        } else {
+            PfLog.e(SFConstants.LOG_TAG, "Error al autenticar al usuario con Cl@ve"); //$NON-NLS-1$
+            String errorType = data != null ? data.getStringExtra("type") : null; //$NON-NLS-1$
+            String errorErrorMsg = data != null ? data.getStringExtra("msg") : null; //$NON-NLS-1$
+
+            PfLog.e(SFConstants.LOG_TAG, "Tipo de error: " + errorType);
+            PfLog.e(SFConstants.LOG_TAG, "Mensaje de error: " + errorErrorMsg);
+
+            // Mostramos un mensaje u otro segun el tipo de error
+            if ("validation".equals(errorType)) {
+                showErrorDialog(getString(R.string.error_logging_with_clave));
+            } else if ("claveerror".equals(errorType)) {
+                showErrorDialog(getString(R.string.error_logging_clave_connection));
+            } else {
+                showErrorDialog(getString(R.string.error_logging_with_clave));
+            }
+        }
+    }
+
+    @Override
+    public void userConfigLoadSuccess(UserConfig userConfig, AuthenticationResult loginResult) {
         final Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
 
         if (loginResult != null && loginResult.getDni() != null) {
@@ -688,7 +636,7 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
 
         // Si el usuario tiene roles disponibles, llamamos primero a la actividad encargada de
         // gestionar la selección de roles.
-        if (userConfig != null && userConfig.getRoles() != null && !userConfig.getRoles().isEmpty()) {
+        if (userConfig.getRoles() != null && !userConfig.getRoles().isEmpty()) {
             intent.setClass(this, LoginWithRoleActivity.class);
         } else {
             intent.setClass(this, PetitionListActivity.class);
@@ -713,7 +661,7 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
     }
 
     @Override
-    public void userConfigLoadError(ValidationLoginResult loginResult, Throwable t) {
+    public void userConfigLoadError(AuthenticationResult loginResult, Throwable t) {
 
         // Si ha fallada la optencion de la configuracion del usuario, interpretaremos que se debe
         // a que estamos ante un proxy que no soporta esa operacion. En ese caso, llamamos a la
@@ -728,7 +676,7 @@ public final class LoginActivity extends WebViewParentActivity implements Keysto
     }
 
     @Override
-    public void configurationLoadSuccess(final RequestAppConfiguration appConfig, final ValidationLoginResult loginResult) {
+    public void configurationLoadSuccess(final RequestAppConfiguration appConfig, final AuthenticationResult loginResult) {
         final Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
 
         if (loginResult != null && loginResult.getDni() != null) {

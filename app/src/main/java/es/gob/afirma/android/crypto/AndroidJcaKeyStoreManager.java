@@ -29,13 +29,26 @@ public final class AndroidJcaKeyStoreManager implements MobileKeyStoreManager {
 
 		PfLog.i(SFConstants.LOG_TAG, "Alias seleccionado: " + alias); //$NON-NLS-1$
 
+		KeyStore.ProtectionParameter protectionParam = pin != null
+				? new KeyStore.PasswordProtection(pin)
+				: null;
+
 		try {
-			this.pke = (PrivateKeyEntry) ks.getEntry(alias, new KeyStore.PasswordProtection(pin));
+			this.pke = (PrivateKeyEntry) ks.getEntry(alias, protectionParam);
 		}
 		catch (final Exception e) {
 			PfLog.e("es.gob.afirma", "Error obteniendo la entrada a la clave privada: " + e); //$NON-NLS-1$ //$NON-NLS-2$
 			this.pkeException = e;
 		}
+	}
+
+	/**
+	 * Construye un gestor simple de claves y certificados a partir de un almac&eacute;n JCE/JCA.
+	 * @param alias Alias preseleccionado
+	 * @param ks KeyStore origen, debe estar previamente inicializado y cargado
+	 */
+	public AndroidJcaKeyStoreManager(final String alias, final KeyStore ks) {
+		this(alias, ks, null);
 	}
 
 	/** {@inheritDoc} */

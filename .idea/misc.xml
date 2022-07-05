@@ -13,9 +13,13 @@
         <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/drawable/tab_selector.xml" value="0.25052083333333336" />
         <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout-large/activity_splash_screen.xml" value="0.1991869918699187" />
         <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout-large/activity_wizard_signfolder.xml" value="0.67" />
+        <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout-large/array_adapter_panel_paginacion.xml" value="0.1640625" />
+        <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout-large/array_adapter_unresolved_request.xml" value="0.134375" />
         <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout-medium/activity_splash_screen.xml" value="0.5125" />
+        <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout-xlarge/activity_detect_nfc.xml" value="0.41" />
         <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout-xlarge/activity_splash_screen.xml" value="0.1" />
         <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout-xlarge/activity_wizard_signfolder.xml" value="0.216796875" />
+        <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout-xlarge/dialog_can.xml" value="0.254296875" />
         <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout/activity_auth_role_info.xml" value="0.1953125" />
         <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout/activity_choose_role.xml" value="0.1734375" />
         <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout/activity_create_new_authorized.xml" value="0.1953125" />
@@ -29,11 +33,24 @@
         <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout/activity_wizard_layout.xml" value="0.234375" />
         <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout/activity_wizard_signfolder.xml" value="0.33" />
         <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout/activity_wizard_signfolder_ok.xml" value="0.20555555555555555" />
+        <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout/app_item_view.xml" value="0.1482638888888889" />
+        <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout/array_adapter_panel_paginacion.xml" value="0.14583333333333334" />
+        <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout/array_adapter_signline_header.xml" value="0.1482638888888889" />
+        <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout/array_adapter_signline_item.xml" value="0.11944444444444445" />
+        <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout/array_adapter_unresolved_request.xml" value="0.11944444444444445" />
+        <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout/auth_item_view.xml" value="0.22" />
+        <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout/dialog_add_server.xml" value="0.1482638888888889" />
         <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout/dialog_aliases.xml" value="0.234375" />
+        <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout/dialog_info.xml" value="0.1482638888888889" />
+        <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout/dialog_list.xml" value="0.1482638888888889" />
+        <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout/dialog_server_title.xml" value="0.1482638888888889" />
         <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout/dialog_view_reject_sign_vb.xml" value="0.1953125" />
         <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout/roles_tab_view.xml" value="0.24166666666666667" />
+        <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout/ssl_certificate.xml" value="0.1482638888888889" />
+        <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout/tabs_bg.xml" value="0.1482638888888889" />
         <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout/verifier_item_view.xml" value="0.21614583333333334" />
         <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/menu/activity_configuration_options_menu.xml" value="0.178125" />
+        <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/menu/activity_login_options_menu.xml" value="0.228125" />
         <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/menu/activity_petition_details_options_menu.xml" value="0.178125" />
         <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/menu/activity_petition_list_rejected_options_menu.xml" value="0.178125" />
         <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/menu/activity_petition_list_signed_options_menu.xml" value="0.25833333333333336" />

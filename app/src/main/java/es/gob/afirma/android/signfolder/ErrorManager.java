@@ -36,6 +36,7 @@ public final class ErrorManager {
 	public static final String ERROR_MSC_PIN					 = "ERR-24"; //$NON-NLS-1$
 	public static final String ERROR_LOST_SESSION				 = "ERR-25"; //$NON-NLS-1$
 	public static final String ERROR_INVALID_CREDENTIALS		 = "ERR-26"; //$NON-NLS-1$
+	public static final String ERROR_AUTHENTICATION_WITH_CLAVE	 = "ERR-27"; //$NON-NLS-1$
 
 	private static final Dictionary<String, String> ERRORS = new Hashtable<String, String>();
 	static {
@@ -63,6 +64,7 @@ public final class ErrorManager {
 		ERRORS.put(ERROR_MSC_PIN, "Error en la firma. Compruebe que el PIN de su dispositivo criptografico es correcto. Varios intentos incorrectos pueden bloquearlo."); //$NON-NLS-1$
 		ERRORS.put(ERROR_LOST_SESSION, "Se ha perdido la sesion con el Portafirmas");
 		ERRORS.put(ERROR_INVALID_CREDENTIALS, "El certificado seleccionado no es valido");
+		ERRORS.put(ERROR_AUTHENTICATION_WITH_CLAVE, "No se pudo completar la autenticacion con Cl@ve");
 	}
 
 	private ErrorManager() {

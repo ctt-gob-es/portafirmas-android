@@ -42,16 +42,12 @@ public final class TriSigner {
 
 		PfLog.i(SFConstants.LOG_TAG, "TriSigner - sign: == PREFIRMA =="); //$NON-NLS-1$
 
-		//PfLog.i(SFConstants.LOG_TAG, " ======== Parametros prefirma: " + request.getDocs()[0].getParams());
-
 		// Mandamos a prefirmar y obtenemos los resultados
 		final TriphaseRequest[] signRequest = signPhase1(request, commMgr);
 
 		// *****************************************************************************************************
 		// ******************************* FIRMA ***************************************************************
 		//******************************************************************************************************
-
-		//PfLog.i(SFConstants.LOG_TAG, " ======== Parametros resultado prefirma: " + signRequest[0].getDocumentsRequests()[0].getParams());
 
 		PfLog.i(SFConstants.LOG_TAG, "TriSigner - sign: == FIRMA =="); //$NON-NLS-1$
 
@@ -83,8 +79,6 @@ public final class TriSigner {
 		//******************************************************************************************************
 
 		PfLog.i(SFConstants.LOG_TAG, "TriSigner - sign: == POSTFIRMA =="); //$NON-NLS-1$
-
-		//PfLog.i(SFConstants.LOG_TAG, " ======== Parametros postfirma: " + request.getDocs()[0].getParams());
 
 		// Mandamos a postfirmar y recogemos el resultado
 		return signPhase3(signRequest, commMgr);

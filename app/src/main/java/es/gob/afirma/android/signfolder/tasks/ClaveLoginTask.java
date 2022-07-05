@@ -70,8 +70,8 @@ public final class ClaveLoginTask extends AsyncTask<Void, Void, ClaveLoginResult
 	 * Subtarea encargada de finalizar la tarea principal si se excede una cantidad de tiempo limitada.
 	 */
 	static class TaskKiller extends TimerTask {
-		private AsyncTask<?, ?, ?> mTask;
-		private ClaveLoginRequestListener loginListener;
+		private final AsyncTask<?, ?, ?> mTask;
+		private final ClaveLoginRequestListener loginListener;
 		TaskKiller(AsyncTask<?, ?, ?> task, ClaveLoginRequestListener loginListener) {
 			this.mTask = task;
 			this.loginListener = loginListener;

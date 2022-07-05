@@ -94,8 +94,6 @@ public final class FindUserActivity extends FragmentActivity implements FindUser
         searchEditText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                PfLog.i(SFConstants.LOG_TAG, " ========= ActionId: " + actionId);
-                PfLog.i(SFConstants.LOG_TAG, " ========= Event: " + (event != null ? event.getKeyCode() : -1));
                 searchUser(v);
                 return true;
             }

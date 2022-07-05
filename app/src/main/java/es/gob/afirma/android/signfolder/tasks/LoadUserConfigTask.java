@@ -2,18 +2,18 @@ package es.gob.afirma.android.signfolder.tasks;
 
 import android.os.AsyncTask;
 
+import es.gob.afirma.android.crypto.AuthenticationResult;
 import es.gob.afirma.android.signfolder.SFConstants;
 import es.gob.afirma.android.signfolder.proxy.CommManager;
-import es.gob.afirma.android.signfolder.proxy.ValidationLoginResult;
 import es.gob.afirma.android.user.configuration.UserConfig;
 import es.gob.afirma.android.util.PfLog;
 
 public class LoadUserConfigTask extends AsyncTask<Void, Void, UserConfig> {
-    private final ValidationLoginResult loginResult;
+    private final AuthenticationResult loginResult;
     private final LoadUserConfigListener listener;
     private Throwable t = null;
 
-    public LoadUserConfigTask(ValidationLoginResult loginResult, LoadUserConfigListener listener) {
+    public LoadUserConfigTask(AuthenticationResult loginResult, LoadUserConfigListener listener) {
         this.loginResult = loginResult;
         this.listener = listener;
     }
@@ -37,6 +37,7 @@ public class LoadUserConfigTask extends AsyncTask<Void, Void, UserConfig> {
 
     @Override
     protected void onPostExecute(final UserConfig userConfig) {
+
         if (userConfig != null) {
             this.listener.userConfigLoadSuccess(userConfig, this.loginResult);
         } else {
@@ -50,8 +51,8 @@ public class LoadUserConfigTask extends AsyncTask<Void, Void, UserConfig> {
      */
     public interface LoadUserConfigListener {
 
-        void userConfigLoadSuccess(UserConfig userConfig, ValidationLoginResult loginResult);
+        void userConfigLoadSuccess(UserConfig userConfig, AuthenticationResult loginResult);
 
-        void userConfigLoadError(ValidationLoginResult loginResult, Throwable t);
+        void userConfigLoadError(AuthenticationResult loginResult, Throwable t);
     }
 }

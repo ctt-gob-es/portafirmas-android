@@ -111,7 +111,7 @@
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:onClick="onClickCertoriginRemote">
+                android:onClick="onClickCertoriginCloud">
 
                 <TextView
                     android:id="@+id/option2Arrow"
@@ -152,6 +152,55 @@
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
                     android:layout_below="@id/option2Body"
+                    android:layout_marginTop="16dp"
+                    android:background="@android:color/black" />
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/optionDnie"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:onClick="onClickCertoriginDnie">
+
+                <TextView
+                    android:id="@+id/option3Arrow"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_alignParentRight="true"
+                    android:paddingTop="8dp"
+                    android:paddingBottom="4dp"
+                    android:text="@string/wizard_option_arrow"
+                    android:textColor="@color/black"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/option3Header"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_toStartOf="@id/option3Arrow"
+                    android:layout_toLeftOf="@id/option3Arrow"
+                    android:paddingTop="8dp"
+                    android:paddingBottom="4dp"
+                    android:text="@string/wizard_certorigin_option3_title"
+                    android:textColor="@color/black"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/option3Body"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/option3Header"
+                    android:text="@string/wizard_certorigin_option3_body"
+                    android:textColor="@color/darkGrey"
+                    android:textSize="16sp" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_below="@id/option3Body"
                     android:layout_marginTop="16dp"
                     android:background="@android:color/black" />
             </RelativeLayout>

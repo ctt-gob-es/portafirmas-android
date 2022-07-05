@@ -17,8 +17,9 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Enumeration;
 
+import es.gob.afirma.android.crypto.KeyStoreManagerListener;
 import es.gob.afirma.android.crypto.LoadKeyStoreManagerTask;
-import es.gob.afirma.android.crypto.LoadKeyStoreManagerTask.KeystoreManagerListener;
+import es.gob.afirma.android.crypto.LoadingKeyStoreResult;
 import es.gob.afirma.android.signfolder.R;
 import es.gob.afirma.android.signfolder.SFConstants;
 import es.gob.afirma.android.util.AOUtil;
@@ -40,8 +41,8 @@ public class PinDialog extends DialogFragment {
 		return this.keyStoreName;
 	}
 
-	private KeystoreManagerListener ksmListener;
-	KeystoreManagerListener getKsmListener() {
+	private KeyStoreManagerListener ksmListener;
+	KeyStoreManagerListener getKsmListener() {
 		return this.ksmListener;
 	}
 
@@ -61,7 +62,7 @@ public class PinDialog extends DialogFragment {
 	 * @param ksml Clase a la que se establece el gestor de almacenes de claves y certificados
 	 * @return Di&acute;logo creado.
 	 */
-	public static PinDialog newInstance(final String provider, final String keyStoreName, final KeystoreManagerListener ksml) {
+	public static PinDialog newInstance(final String provider, final String keyStoreName, final KeyStoreManagerListener ksml) {
 
 		final PinDialog pinDialog = new PinDialog();
 		pinDialog.setKeyStoreManagerListener(ksml);
@@ -75,7 +76,7 @@ public class PinDialog extends DialogFragment {
 
 	/** Establece la clase que manejara el resultado de la carga del almacen de claves del dispositivo.
 	 * @param ksml Manejador de la carga. */
-	public void setKeyStoreManagerListener(final KeystoreManagerListener ksml) {
+	public void setKeyStoreManagerListener(final KeyStoreManagerListener ksml) {
 		this.ksmListener = ksml;
 	}
 
@@ -107,7 +108,9 @@ public class PinDialog extends DialogFragment {
 				dialog.dismiss();
 				//Cancelamos el proceso
 				if (PinDialog.this.getKsmListener() != null) {
-					PinDialog.this.getKsmListener().setKeyStoreManager(null);
+					LoadingKeyStoreResult result = new LoadingKeyStoreResult("Operacion cancelada por el usuario", null);
+					result.setCancelled(true);
+					PinDialog.this.getKsmListener().onLoadingKeyStoreResult(result);
 				}
 			}
 		});
@@ -127,9 +130,10 @@ public class PinDialog extends DialogFragment {
 						PfLog.e(SFConstants.LOG_TAG, "Error al cargar el almacen de claves: " + e); //$NON-NLS-1$
 						dialog.dismiss();
 						if (PinDialog.this.getKsmListener() != null) {
-							PinDialog.this.getKsmListener().onErrorLoadingKeystore(
-								getActivity().getString(R.string.error_loading_keystore), e
-							);
+							PinDialog.this.getKsmListener().onLoadingKeyStoreResult(
+									new LoadingKeyStoreResult(
+											getActivity().getString(R.string.error_loading_keystore), e
+									));
 						}
 						return;
 					}
@@ -143,9 +147,10 @@ public class PinDialog extends DialogFragment {
 						PfLog.e(SFConstants.LOG_TAG, "Error extrayendo los alias de los certificados del almacen: " + e); //$NON-NLS-1$
 						dialog.dismiss();
 						if (PinDialog.this.getKsmListener() != null) {
-							PinDialog.this.getKsmListener().onErrorLoadingKeystore(
-								getActivity().getString(R.string.error_loading_certificate_alias), e
-							);
+							PinDialog.this.getKsmListener().onLoadingKeyStoreResult(
+									new LoadingKeyStoreResult(
+											getActivity().getString(R.string.error_loading_certificate_alias), e
+									));
 						}
 						return;
 					}
@@ -184,9 +189,10 @@ public class PinDialog extends DialogFragment {
 						PfLog.e(SFConstants.LOG_TAG, "No se ha establecido la tarea para la obtencion del almacen de certificados con setLoadKeyStoreManagerTask()");  //$NON-NLS-1$
 						dialog.dismiss();
 						if (PinDialog.this.getKsmListener() != null) {
-							PinDialog.this.getKsmListener().onErrorLoadingKeystore(
-								getActivity().getString(R.string.error_loading_keystore), null
-							);
+							PinDialog.this.getKsmListener().onLoadingKeyStoreResult(
+									new LoadingKeyStoreResult(
+											getActivity().getString(R.string.error_loading_keystore), null
+									));
 						}
 					}
 
@@ -207,9 +213,11 @@ public class PinDialog extends DialogFragment {
 			public boolean onKey(final DialogInterface dialog, final int keyCode, final KeyEvent event) {
 				if (keyCode == KeyEvent.KEYCODE_BACK) {
 					dialog.dismiss();
-					//Cancelamos el proceso
+					// Cancelamos el proceso
 					if (PinDialog.this.getKsmListener() != null) {
-						PinDialog.this.getKsmListener().setKeyStoreManager(null);
+						LoadingKeyStoreResult result = new LoadingKeyStoreResult("Operacion cancelada por el usuario", null);
+						result.setCancelled(true);
+						PinDialog.this.getKsmListener().onLoadingKeyStoreResult(result);
 					}
 					return true;
 				}

@@ -2,12 +2,16 @@ package es.gob.afirma.android.signfolder.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.Layout;
 import android.text.method.LinkMovementMethod;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import es.gob.afirma.android.crypto.NfcHelper;
 import es.gob.afirma.android.signfolder.AppPreferences;
 import es.gob.afirma.android.signfolder.R;
 import es.gob.afirma.android.signfolder.SFConstants;
@@ -17,6 +21,9 @@ import es.gob.afirma.android.util.PfLog;
  * Pantalla del asistente de la aplicación.
  */
 public class WizardActivity extends AppCompatActivity {
+
+    /** C&oacute;digo de solicitud de la habilitaci&oacute;n del NFC del dispositivo. */
+    private final static int REQUEST_CODE_ENABLE_NFC = 2002;   // The request code
 
     private int currentLayout = -1;
 
@@ -28,6 +35,8 @@ public class WizardActivity extends AppCompatActivity {
         if (currentLayout == -1) {
             changeActivityLayout(R.layout.activity_wizard_signfolder);
         }
+
+        // Ocultamos la opcion de firma ocn DNIe
 
         // Inicializamos las preferencias y establecemos los valores que deben existir de inicio
         if (preferences == null) {
@@ -46,6 +55,12 @@ public class WizardActivity extends AppCompatActivity {
         TextView hyperlinkTv = findViewById(R.id.textViewHyperlink);
         if (hyperlinkTv != null) {
             hyperlinkTv.setMovementMethod(LinkMovementMethod.getInstance());
+        }
+
+        // La opcion de DNIe solo se muestra si el dispositivo cuenta con NFC
+        View optionDnie = findViewById(R.id.optionDnie);
+        if (optionDnie != null && !NfcHelper.isNfcServiceAvailable(this)) {
+            optionDnie.setVisibility(View.GONE);
         }
     }
 
@@ -103,8 +118,8 @@ public class WizardActivity extends AppCompatActivity {
      */
     public void onClickCertoriginLocal(View option) {
         PfLog.i(SFConstants.LOG_TAG, "Se selecciona el uso de certificado local");
-        // Desactivamos el uso de certificado remoto
-        AppPreferences.getInstance().setCloudCertEnabled(false);
+        // Desactivamos el uso de certificado local
+        AppPreferences.getInstance().setCertKeyStore(AppPreferences.KEYSTORE_LOCAL);
         // Finalizamos el asistente
         finishWizard();
     }
@@ -113,10 +128,22 @@ public class WizardActivity extends AppCompatActivity {
      * Acción a ejecutar cuando se selecciona el uso de certificado remoto.
      * @param option Elemento sobre el que se ejecutó el evento onClick.
      */
-    public void onClickCertoriginRemote(View option) {
+    public void onClickCertoriginCloud(View option) {
         PfLog.i(SFConstants.LOG_TAG, "Se selecciona el uso de certificado remoto");
         // Activamos el uso de certificado remoto
-        AppPreferences.getInstance().setCloudCertEnabled(true);
+        AppPreferences.getInstance().setCertKeyStore(AppPreferences.KEYSTORE_CLOUD);
+        // Finalizamos el asistente
+        finishWizard();
+    }
+
+    /**
+     * Acción a ejecutar cuando se selecciona el uso de certificado remoto.
+     * @param option Elemento sobre el que se ejecutó el evento onClick.
+     */
+    public void onClickCertoriginDnie(View option) {
+        PfLog.i(SFConstants.LOG_TAG, "Se selecciona el uso de DNIe");
+        // Activamos el uso de DNIe
+        AppPreferences.getInstance().setCertKeyStore(AppPreferences.KEYSTORE_DNIE);
         // Finalizamos el asistente
         finishWizard();
     }

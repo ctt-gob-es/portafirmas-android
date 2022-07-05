@@ -21,7 +21,10 @@ import java.security.KeyStore;
 import java.util.ArrayList;
 
 import es.gob.afirma.android.crypto.AndroidJcaKeyStoreManager;
-import es.gob.afirma.android.crypto.LoadKeyStoreManagerTask.KeystoreManagerListener;
+import es.gob.afirma.android.crypto.DnieConnectionManager;
+import es.gob.afirma.android.crypto.KeyStoreManagerListener;
+import es.gob.afirma.android.crypto.LoadingKeyStoreResult;
+import es.gob.afirma.android.crypto.MobileKeyStoreManager;
 import es.gob.afirma.android.signfolder.R;
 
 /**Dia&acute;logo para elegir un alias
@@ -32,7 +35,7 @@ public final class SelectAliasDialog extends DialogFragment {
 	 * @param aliases lista de alias disponibles en el dispositivo
 	 * @param ksmListener Clase a la que se establece el gestor de almacenes de claves y certificados
 	 * @return devuelve la instanciaci&oacute;n del di&acute;logo de selecci&oacute;n del alias	 */
-	public static SelectAliasDialog newInstance(final ArrayList<CertificateInfoForAliasSelect> aliases, final KeystoreManagerListener ksmListener) {
+	public static SelectAliasDialog newInstance(final ArrayList<CertificateInfoForAliasSelect> aliases, final KeyStoreManagerListener ksmListener) {
 		final SelectAliasDialog scd = new SelectAliasDialog();
 		final Bundle args = new Bundle();
 		args.putSerializable("aliases", aliases); //$NON-NLS-1$
@@ -40,6 +43,38 @@ public final class SelectAliasDialog extends DialogFragment {
 		scd.setKeyStoreListener(ksmListener);
 
 		return scd;
+	}
+
+	public void signWithSignCertificate() {
+		// Datos de los alias recibidos
+		final Serializable aliasesSerializable = getArguments().getSerializable("aliases"); //$NON-NLS-1$
+		this.aliases = (ArrayList<CertificateInfoForAliasSelect>) aliasesSerializable;
+		int i = 0;
+		boolean signCertFound = false;
+		// Se busca el certificado de firma para firmar con el directamente
+		while(i < getAlises().size() && !signCertFound) {
+			final CertificateInfoForAliasSelect certInfo = getAlises().get(i);
+			if(certInfo.getAlias().equals("CertFirmaDigital")) {
+				setAlias(certInfo.getAlias());
+				signCertFound = true;
+			}
+			i++;
+		}
+		if (SelectAliasDialog.this.getKsmListener() != null && getAlias() != null) {
+			MobileKeyStoreManager ksm = new AndroidJcaKeyStoreManager(
+					getAlias(),
+					SelectAliasDialog.this.getKs(),
+					null
+			);
+			DnieConnectionManager.getInstance().setKeyStoreManager(ksm);
+			SelectAliasDialog.this.getKsmListener().onLoadingKeyStoreResult(
+					new LoadingKeyStoreResult(ksm)
+			);
+		}
+	}
+	ArrayList<CertificateInfoForAliasSelect> aliases;
+	ArrayList<CertificateInfoForAliasSelect> getAlises(){
+		return this.aliases;
 	}
 
 	String alias;
@@ -51,7 +86,7 @@ public final class SelectAliasDialog extends DialogFragment {
 	}
 
 	char[] pin;
-	void setPin(final char[] pin){
+	public void setPin(final char[] pin){
 		this.pin = pin;
 	}
 	char[] getPin(){
@@ -65,12 +100,12 @@ public final class SelectAliasDialog extends DialogFragment {
 
 	/** Establece el almac&eacute;n de claves.
 	 * @param ks KeyStore origen, debe estar previamente inicializado y cargado */
-	void setKeyStore(final KeyStore ks){
+	public void setKeyStore(final KeyStore ks){
 		this.ks=ks;
 	}
 
-	private KeystoreManagerListener ksmListener = null;
-	KeystoreManagerListener getKsmListener() {
+	private KeyStoreManagerListener ksmListener = null;
+	KeyStoreManagerListener getKsmListener() {
 		return this.ksmListener;
 	}
 
@@ -131,7 +166,10 @@ public final class SelectAliasDialog extends DialogFragment {
 	@Override
 	public Dialog onCreateDialog(final Bundle savedInstanceState){
 
+		//Datos de los alias recibidos
 		final Serializable aliasesSerializable = getArguments().getSerializable("aliases"); //$NON-NLS-1$
+
+		//Comprobamos si los datos son nulos
 		if (aliasesSerializable == null || !(aliasesSerializable instanceof ArrayList<?>) ||
 				((ArrayList<?>) aliasesSerializable).size() < 1) {
 			final AlertDialog.Builder noCertificatesBuilder = new AlertDialog.Builder(getActivity());
@@ -141,7 +179,8 @@ public final class SelectAliasDialog extends DialogFragment {
 				@Override
 				public void onClick(final DialogInterface dialog, final int id) {
 					if (SelectAliasDialog.this.getKsmListener() != null) {
-						SelectAliasDialog.this.getKsmListener().onErrorLoadingKeystore("No se encontraron certificados en el almacen", null); //$NON-NLS-1$
+						SelectAliasDialog.this.getKsmListener().onLoadingKeyStoreResult(
+								new LoadingKeyStoreResult("No se encontraron certificados en el almacen", null)); //$NON-NLS-1$
 					}
 					dialog.dismiss();
 				}
@@ -153,19 +192,30 @@ public final class SelectAliasDialog extends DialogFragment {
 		@SuppressWarnings("unchecked")
 		final ArrayList<CertificateInfoForAliasSelect> aliases = (ArrayList<CertificateInfoForAliasSelect>) aliasesSerializable;
 
+		//Creamos el dialogo de selecion de alias
 		final AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(getActivity());
 		alertDialogBuilder.setTitle(getString(R.string.dialog_title_select_cert));
 		alertDialogBuilder.setPositiveButton(getString(R.string.allow), new DialogInterface.OnClickListener() {
 			@Override
 			public void onClick(final DialogInterface dialog, final int id) {
 				if (SelectAliasDialog.this.getKsmListener() != null) {
-					SelectAliasDialog.this.getKsmListener().setKeyStoreManager(
-						new AndroidJcaKeyStoreManager(
-							getAlias(),
-							SelectAliasDialog.this.getKs(),
-							getPin()
-						)
-					);
+					SelectAliasDialog.this.getKsmListener().onLoadingKeyStoreResult(
+							new LoadingKeyStoreResult(
+									new AndroidJcaKeyStoreManager(
+											getAlias(),
+											SelectAliasDialog.this.getKs(),
+											getPin()
+									)
+							));
+				}
+				else {
+					// No se ha selecionado un certificado.
+					// Cancelamos el proceso
+					if (SelectAliasDialog.this.getKsmListener() != null) {
+						LoadingKeyStoreResult result = new LoadingKeyStoreResult("Operacion cancelada por el usuario", null);
+						result.setCancelled(true);
+						SelectAliasDialog.this.getKsmListener().onLoadingKeyStoreResult(result);
+					}
 				}
 				dialog.dismiss();
 			}
@@ -175,7 +225,9 @@ public final class SelectAliasDialog extends DialogFragment {
 			public void onClick(final DialogInterface dialog, final int id) {
 				// Cancelamos el proceso
 				if (SelectAliasDialog.this.getKsmListener() != null) {
-					SelectAliasDialog.this.getKsmListener().setKeyStoreManager(null);
+					LoadingKeyStoreResult result = new LoadingKeyStoreResult("Operacion cancelada por el usuario", null);
+					result.setCancelled(true);
+					SelectAliasDialog.this.getKsmListener().onLoadingKeyStoreResult(result);
 				}
 				dialog.dismiss();
 			}
@@ -191,9 +243,11 @@ public final class SelectAliasDialog extends DialogFragment {
 			@Override
 			public boolean onKey(final DialogInterface dialog, final int keyCode, final KeyEvent event) {
 				if (keyCode == KeyEvent.KEYCODE_BACK) {
-					//Cancelamos el proceso
+					// Cancelamos el proceso
 					if (SelectAliasDialog.this.getKsmListener() != null) {
-						SelectAliasDialog.this.getKsmListener().setKeyStoreManager(null);
+						LoadingKeyStoreResult result = new LoadingKeyStoreResult("Operacion cancelada por el usuario", null);
+						result.setCancelled(true);
+						SelectAliasDialog.this.getKsmListener().onLoadingKeyStoreResult(result);
 					}
 					dialog.dismiss();
 					return true;
@@ -204,7 +258,7 @@ public final class SelectAliasDialog extends DialogFragment {
 		return alertDialogBuilder.create();
 	}
 
-	private void setKeyStoreListener(final KeystoreManagerListener ksmListener) {
+	private void setKeyStoreListener(final KeyStoreManagerListener ksmListener) {
 		this.ksmListener = ksmListener;
 	}
 

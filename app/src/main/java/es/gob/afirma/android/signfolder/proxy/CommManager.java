@@ -598,7 +598,7 @@ public final class CommManager extends CommManagerOldVersion {
             return null;
         }
 
-        Log.i(SFConstants.LOG_TAG, " ============== Registro en el sistema de notificaciones");
+        Log.i(SFConstants.LOG_TAG, "Notificamos el registro en el sistema de notificaciones");
 
         // Realizamos la peticion
         String xml = XmlRequestsFactory.createRegisterNotificationRequest(token, device, dni);
@@ -852,81 +852,4 @@ public final class CommManager extends CommManagerOldVersion {
         String url = this.signFolderProxyUrl + createUrlParams(OPERATION_UPDATE_PUSH_NOTIFICATIONS, xml);
         return UpdatePushNotsResponseParser.parse(getRemoteDocument(url));
     }
-
-
-    //TODO: Método deshabilitado. Pendiente de la implementación de la parte servidora. Servicio de creación de nuevo rol.
-//    /**
-//     * Método que obtiene la lista de usuarios del portafirmas-proxy.
-//     *
-//     * @param numPage  Número de página.
-//     * @param pageSize Tamaño de página.
-//     * @param filter   Filtro de usuario.
-//     * @return una lista de usuarios.
-//     * @throws IOException               Si el proceso falla.
-//     * @throws SAXException              Si el proceso falla.
-//     * @throws ServerControlledException Si hay algún problema de conexión con el proxy.
-//     */
-//    public List<UserConfiguration> getListUser(final int numPage, final int pageSize, String filter)
-//            throws IOException, SAXException, ServerControlledException {
-//
-//        PartialResponseUserList partialResult;
-//        String xml = XmlRequestsFactory.createRequestListUsers(numPage, pageSize, filter);
-//        String url = this.signFolderProxyUrl + createUrlParams(OPERATION_GET_USERS, xml);
-//        partialResult = RequestListResponseParser.parseUsersReq(getRemoteDocument(url));
-//        return partialResult.getUsersList();
-//    }
-
-    //TODO: Método deshabilitado. Pendiente de la implementación de la parte servidora. Servicio de creación de nuevo rol.
-//    /**
-//     * Método que lanza una petición al portafirmas-proxy para crear un nuevo rol.
-//     *
-//     * @param user     Usuario que genera la petición de creación.
-//     * @param role     Rol a crear.
-//     * @param appIds   Lista con los identificadores de las de aplicaciones a las que tendrá acceso
-//     *                 el validador (solo aplicable a creación de rol de tipo validador).
-//     * @param authUser Objeto que contiene los valores de los campos asociados a
-//     *                 la creación de una nueva autorización.
-//     * @return <i>True</i> si la rol se ha creado correctamente y <i>False</i> en caso contrario.
-//     * @throws IOException               si algo falla.
-//     * @throws SAXException              si algo falla.
-//     * @throws ServerControlledException si algo falla.
-//     */
-//    public boolean createNewRole(UserConfiguration user, ConfigurationRole role,
-//                                 AuthorizedUser authUser, List<String> appIds)
-//            throws IOException, SAXException, ServerControlledException {
-//
-//        CreationRoleResponse result;
-//        String xml = XmlRequestsFactory.createRequestCreateRole(user, role, authUser, appIds);
-//        String url = this.signFolderProxyUrl + createUrlParams(OPERATION_CREATE_ROLE, xml);
-//        result = CreateRoleResponseParser.parseResponse(getRemoteDocument(url));
-//        if (result == null) {
-//            return false;
-//        } else {
-//            return result.isSuccess();
-//        }
-//}
-
-
-//	private static void printText(String text) {
-//
-//		if (text == null || text.isEmpty()) {
-//			return;
-//		}
-//
-//		final int TEXT_LIMIT = 4000;
-//
-//		PfLog.i(SFConstants.LOG_TAG, "===========");
-//		if (text.length() <= TEXT_LIMIT) {
-//			PfLog.i(SFConstants.LOG_TAG, text);
-//		}
-//		else {
-//			int idx = 0;
-//			while (text.length() - idx > TEXT_LIMIT) {
-//				PfLog.i(SFConstants.LOG_TAG, text.substring(idx, idx + TEXT_LIMIT));
-//				idx += TEXT_LIMIT;
-//			}
-//			PfLog.i(SFConstants.LOG_TAG, text.substring(idx));
-//		}
-//		PfLog.i(SFConstants.LOG_TAG, "===========");
-//	}
 }

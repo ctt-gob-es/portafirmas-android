@@ -1,23 +1,17 @@
 package es.gob.afirma.android.signfolder.activities;
 
 import android.Manifest;
-import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
-import android.content.DialogInterface.OnKeyListener;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
-import android.security.KeyChainException;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -39,23 +33,18 @@ import androidx.core.content.FileProvider;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.security.KeyStore.PrivateKeyEntry;
-import java.security.KeyStoreException;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 import java.util.Vector;
 
-import es.gob.afirma.android.crypto.MobileKeyStoreManager.KeySelectedEvent;
-import es.gob.afirma.android.crypto.MobileKeyStoreManager.PrivateKeySelectionListener;
+import es.gob.afirma.android.crypto.NfcHelper;
 import es.gob.afirma.android.signfolder.AppPreferences;
 import es.gob.afirma.android.signfolder.CryptoConfiguration;
 import es.gob.afirma.android.signfolder.CustomAlertDialog;
-import es.gob.afirma.android.signfolder.ErrorManager;
 import es.gob.afirma.android.signfolder.MessageDialog;
 import es.gob.afirma.android.signfolder.R;
 import es.gob.afirma.android.signfolder.SFConstants;
@@ -96,13 +85,9 @@ import es.gob.afirma.android.util.PfLog;
 /**
  * Actividad con el detalle de las peticiones.
  */
-public final class PetitionDetailsActivity extends WebViewParentActivity implements LoadSignRequestDetailsListener,
+public final class PetitionDetailsActivity extends SignatureFragmentActivity implements LoadSignRequestDetailsListener,
         DownloadDocumentListener,
-        OperationRequestListener,
-        PrivateKeySelectionListener,
-        DialogFragmentListener,
-        FireLoadDataTask.FireLoadDataListener,
-        FireSignTask.FireSignListener {
+        DialogFragmentListener {
 
     /**
      * Identificador de la firma PAdES.
@@ -314,7 +299,7 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
                         this.roleInfo != null ? this.roleInfo.getOwnerDni() : this.dni,
                         CommManager.getInstance(),
                         this);
-                showProgressDialog(getString(R.string.dialog_msg_loading), lpdt);
+                showProgressDialog(getString(R.string.dialog_msg_loading), this, lpdt);
                 lpdt.execute();
             }
         }
@@ -349,6 +334,9 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
                 details.getExpirationDate() != null ?
                         details.getExpirationDate() : getString(R.string.no_detail_data));
         ((TextView) findViewById(R.id.applicationValue)).setText(details.getApp());
+
+
+
 
         if (details.getMessage() != null) {
             ((TextView) findViewById(R.id.messageValue)).setText(
@@ -523,8 +511,8 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
                         mimetype,
                         publicDir,
                         CommManager.getInstance(), this, getApplicationContext());
+        showProgressDialog(getString(R.string.loading_doc), this, dlfTask);
         dlfTask.execute();
-        showProgressDialogDownloadFile(getString(R.string.loading_doc), dlfTask);
     }
 
     private void requestStoragePerm() {
@@ -779,82 +767,34 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
     private void processRequest(final RequestType type) {
 
         if (type == RequestType.SIGNATURE) {
-            showProgressDialog(getString(R.string.dialog_msg_signing_1), null);
-
-            // Dependiendo de si firmamos con Cl@ve Firma o con certificado local,
-            // iniciaremos las llamadas a FIRe o cargaremos el certificado local
-            if (AppPreferences.getInstance().isCloudCertEnabled()) {
-                PfLog.i(SFConstants.LOG_TAG, "Iniciamos firma con Cl@ve Firma");
-                doSignWithFire();
-            } else {
-                PfLog.i(SFConstants.LOG_TAG, "Iniciamos firma con certificado local");
-                new LoadSelectedPrivateKeyTask(this.certAlias, this, this).execute();
-            }
+            showProgressDialog(getString(R.string.dialog_msg_signing_1),  this);
+            signRequest();
         } else if (type == RequestType.VERIFY) {
-            showProgressDialog(getString(R.string.dialog_msg_verifying_1), null);
-            doVerify();
+            showProgressDialog(getString(R.string.dialog_msg_verifying_1), this);
+            verifyRequest();
         } else {
-            showProgressDialog(getString(R.string.dialog_msg_approving_1), null);
+            showProgressDialog(getString(R.string.dialog_msg_approving_1), this);
             approveRequest();
         }
     }
 
-    /**
-     * Inicia el proceso de firma con Cl@ve Firma.
-     */
-    private void doSignWithFire() {
-        FireLoadDataTask cct = new FireLoadDataTask(new SignRequest[]{this.reqDetails}, this);
-        cct.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+    protected void signRequest() {
+        signRequests(new SignRequest[]{this.reqDetails});
     }
 
     /**
      * Inicia el proceso de validación de petición.
      */
-    private void doVerify() {
-        new VerifyRequestsTask(
-                this.reqDetails.getId(), CommManager.getInstance(), this).execute();
-    }
-
-    @Override
-    public synchronized void keySelected(final KeySelectedEvent kse) {
-
-        final PrivateKeyEntry pke;
-        try {
-            pke = kse.getPrivateKeyEntry();
-        } catch (final KeyChainException e) {
-            PfLog.e(SFConstants.LOG_TAG, "Error al recuperar la clave privada seleccionada: " + e); //$NON-NLS-1$
-            if ("4.1.1".equals(Build.VERSION.RELEASE) || "4.1.0".equals(Build.VERSION.RELEASE) || "4.1".equals(Build.VERSION.RELEASE)) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                showToastMessage(ErrorManager.getErrorMessage(ErrorManager.ERROR_PKE_ANDROID_4_1));
-                closeActivity();
-            } else {
-                showToastMessage(ErrorManager.getErrorMessage(ErrorManager.ERROR_PKE));
-            }
-            return;
-        } catch (final KeyStoreException e) {
-            PfLog.e(SFConstants.LOG_TAG, "El usuario no selecciono un certificado: " + e); //$NON-NLS-1$
-            showToastMessage(ErrorManager.getErrorMessage(ErrorManager.ERROR_CANCELLED_OPERATION));
-            return;
-        }
-        // Cuando se instala el certificado desde el dialogo de seleccion, Android da a elegir certificado
-        // en 2 ocasiones y en la segunda se produce un "java.lang.AssertionError". Se ignorara este error.
-        catch (final Throwable e) {
-            PfLog.e(SFConstants.LOG_TAG, "Error desconocido en la seleccion del certificado: " + e); //$NON-NLS-1$
-            showToastMessage(ErrorManager.getErrorMessage(ErrorManager.ERROR_PKE));
-            return;
-        }
-        doSign(pke.getPrivateKey(), (X509Certificate[]) pke.getCertificateChain());
-    }
-
-    private void doSign(final PrivateKey pk, final X509Certificate[] certChain) {
-        new SignRequestTask(
-                this.reqDetails, pk, certChain, CommManager.getInstance(), this).execute();
+    private void verifyRequest() {
+        VerifyRequestsTask verifyRequestTask = new VerifyRequestsTask(
+                this.reqDetails.getId(), CommManager.getInstance(), this);
+        verifyRequestTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-
         // Obtenemos la respuesta tras autorizar la operacion en Cl@ve Firma
-        if (requestCode == WebViewParentActivity.WEBVIEW_REQUEST_CODE) {
+        if (requestCode == LoadKeyStoreFragmentActivity.WEBVIEW_REQUEST_CODE) {
             // Si la peticion ha sido correcta iniciamos la finalizacion de firma
             if (resultCode == RESULT_OK) {
 
@@ -877,6 +817,7 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
                 showToastMessage(getString(R.string.toast_msg_fire_comunication_ko));
             }
         }
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
     private void rejectRequest(final String reason) {
@@ -909,20 +850,7 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
             setResult(result);
             closeActivity();
         } else {
-            PfLog.e(SFConstants.LOG_TAG, "Ha fallado la operacion"); //$NON-NLS-1$
-
-            int msgId;
-            switch (operation) {
-                case OperationRequestListener.REJECT_OPERATION:
-                    msgId = R.string.error_msg_rejecting_request;
-                    break;
-                case OperationRequestListener.VERIFY_OPERATION:
-                    msgId = R.string.error_msg_verifing_request;
-                    break;
-                default:
-                    msgId = R.string.error_msg_procesing_request;
-            }
-            showToastMessage(getString(msgId));
+            requestOperationFailed(operation, requestResult, null);
         }
     }
 
@@ -931,7 +859,7 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
 
         dismissProgressDialog();
 
-        PfLog.e(SFConstants.LOG_TAG, "Ha fallado la operacion con la excepcion: " + t, t); //$NON-NLS-1$
+        PfLog.e(SFConstants.LOG_TAG, "Ha fallado la operacion: " + t, t); //$NON-NLS-1$
 
         int msgId;
         switch (operation) {
@@ -945,6 +873,29 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
                 msgId = R.string.error_msg_procesing_request;
         }
         showToastMessage(getString(msgId));
+    }
+
+    @Override
+    public void requestOperationCancelled(int operation) {
+        dismissProgressDialog();
+
+        PfLog.e(SFConstants.LOG_TAG, "El usuario ha cancelado la operacion"); //$NON-NLS-1$
+    }
+
+    @Override
+    void requestedSignatureSuccess() {
+
+        dismissProgressDialog();
+
+        requestOperationFinished(OperationRequestListener.SIGN_OPERATION, null);
+    }
+
+    @Override
+    void requestedSignatureFailed(Throwable cause) {
+
+        dismissProgressDialog();
+
+        requestOperationFailed(OperationRequestListener.SIGN_OPERATION, null, cause);
     }
 
     /**
@@ -970,10 +921,42 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
         finish();
     }
 
-    /**
-     * Cierra el di&aacute;logo de espera en caso de estar abierto.
-     */
-    void dismissProgressDialog() {
+    @Override
+    protected void showProgressDialog(final String message, final Context ctx, final AsyncTask<?, ?, ?>... tasks) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    setProgressDialog(ProgressDialog.show(ctx, null, message, true));
+                } catch (final Exception e) {
+                    PfLog.e(SFConstants.LOG_TAG, "No se ha podido mostrar el dialogo de progreso: " + e, e); //$NON-NLS-1$
+                    return;
+                }
+
+                // Definimos el comportamiento para cancelar los dialogos de espera
+                getProgressDialog().setOnKeyListener(new DialogInterface.OnKeyListener() {
+                    @Override
+                    public boolean onKey(final DialogInterface dialog, final int keyCode, final KeyEvent event) {
+                        if (keyCode == KeyEvent.KEYCODE_BACK) {
+                            if (tasks != null) {
+                                for (AsyncTask<?, ?, ?> task : tasks) {
+                                    if (task != null) {
+                                        task.cancel(true);
+                                    }
+                                }
+                            }
+                            dismissProgressDialog();
+                            return true;
+                        }
+                        return false;
+                    }
+                });
+            }
+        });
+    }
+
+    @Override
+    protected void dismissProgressDialog() {
         if (getProgressDialog() != null) {
             runOnUiThread(new Runnable() {
                 @Override
@@ -982,65 +965,6 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
                 }
             });
         }
-    }
-
-    /**
-     * Muestra un di&aacute;logo de espera con un mensaje.
-     */
-    private void showProgressDialog(final String message, final LoadPetitionDetailsTask lpdt) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    setProgressDialog(ProgressDialog.show(PetitionDetailsActivity.this, null, message, true));
-                    if (lpdt != null) {
-                        getProgressDialog().setOnKeyListener(new OnKeyListener() {
-                            @Override
-                            public boolean onKey(final DialogInterface dlg, final int keyCode, final KeyEvent event) {
-                                if (keyCode == KeyEvent.KEYCODE_BACK) {
-                                    lpdt.cancel(true);
-                                    dismissProgressDialog();
-                                    closeActivity();
-                                    return true;
-                                }
-                                return false;
-                            }
-                        });
-                    }
-                } catch (final Exception e) {
-                    PfLog.e(SFConstants.LOG_TAG, "No se ha podido mostrar el dialogo de progreso: " + e); //$NON-NLS-1$
-                }
-            }
-        });
-    }
-
-    /**
-     * Muestra un di&aacute;logo de espera con un mensaje.
-     */
-    void showProgressDialogDownloadFile(final String message, final DownloadFileTask dlfTask) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    setProgressDialog(ProgressDialog.show(PetitionDetailsActivity.this, null, message, true));
-                    getProgressDialog().setOnKeyListener(new OnKeyListener() {
-
-                        @Override
-                        public boolean onKey(final DialogInterface dlg, final int keyCode, final KeyEvent event) {
-                            if (keyCode == KeyEvent.KEYCODE_BACK) {
-                                //Stop task, al presionar el boton volver del dialogo paramos la descarga del fichero
-                                dlfTask.cancel(true);
-                                dismissProgressDialog();
-                                return true;
-                            }
-                            return false;
-                        }
-                    });
-                } catch (final Exception e) {
-                    PfLog.e(SFConstants.LOG_TAG, "No se ha podido mostrar el dialogo de progreso: " + e); //$NON-NLS-1$
-                }
-            }
-        });
     }
 
     @Override
@@ -1074,7 +998,7 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
         // Dialogo de confirmacion de rechazo de peticiones
         else if (dialogId == DIALOG_CONFIRM_REJECT) {
             getCustomAlertDialog().dismiss();
-            showProgressDialog(getString(R.string.dialog_msg_rejecting_1), null);
+            showProgressDialog(getString(R.string.dialog_msg_rejecting_1), this);
             rejectRequest(reason);
         }
     }
@@ -1082,59 +1006,6 @@ public final class PetitionDetailsActivity extends WebViewParentActivity impleme
     @Override
     public void onDialogNegativeClick(final int dialogId) {
         // Si el usuario cancela el dialogo, se cierra y no hacemos nada
-    }
-
-    /**
-     * Cuando se finaliza correctamente el llamada a FIRe que procesa las peticiones,
-     * recibimos el identificador de la transaccion de FIRe y la URL de redireccion
-     * a la pagina web desde la que hacer la autorizaci&oacute;n.
-     *
-     * @param firePreSignResult Informacion de prefirma y de la transaccion de FIRe para permitir la
-     *                          autorizaci&oacute;n del usuario.
-     */
-    @Override
-    public void fireLoadDataSuccess(FireLoadDataResult firePreSignResult) {
-        PfLog.w(SFConstants.LOG_TAG, "Recibido del PreSignTask:\n" + firePreSignResult);
-
-        // Abrimos una actividad con un WebView en la que se muestre la URL recibida
-        openWebViewActivity(
-                ClaveWebViewActivity.class,
-                firePreSignResult.getURL(),
-                null,
-                R.string.title_fire_webview,
-                true);
-    }
-
-    @Override
-    public void fireLoadDataFailed(Throwable cause) {
-        PfLog.e(SFConstants.LOG_TAG, "Ha fallado la operacion con la excepcion: " + cause, cause); //$NON-NLS-1$
-
-        dismissProgressDialog();
-
-        showToastMessage(getString(R.string.toast_msg_fire_comunication_ko));
-    }
-
-    @Override
-    public void fireSignSuccess(boolean allOk) {
-
-        dismissProgressDialog();
-
-        if (allOk) {
-            setResult(PetitionDetailsActivity.RESULT_SIGN_OK);
-            closeActivity();
-        } else {
-            PfLog.e(SFConstants.LOG_TAG, "Ha fallado la firma con FIRe"); //$NON-NLS-1$
-            showToastMessage(getString(R.string.error_msg_procesing_request));
-        }
-    }
-
-    @Override
-    public void fireSignFailed(Throwable cause) {
-
-        dismissProgressDialog();
-
-        PfLog.e(SFConstants.LOG_TAG, "Ha fallado la operacion de firma con Cl@ve Firma", cause); //$NON-NLS-1$
-        showToastMessage(getString(R.string.error_msg_procesing_request));
     }
 
     // Definimos el menu de opciones de la aplicacion, cuyas opciones estan

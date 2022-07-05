@@ -6,7 +6,6 @@ import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.DialogInterface.OnKeyListener;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
@@ -65,9 +64,7 @@ import es.gob.afirma.android.signfolder.RequestSigner;
 import es.gob.afirma.android.signfolder.SFConstants;
 import es.gob.afirma.android.signfolder.SignfolderApp;
 import es.gob.afirma.android.signfolder.listeners.DialogFragmentListener;
-import es.gob.afirma.android.signfolder.listeners.OperationRequestListener;
 import es.gob.afirma.android.signfolder.proxy.CommManager;
-import es.gob.afirma.android.signfolder.proxy.FireLoadDataResult;
 import es.gob.afirma.android.signfolder.proxy.RequestResult;
 import es.gob.afirma.android.signfolder.proxy.SignRequest;
 import es.gob.afirma.android.signfolder.proxy.SignRequest.RequestType;
@@ -98,10 +95,8 @@ import es.gob.afirma.android.util.PfLog;
  * el Layout por medio del uso de los elementos "list" y "empty" reconocidos por
  * el ListActivity.
  */
-public final class PetitionListActivity extends WebViewParentActivity implements
-        OperationRequestListener, LoadSignRequestListener, OnItemClickListener,
-        DialogFragmentListener, FireLoadDataTask.FireLoadDataListener,
-        FireSignTask.FireSignListener,
+public final class PetitionListActivity extends SignatureFragmentActivity implements
+        LoadSignRequestListener, OnItemClickListener, DialogFragmentListener,
         UpdatePushNotificationsTask.UpdatePushNotsListener {
 
     public final static String EXTRA_RESOURCE_DNI = "es.gob.afirma.signfolder.dni"; //$NON-NLS-1$
@@ -110,6 +105,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
     public final static String EXTRA_RESOURCE_APP_IDS = "es.gob.afirma.signfolder.apps.ids"; //$NON-NLS-1$
     public final static String EXTRA_RESOURCE_APP_NAMES = "es.gob.afirma.signfolder.apps.names"; //$NON-NLS-1$
     public static final String KEY_COUNT = "notificationCount";
+
     /**
      * Clave para comprobaci&oacute;n del estado de las solicitudes de firma que
      * se muestran actualmente.
@@ -148,23 +144,20 @@ public final class PetitionListActivity extends WebViewParentActivity implements
      */
     private final static int DIALOG_CONFIRM_REJECT = 13;
     /**
-     * Di&aacute;logo de advertencia de que no se han seleccionado peticiones.
-     */
-    private final static int DIALOG_NO_SELECTED_REQUEST = 14;
-    /**
      * Di&aacute;logo para confirmar la firma de peticiones.
      */
     private final static int DIALOG_CONFIRM_SIGN = 15;
-//    /**
-//     * Di&aacute;logo para mostrar el resultado devuelto por la pantalla de detalle.
-//     */
-//    private final static int DIALOG_RESULT_SIMPLE_REQUEST = 16;
-    private final static int PERMISSION_TO_OPEN_HELP = 22;
     /**
-     * Di&aacute;logo de notificaci&oacute;n de error al procesar las
-     * peticiones.
+     * Di&aacute;logo de notificaci&oacute;n de error.
      */
-    private final static int DIALOG_ERROR_PROCESSING = 16;
+    private final static int DIALOG_ERROR = 16;
+    /**
+     * Di&aacute;logo de notificaci&oacute;n de advertencia.
+     */
+    private final static int DIALOG_WARNING = 17;
+
+    private final static int PERMISSION_TO_OPEN_HELP = 22;
+
     /**
      * Tag para la presentaci&oacute;n de di&aacute;logos
      */
@@ -529,7 +522,6 @@ public final class PetitionListActivity extends WebViewParentActivity implements
         super.onStart();
 
         if (this.needReload || this.forceReload) {
-            setVisibilityLoadingMessage(true, null, this.loadingTask);
             updateCurrentList(FIRST_PAGE);
             this.needReload = false;
             this.forceReload = false;
@@ -546,7 +538,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
         final SignRequest[] reqs = getSelectedRequests();
 
         if (reqs == null || reqs.length == 0) {
-            showNoSelectedRequestDialog();
+            showWarningDialog(getString(R.string.dialog_msg_no_selected_requests));
             return;
         }
 
@@ -572,10 +564,10 @@ public final class PetitionListActivity extends WebViewParentActivity implements
         });
     }
 
-    private void showNoSelectedRequestDialog() {
+    private void showWarningDialog(final String message) {
         final CustomAlertDialog dialog = CustomAlertDialog.newInstance(
-                DIALOG_NO_SELECTED_REQUEST, getString(R.string.aviso),
-                getString(R.string.dialog_msg_no_selected_requests),
+                DIALOG_WARNING, getString(R.string.aviso),
+                message,
                 getString(android.R.string.ok), null, this);
 
         try {
@@ -596,10 +588,10 @@ public final class PetitionListActivity extends WebViewParentActivity implements
         }
     }
 
-    private void showErrorDialog(final int dialogId, final String message) {
+    private void showErrorDialog(final String message) {
 
         final CustomAlertDialog dialog = CustomAlertDialog.newInstance(
-                dialogId, getString(R.string.aviso), message,
+                DIALOG_ERROR, getString(R.string.aviso), message,
                 getString(android.R.string.ok), null, this);
 
         try {
@@ -631,7 +623,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
         final SignRequest[] requests = getSelectedRequests();
 
         if (requests == null || requests.length == 0) {
-            showNoSelectedRequestDialog();
+            showWarningDialog(getString(R.string.dialog_msg_no_selected_requests));
             return;
         }
 
@@ -725,7 +717,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
      * @return Lista.
      */
     private ListView getListView() {
-        return (ListView) findViewById(R.id.userList);
+        return findViewById(R.id.userList);
     }
 
     /**
@@ -915,7 +907,6 @@ public final class PetitionListActivity extends WebViewParentActivity implements
             setFilterConfig(this.filterConfig.reset(this.roleSelected, this.userConfig.isUserWithVerifiers()));
             this.filterDialogBuilder.resetLayout();
             invalidateOptionsMenu();
-            setVisibilityLoadingMessage(true, null, this.loadingTask);
             updateCurrentList(FIRST_PAGE);
         }
         // Habilitar/deshabilitar notificaciones
@@ -1026,6 +1017,9 @@ public final class PetitionListActivity extends WebViewParentActivity implements
         checkOperationPermissions(this.currentState, this.roleSelected);
 
         if (this.loadingTask == null || !this.loadingTask.isRunning()) {
+
+            dismissProgressDialog();
+
             this.currentPage = page;
 
             // Configuramos los filtros
@@ -1034,6 +1028,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
             this.loadingTask = new LoadSignRequestsTask(
                     this.currentState, page, PAGE_SIZE, filters,
                     CommManager.getInstance(), this);
+            showProgressDialog(getString(R.string.dialog_msg_loading_petitions), this, this.loadingTask);
             this.loadingTask.execute();
 
             // Se reinicia el contador de notificaciones para el servidor cargado
@@ -1065,7 +1060,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
      */
     private void changeCurrentRequestList(final String stateSigned) {
         if (this.loadingRequests && this.loadingTask != null) {
-            setVisibilityLoadingMessage(false, null, null);
+            dismissProgressDialog();
             this.loadingTask.cancel(true);
         }
         this.needReload = true;
@@ -1105,7 +1100,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
 
     @Override
     public void requestOperationFinished(final int operation,
-                                         final RequestResult request) {
+                                         final RequestResult result) {
 
         synchronized (this) {
 
@@ -1123,14 +1118,14 @@ public final class PetitionListActivity extends WebViewParentActivity implements
                     && this.numRequestToApprovePending <= 0
                     && this.numRequestToRejectPending <= 0
                     && this.numRequestToVerifyPending <= 0) {
-                setVisibilityLoadingMessage(false, null, null);
+
+                dismissProgressDialog();
 
                 // Una vez finalizada una operacion, si se produjo algun error,
                 // mostramos un dialogo informandolo. Si no, se recarga el listado
                 if (anyError) {
                     showProcessingError(operation);
                 } else {
-                    setVisibilityLoadingMessage(true, null, this.loadingTask);
                     updateCurrentList(FIRST_PAGE);
                 }
             }
@@ -1139,7 +1134,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
 
     @Override
     public void requestOperationFailed(final int operation,
-                                       final RequestResult request, final Throwable t) {
+                                       final RequestResult result, final Throwable t) {
 
         synchronized (this) {
 
@@ -1160,14 +1155,29 @@ public final class PetitionListActivity extends WebViewParentActivity implements
                     && this.numRequestToRejectPending <= 0
                     && this.numRequestToVerifyPending <= 0) {
 
+                dismissProgressDialog();
+
                 if (t != null) {
                     PfLog.e(SFConstants.LOG_TAG, "Error al procesar las peticiones de firma", t); //$NON-NLS-1$
                 }
 
-                setVisibilityLoadingMessage(false, null, null);
-
                 showProcessingError(operation);
             }
+        }
+    }
+
+    @Override
+    public void requestOperationCancelled(int operation) {
+        synchronized (this) {
+
+            this.numRequestToSignPending = 0;
+            this.numRequestToApprovePending = 0;
+            this.numRequestToRejectPending = 0;
+            this.numRequestToVerifyPending = 0;
+
+            PfLog.i(SFConstants.LOG_TAG, "Operacion cancelada por el usuario"); //$NON-NLS-1$
+
+            dismissProgressDialog();
         }
     }
 
@@ -1184,7 +1194,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
                 errorMsg = getString(R.string.error_msg_procesing_requests);
         }
         PfLog.w(SFConstants.LOG_TAG, "Error: " + errorMsg); //$NON-NLS-1$
-        showErrorDialog(DIALOG_ERROR_PROCESSING, errorMsg);
+        showErrorDialog(errorMsg);
     }
 
     @Override
@@ -1254,16 +1264,17 @@ public final class PetitionListActivity extends WebViewParentActivity implements
     }
 
     @Override
-    public void loadedSignRequest(final List<SignRequest> signRequests, final int pageNumber, final int numOfPages) {
+    public void loadedSignRequest(final List<SignRequest> requests, final int pageNumber, final int numOfPages) {
+
+        dismissProgressDialog();
 
         // Se termina la carga
-        setVisibilityLoadingMessage(false, null, null);
         ((SwipeRefreshLayout) findViewById(R.id.swiperefresh)).setRefreshing(false);
 
         // Mostramos u ocultamos el texto de "No hay resultados" segun
         // corresponda
         final TextView emptyTextView = findViewById(R.id.empty);
-        emptyTextView.setVisibility(signRequests == null || signRequests
+        emptyTextView.setVisibility(requests == null || requests
                 .size() == 0 ? View.VISIBLE : View.INVISIBLE);
         emptyTextView.setText(getString(R.string.no_request_avaible));
 
@@ -1275,7 +1286,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
         this.numPages = numOfPages;
 
         // Mostramos el listado de peticiones
-        getListView().setAdapter(preparePetitionList(signRequests,
+        getListView().setAdapter(preparePetitionList(requests,
                 this.currentState, numOfPages > 1));
     }
 
@@ -1283,13 +1294,13 @@ public final class PetitionListActivity extends WebViewParentActivity implements
      * Preparamos las peticiones para mostrarlas, anteponiendo las proximas a caducar
      * y ajustando el layout de los datos.
      *
-     * @param signRequests   Peticiones de firma.
+     * @param requests   Peticiones de firma.
      * @param state          Estado de las peticiones (pendientes, procesadas o rechazadas).
      * @param needPagination Indica si debe mostrarse el elemento para la paginaci&oacute;n.
      * @return Listado de peticiones.
      */
     private PetitionListArrayAdapter preparePetitionList(
-            final List<SignRequest> signRequests, final String state, final boolean needPagination) {
+            final List<SignRequest> requests, final String state, final boolean needPagination) {
 
         final List<PetitionListAdapterItem> plAdapterItem = new ArrayList<>();
 
@@ -1310,8 +1321,8 @@ public final class PetitionListActivity extends WebViewParentActivity implements
 
             // Creamos una lista con las peticiones proximas a caducar
             List<SignRequest> priorityList = new ArrayList<>();
-            for (int i = signRequests.size() - 1; i >= 0; i--) {
-                SignRequest signRequest = signRequests.get(i);
+            for (int i = requests.size() - 1; i >= 0; i--) {
+                SignRequest signRequest = requests.get(i);
                 if (signRequest.getExpirationDate() != null) {
                     // Obtenemos la fecha de caducidad
                     Date date;
@@ -1325,7 +1336,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
                     // Comprobamos si la fecha de caducidad es menor que la fecha limite
                     if (dateFuture.compareTo(date) > -1) {
                         priorityList.add(signRequest);
-                        signRequests.remove(i);
+                        requests.remove(i);
                     }
                 }
             }
@@ -1354,7 +1365,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
         }
 
         // Incluimos el resto de peticiones
-        for (final SignRequest request : signRequests) {
+        for (final SignRequest request : requests) {
             plAdapterItem.add(new PetitionElement(
                     request,
                     SignRequest.STATE_UNRESOLVED.equals(state) ?
@@ -1419,7 +1430,6 @@ public final class PetitionListActivity extends WebViewParentActivity implements
             if (resultCode == PetitionDetailsActivity.RESULT_SIGN_OK
                     || resultCode == PetitionDetailsActivity.RESULT_REJECT_OK
                     || resultCode == PetitionDetailsActivity.RESULT_VERIFY_OK) {
-                setVisibilityLoadingMessage(true, null, this.loadingTask);
                 updateCurrentList(FIRST_PAGE);
             }
             // Si ha caducado la sesion vuelve a la actividad principal
@@ -1433,7 +1443,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
         }
 
         // Obtenemos la respuesta tras autorizar la operacion en Cl@ve Firma
-        else if (requestCode == WebViewParentActivity.WEBVIEW_REQUEST_CODE) {
+        else if (requestCode == LoadKeyStoreFragmentActivity.WEBVIEW_REQUEST_CODE) {
             // Si la peticion ha sido correcta iniciamos la finalizacion de firma
             if (resultCode == RESULT_OK) {
 
@@ -1486,8 +1496,9 @@ public final class PetitionListActivity extends WebViewParentActivity implements
     @Override
     public void errorLoadingSignRequest() {
 
+        dismissProgressDialog();
+
         // Se termina la carga
-        setVisibilityLoadingMessage(false, null, null);
         ((SwipeRefreshLayout) findViewById(R.id.swiperefresh)).setRefreshing(false);
 
         // Ya no tenemos que recargar el listado
@@ -1529,37 +1540,6 @@ public final class PetitionListActivity extends WebViewParentActivity implements
         });
     }
 
-    /**
-     * Establece la visibilidad de un mensaje/s&iacute;mbolo de carga.
-     *
-     * @param visible Establece si el mensage sera visible o no.
-     */
-    void setVisibilityLoadingMessage(final boolean visible, final RejectRequestsTask rrt,
-                                     final LoadSignRequestsTask lsrt) {
-        if (visible) {
-            showProgressDialog(
-                    getString(R.string.dialog_msg_loading_petitions), rrt,
-                    lsrt);
-        } else {
-            dismissProgressDialog();
-        }
-    }
-
-    /**
-     * Establece la visibilidad de un mensaje/s&iacute;mbolo de carga.
-     *
-     * @param visible Establece si el mensage sera visible o no.
-     */
-    void setVisibilityProgressMessage(final boolean visible) {
-        if (visible) {
-            showProgressDialog(
-                    getString(R.string.dialog_msg_processing_requests), null,
-                    null);
-        } else {
-            dismissProgressDialog();
-        }
-    }
-
     @Override
     protected void onSaveInstanceState(final Bundle outState) {
         super.onSaveInstanceState(outState);
@@ -1587,7 +1567,6 @@ public final class PetitionListActivity extends WebViewParentActivity implements
                     public void onClick(final DialogInterface dialog, final int identifier) {
                         setFilterConfig(getFilterDialogBuilder().getFilterConfig());
                         invalidateOptionsMenu();
-                        setVisibilityLoadingMessage(true, null, PetitionListActivity.this.loadingTask);
                         updateCurrentList(FIRST_PAGE);
                     }
                 });
@@ -1644,24 +1623,24 @@ public final class PetitionListActivity extends WebViewParentActivity implements
             if (selectedRequests == null || selectedRequests.length == 0) {
                 // Esto no deberia ocurrir nunca, ya que se se comprobo anteriormente que
                 // hubiese peticiones seleccionadas.
-                showNoSelectedRequestDialog();
+                showWarningDialog(getString(R.string.dialog_msg_no_selected_requests));
                 return;
             }
 
             this.numRequestToRejectPending = selectedRequests.length;
-            setVisibilityLoadingMessage(true, rejectRequests(reason, selectedRequests),
-                    null);
+            rejectRequests(reason, selectedRequests);
 
         }
         // Dialogo de confirmacion de firma de peticiones.
         else if (dialogId == DIALOG_CONFIRM_SIGN) {
 
-            setVisibilityProgressMessage(true);
+            showProgressDialog(getString(R.string.dialog_msg_processing_requests), this);
 
             // Comprobamos que haya elementos seleccionados.
             final SignRequest[] requests = getSelectedRequests();
             if (requests == null || requests.length == 0) {
-                showNoSelectedRequestDialog();
+                dismissProgressDialog();
+                showWarningDialog(getString(R.string.dialog_msg_no_selected_requests));
                 return;
             }
 
@@ -1682,23 +1661,14 @@ public final class PetitionListActivity extends WebViewParentActivity implements
             this.numRequestToApprovePending = requestToApprove.size();
             if (this.numRequestToApprovePending > 0) {
                 PfLog.i(SFConstants.LOG_TAG, "Peticiones para aprobar: " + this.numRequestToApprovePending); //$NON-NLS-1$
-                approveRequests(
-                        requestToApprove.toArray(new SignRequest[0]));
+                approveRequests(requestToApprove.toArray(new SignRequest[0]));
             }
 
             // Mandamos a firmar las peticiones de firma.
             this.numRequestToSignPending = requestToSign.size();
             if (this.numRequestToSignPending > 0) {
                 PfLog.i(SFConstants.LOG_TAG, "Peticiones para firmar: " + this.numRequestToSignPending); //$NON-NLS-1$
-
-                // Firmamos con certificado local o con Cl@ve Firma segun se haya configurado
-                if (AppPreferences.getInstance().isCloudCertEnabled()) {
-                    doSignWithFire(requestToSign.toArray(new SignRequest[0]));
-                } else {
-                    signRequets(
-                            this.certAlias,
-                            requestToSign.toArray(new SignRequest[0]));
-                }
+                signRequests(requestToSign.toArray(new SignRequest[0]));
             }
 
             // Mandamos a validar las peticiones de validación.
@@ -1709,9 +1679,8 @@ public final class PetitionListActivity extends WebViewParentActivity implements
             }
         }
         // Dialogo de error procesando peticiones
-        else if (dialogId == DIALOG_ERROR_PROCESSING) {
+        else if (dialogId == DIALOG_ERROR) {
             // Actualizamos el listado
-            setVisibilityLoadingMessage(true, null, this.loadingTask);
             updateCurrentList(FIRST_PAGE);
         }
     }
@@ -1752,6 +1721,7 @@ public final class PetitionListActivity extends WebViewParentActivity implements
         // Antes de iniciar el proceso, reiniciamos la bandera que senala los errores
         anyError = false;
         final RejectRequestsTask rrt = new RejectRequestsTask(signRequests, CommManager.getInstance(), this, reason);
+        showProgressDialog(getString(R.string.dialog_msg_processing_requests), this, rrt);
         rrt.execute();
         return rrt;
     }
@@ -1781,134 +1751,89 @@ public final class PetitionListActivity extends WebViewParentActivity implements
         cct.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
 
+    /**
+     * Inicia el proceso de firma con DNIe.
+     */
+    private void doSignWithDnie(final SignRequest[] requests) {
+        //TODO: Implementar firma con DNIe
+//        FireLoadDataTask cct = new FireLoadDataTask(requests, this);
+//        cct.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+    }
+
     @Override
     public void onDialogNegativeClick(final int dialogId) {
         // No se implementa comportamiento
     }
 
-    /**
-     * Cierra el di&aacute;logo de espera en caso de estar abierto.
-     */
-    void dismissProgressDialog() {
+    @Override
+    protected void showProgressDialog(final String message, final Context ctx, final AsyncTask<?, ?, ?>... tasks) {
+
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+
+                ProgressDialog currentProgressDialog = getProgressDialog();
+                if (currentProgressDialog != null && currentProgressDialog.isShowing()) {
+                    currentProgressDialog.dismiss();
+                }
+
+                try {
+                    currentProgressDialog = ProgressDialog.show(ctx, null, message, true);
+                    setProgressDialog(currentProgressDialog);
+                } catch (final Exception e) {
+                    PfLog.e(SFConstants.LOG_TAG, "No se ha podido mostrar el dialogo de progreso: " + e, e); //$NON-NLS-1$
+                    return;
+                }
+
+                // Definimos el comportamiento para cancelar los dialogos de espera
+                currentProgressDialog.setOnKeyListener(new DialogInterface.OnKeyListener() {
+                    @Override
+                    public boolean onKey(final DialogInterface dialog, final int keyCode, final KeyEvent event) {
+                        if (keyCode == KeyEvent.KEYCODE_BACK) {
+                            if (tasks != null) {
+                                for (AsyncTask<?, ?, ?> task : tasks) {
+                                    if (task != null) {
+                                        task.cancel(true);
+                                    }
+                                }
+                            }
+                            dialog.dismiss();
+                            return true;
+                        }
+                        return false;
+                    }
+                });
+            }
+        });
+    }
+
+    @Override
+    protected void dismissProgressDialog() {
         this.loadingRequests = false;
         if (getProgressDialog() != null) {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    try {
-                        getProgressDialog().dismiss();
-                    }
-                    catch (Exception e) {
-                        PfLog.w(SFConstants.LOG_TAG, "El dialogo de espera no estaba abierto o fallo al cerrarse: " + e);
-                    }
+                    getProgressDialog().dismiss();
                 }
             });
         }
     }
 
-    /**
-     * Muestra un di&aacute;logo de espera con un mensaje.
-     */
-    private void showProgressDialog(final String message,
-                                    final RejectRequestsTask rrt, final LoadSignRequestsTask lsrt) {
-        this.loadingRequests = true;
-
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    setProgressDialog(ProgressDialog.show(
-                            PetitionListActivity.this, null, message, true));
-                    getProgressDialog().setOnKeyListener(new OnKeyListener() {
-                        @Override
-                        public boolean onKey(final DialogInterface dialog,
-                                             final int keyCode, final KeyEvent event) {
-                            if (keyCode == KeyEvent.KEYCODE_BACK) {
-                                // comprobamos si se esta ejecutando alguna
-                                // tarea para cancelarla
-                                if (rrt != null) {
-                                    rrt.cancel(true);
-                                } else if (lsrt != null) {
-                                    lsrt.cancel(true);
-                                }
-                                dismissProgressDialog();
-                                return true;
-                            }
-                            return false;
-                        }
-                    });
-                } catch (final Exception e) {
-                    PfLog.e(SFConstants.LOG_TAG,
-                            "No se ha podido mostrar el dialogo de progreso: " + e); //$NON-NLS-1$
-                }
-            }
-        });
-    }
-
-    /**
-     * Cuando se finaliza correctamente el llamada a FIRe que procesa las peticiones,
-     * recibimos el identificador de la transaccion de FIRe y la URL de redireccion
-     * a la pagina web desde la que hacer la autorizaci&oacute;n.
-     *
-     * @param loadDataResult Informaci&oacute;n de prefirma y de la transacci&oacute;n de FIRe para
-     *                       permitir la autorizaci&oacute;n del usuario.
-     */
     @Override
-    public void fireLoadDataSuccess(FireLoadDataResult loadDataResult) {
-
-        PfLog.w(SFConstants.LOG_TAG, "Resultado de la carga de datos en FIRe:\n" + loadDataResult);
-
-        // Abrimos una actividad con un WebView en la que se muestre la URL recibida
-        openWebViewActivity(
-                ClaveWebViewActivity.class,
-                loadDataResult.getURL(),
-                null,
-                R.string.title_fire_webview,
-                true);
-    }
-
-    @Override
-    public void fireLoadDataFailed(Throwable cause) {
-        PfLog.e(SFConstants.LOG_TAG, "Ha fallado en la prefirma la operacion de firma con Cl@ve Firma", cause); //$NON-NLS-1$
-
+    void requestedSignatureSuccess() {
         synchronized (this) {
             this.numRequestToSignPending = 0;
 
             if (this.numRequestToApprovePending <= 0) {
-
-                setVisibilityLoadingMessage(false, null, null);
-
-                final String errorMsg = getString(R.string.error_msg_procesing_requests);
-                PfLog.w(SFConstants.LOG_TAG, "Error: " + errorMsg); //$NON-NLS-1$
-                showErrorDialog(DIALOG_ERROR_PROCESSING, errorMsg);
+                dismissProgressDialog();
+                updateCurrentList(FIRST_PAGE);
             }
         }
     }
 
     @Override
-    public void fireSignSuccess(boolean allResultOk) {
-
-        synchronized (this) {
-            this.numRequestToSignPending = 0;
-
-            if (this.numRequestToApprovePending <= 0) {
-                setVisibilityLoadingMessage(false, null, null);
-                if (allResultOk) {
-                    // Una vez finalizada una operacion, recargamos el listado por
-                    // la primera pagina
-                    setVisibilityLoadingMessage(true, null, this.loadingTask);
-                    updateCurrentList(FIRST_PAGE);
-                } else {
-                    final String errorMsg = getString(R.string.error_msg_procesing_requests);
-                    PfLog.w(SFConstants.LOG_TAG, "Ha fallado la firma de una o mas peticiones con FIRe"); //$NON-NLS-1$
-                    showErrorDialog(DIALOG_ERROR_PROCESSING, errorMsg);
-                }
-            }
-        }
-    }
-
-    @Override
-    public void fireSignFailed(Throwable cause) {
+    void requestedSignatureFailed(Throwable cause) {
         PfLog.e(SFConstants.LOG_TAG, "Ha fallado en la postfirma la operacion de firma con Cl@ve Firma", cause); //$NON-NLS-1$
 
         synchronized (this) {
@@ -1916,11 +1841,11 @@ public final class PetitionListActivity extends WebViewParentActivity implements
 
             if (this.numRequestToApprovePending <= 0) {
 
-                setVisibilityLoadingMessage(false, null, null);
+                dismissProgressDialog();
 
                 final String errorMsg = getString(R.string.error_msg_procesing_requests);
                 PfLog.w(SFConstants.LOG_TAG, "Error: " + errorMsg); //$NON-NLS-1$
-                showErrorDialog(DIALOG_ERROR_PROCESSING, errorMsg);
+                showErrorDialog(errorMsg);
             }
         }
     }
@@ -2155,7 +2080,6 @@ public final class PetitionListActivity extends WebViewParentActivity implements
                             @Override
                             public void onClick(final View v) {
                                 v.setSelected(true);
-                                setVisibilityLoadingMessage(true, null, PetitionListActivity.this.loadingTask);
                                 updateCurrentList(FIRST_PAGE);
                             }
                         });
@@ -2169,7 +2093,6 @@ public final class PetitionListActivity extends WebViewParentActivity implements
                             @Override
                             public void onClick(final View v) {
                                 v.setSelected(true);
-                                setVisibilityLoadingMessage(true, null, PetitionListActivity.this.loadingTask);
                                 updateCurrentList(PanelPaginationElement.this.page - 1);
                             }
                         });
@@ -2183,7 +2106,6 @@ public final class PetitionListActivity extends WebViewParentActivity implements
                             @Override
                             public void onClick(final View v) {
                                 v.setSelected(true);
-                                setVisibilityLoadingMessage(true, null, PetitionListActivity.this.loadingTask);
                                 updateCurrentList(PanelPaginationElement.this.page + 1);
                             }
                         });
@@ -2197,7 +2119,6 @@ public final class PetitionListActivity extends WebViewParentActivity implements
                             @Override
                             public void onClick(final View v) {
                                 v.setSelected(true);
-                                setVisibilityLoadingMessage(true, null, PetitionListActivity.this.loadingTask);
                                 updateCurrentList(PanelPaginationElement.this.nPages);
                             }
                         });

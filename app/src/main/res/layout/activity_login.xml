@@ -26,18 +26,17 @@
 	        android:layout_marginTop="5dp"
 	        android:contentDescription="@string/signfolder_logo"
 	        android:src="@drawable/logo_portafirmas_mini" />
-	    
-	    <TextView
-	        android:id="@+id/presentationText"
-	        android:layout_width="wrap_content"
-	        android:layout_height="wrap_content"
-	        android:layout_below="@+id/imageView1"
-	        android:layout_marginTop="5dp"
-	        android:layout_marginLeft="5dp"
-	        android:layout_marginRight="5dp"
-	        android:text="@string/label_presentation_text"
-			android:textAppearance="?android:attr/textAppearanceSmall"
-	          />
+
+		<TextView
+			android:id="@+id/presentationText"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_below="@+id/imageView1"
+			android:layout_marginLeft="5dp"
+			android:layout_marginTop="5dp"
+			android:layout_marginRight="5dp"
+			android:text="@string/label_presentation_text"
+			android:textAppearance="?android:attr/textAppearanceSmall" />
 
 		<LinearLayout
 			android:layout_width="match_parent"
@@ -55,7 +54,7 @@
 				android:layout_weight="0.5"
 				android:maxLines="2"
 				android:minWidth="30dp"
-				android:onClick="onClick"
+				android:onClick="onClickImportCertButton"
 				android:text="@string/button_import_cert" />
 
 			<Button
@@ -66,7 +65,7 @@
 				android:layout_weight="0.5"
 				android:maxLines="2"
 				android:minWidth="30dp"
-				android:onClick="onClick"
+				android:onClick="onClickAccessButton"
 				android:text="@string/button_login" />
 
 		</LinearLayout>

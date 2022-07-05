@@ -45,7 +45,7 @@ public final class ClaveWebViewActivity extends FragmentActivity implements WebV
 
 		super.onCreate(savedInstanceState);
 
-		int titleStringId = getIntent().getIntExtra(WebViewParentActivity.EXTRA_RESOURCE_TITLE, 0);
+		int titleStringId = getIntent().getIntExtra(LoadKeyStoreFragmentActivity.EXTRA_RESOURCE_TITLE, 0);
 		if (titleStringId != 0) {
 			setTitle(titleStringId);
 		}
@@ -199,13 +199,13 @@ public final class ClaveWebViewActivity extends FragmentActivity implements WebV
 
 		// Habilitamos los permisos del WebView
 		boolean needJavaScript = getIntent().getBooleanExtra(
-				WebViewParentActivity.EXTRA_RESOURCE_NEED_JAVASCRIPT, false);
+				LoadKeyStoreFragmentActivity.EXTRA_RESOURCE_NEED_JAVASCRIPT, false);
 		final WebSettings webSettings = webView.getSettings();
 		webSettings.setJavaScriptEnabled(needJavaScript);
 
 		// Recuperamos la configuracion
-		String url = getIntent().getStringExtra(WebViewParentActivity.EXTRA_RESOURCE_URL);
-		String cookieId = getIntent().getStringExtra(WebViewParentActivity.EXTRA_RESOURCE_COOKIE_ID);
+		String url = getIntent().getStringExtra(LoadKeyStoreFragmentActivity.EXTRA_RESOURCE_URL);
+		String cookieId = getIntent().getStringExtra(LoadKeyStoreFragmentActivity.EXTRA_RESOURCE_COOKIE_ID);
 
 		if (url == null) {
 			PfLog.e(SFConstants.LOG_TAG, "No se ha proporcionado la URL que cargar en el WebView");

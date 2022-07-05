@@ -37,7 +37,6 @@ android {
 
 repositories {
     mavenLocal()
-    jcenter()
     google()
 }
 
@@ -49,11 +48,18 @@ dependencies {
     implementation 'android.arch.navigation:navigation-fragment:1.0.0'
     implementation 'android.arch.navigation:navigation-ui:1.0.0'
 
-    implementation ('es.gob.afirma:afirma-core:1.6') {
+    implementation ('es.gob.afirma.jmulticard:jmulticard-android:1.8-SNAPSHOT') {
+        exclude(module: 'support-v4')
+        exclude(module: 'android')
+    }
+    implementation 'es.gob.afirma.jmulticard:jmulticard-jse:1.8-SNAPSHOT'
+
+    implementation ('es.gob.afirma:afirma-core:1.8-SNAPSHOT') {
         exclude group: 'es.gob.afirma.lib', module: 'afirma-lib-jmimemagic'
     }
     implementation 'android.arch.lifecycle:extensions:1.1.1'
     implementation "androidx.swiperefreshlayout:swiperefreshlayout:1.1.0"
 
     apply plugin: 'com.google.gms.google-services'
+
 }

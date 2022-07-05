@@ -31,11 +31,21 @@ public final class AppPreferences {
 
 	private static final String KEY_HELP_URL = "help.url"; //$NON-NLS-1$
 
-	/** &Uacute;ltimo certificado utilizado */
+	/** &Uacute;ltimo certificado utilizado. */
 	private static final String LAST_CERT = "lastCert"; //$NON-NLS-1$
 
-	/** Indicador de si se quiere autenticar y firmar con certificado en la nube. */
-	private static final String CLOUD_CERT_ENABLED = "enabledCloudCert"; //$NON-NLS-1$
+	/** Clave de preferencia del almac&eacute;n de claves. */
+	private static final String PREFERENCES_KEY_KEYSTORE = "keystore";
+
+	/** Almac&eacute;n de claves local. */
+	public static final String KEYSTORE_LOCAL = "local";
+
+	/** Almac&eacute;n de claves remoto. */
+	public static final String KEYSTORE_CLOUD = "cloud";
+
+	/** Almac&eacute;n de claves DNIe. */
+	public static final String KEYSTORE_DNIE = "dnie";
+
 
 	/** Clave con la que se almacena el indicador de que esta es la primera ejecuci&oacute;n. */
 	private static final String FIRST_EXECUTION = "firstExecution"; //$NON-NLS-1$
@@ -108,21 +118,19 @@ public final class AppPreferences {
 	}
 
 	/**
-	 * Define si se ha habilitado la firma con Cl@ve Firma.
-	 * @param  cloudCertEnabled {@code true} para habilitar el uso de
-	 * certificados en la mube, {@code false} para usar certificados locales.
+	 * Establece el almac&eacute;n de claves configurado.
+	 * @param keystore Almac&eacute;n de claves.
 	 */
-	public void setCloudCertEnabled(boolean cloudCertEnabled) {
-		setPreferenceBool(CLOUD_CERT_ENABLED, cloudCertEnabled);
+	public void setCertKeyStore(String keystore) {
+		setPreference(PREFERENCES_KEY_KEYSTORE, keystore);
 	}
 
 	/**
-	 * Recupera si se ha habilitado la firma con Cl@ve Firma.
-	 * @return {@code true} si está habilitado el uso del certificado en la nube, {@code false}
-	 * en caso contrario.
+	 * Recupera el almac&eacute;n de claves configurado.
+	 * @return Almac&eacute;n de claves configurado.
 	 */
-	public boolean isCloudCertEnabled() {
-		return getPreferenceBool(CLOUD_CERT_ENABLED, false);
+	public String getCertKeyStore() {
+		return getPreference(PREFERENCES_KEY_KEYSTORE, KEYSTORE_LOCAL);
 	}
 
 	/**

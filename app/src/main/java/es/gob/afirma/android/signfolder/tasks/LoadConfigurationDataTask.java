@@ -3,17 +3,17 @@ package es.gob.afirma.android.signfolder.tasks;
 import android.content.Context;
 import android.os.AsyncTask;
 
+import es.gob.afirma.android.crypto.AuthenticationResult;
 import es.gob.afirma.android.signfolder.R;
 import es.gob.afirma.android.signfolder.SFConstants;
 import es.gob.afirma.android.signfolder.proxy.CommManager;
 import es.gob.afirma.android.signfolder.proxy.RequestAppConfiguration;
-import es.gob.afirma.android.signfolder.proxy.ValidationLoginResult;
 import es.gob.afirma.android.util.PfLog;
 
 /** Carga los datos remotos necesarios para la configuraci&oacute;n de la aplicaci&oacute;n. */
 public final class LoadConfigurationDataTask extends AsyncTask<Void, Void, RequestAppConfiguration> {
 
-	private final ValidationLoginResult loginResult;
+	private final AuthenticationResult loginResult;
 	private final CommManager commManager;
 	private final Context context;
 	private final LoadConfigurationListener listener;
@@ -27,7 +27,7 @@ public final class LoadConfigurationDataTask extends AsyncTask<Void, Void, Reque
 	 * @param context Contexto de la aplicaci&oacute;n.
 	 * @param listener Manejador del resultado de la operaci&oacute;n.
 	 */
-	public LoadConfigurationDataTask(final ValidationLoginResult loginResult,
+	public LoadConfigurationDataTask(final AuthenticationResult loginResult,
 							  final CommManager commManager, final Context context,
 							  final LoadConfigurationListener listener) {
 		this.loginResult = loginResult;
@@ -77,7 +77,7 @@ public final class LoadConfigurationDataTask extends AsyncTask<Void, Void, Reque
 	 * configuraci&oacute;n de la aplicaci&oacute;n. */
 	public interface LoadConfigurationListener {
 
-		void configurationLoadSuccess(RequestAppConfiguration appConfig, ValidationLoginResult loginResult);
+		void configurationLoadSuccess(RequestAppConfiguration appConfig, AuthenticationResult loginResult);
 
 		void configurationLoadError(Throwable t);
 	}

@@ -13,12 +13,15 @@ package es.gob.afirma.android.crypto;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
+import java.security.Security;
 import java.security.Signature;
 import java.security.SignatureException;
 import java.security.cert.Certificate;
 import java.util.Properties;
 
+import es.gob.afirma.android.signfolder.SFConstants;
 import es.gob.afirma.android.util.AOException;
+import es.gob.afirma.android.util.PfLog;
 
 /** Firmador simple en formato PKCS#1.
  * @author Tom&aacute;s Garc&iacute;a-Mer&aacute;s */
@@ -56,6 +59,11 @@ public final class AOPkcs1Signer {
 				sig = Signature.getInstance(algorithm, "CeresJCAProvider"); //$NON-NLS-1$
 			}
 			else {
+				// Al usar DNIe puede quedarse el proveedor "SC" instalada y despues, al dejar de usarlo,
+				// impediria el uso de las claves de Android, asi que se eliminar este proveedor antes de
+				// firmar
+				Security.removeProvider("SC");
+
 				sig = Signature.getInstance(algorithm);
 			}
 		}
@@ -80,11 +88,19 @@ public final class AOPkcs1Signer {
 			throw new AOException("Error al configurar los datos a firmar: " + e, e); //$NON-NLS-1$
 		}
 
+		byte[] signature;
 		try {
-			return sig.sign();
+			signature = sig.sign();
 		}
-		catch (final SignatureException e) {
+		catch (final Exception e) {
+			// El fallo de la firma puede ser por un error con el PIN cuando se firma con DNIe, asi
+			// que hay que reiniciar el CallbackHandler para que lo vuelva a pedir
+			DnieConnectionManager dnieManager = DnieConnectionManager.getInstance();
+			if (dnieManager.getCallbackHandler() != null) {
+				DnieConnectionManager.getInstance().getCallbackHandler().clearPin();
+			}
 			throw new AOException("Error durante el proceso de firma PKCS#1: " + e, e); //$NON-NLS-1$
 		}
+		return signature;
 	}
 }

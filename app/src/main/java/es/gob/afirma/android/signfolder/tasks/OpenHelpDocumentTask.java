@@ -8,8 +8,6 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Environment;
-import android.util.Log;
 import android.widget.Toast;
 
 import androidx.core.content.FileProvider;
@@ -41,10 +39,6 @@ public final class OpenHelpDocumentTask extends AsyncTask<Void, Void, File> {
 	 */
 	public OpenHelpDocumentTask(final Activity activity) {
 		this.activity = activity;
-	}
-
-	Activity getActivity() {
-		return this.activity;
 	}
 
 	@Override
@@ -104,7 +98,6 @@ public final class OpenHelpDocumentTask extends AsyncTask<Void, Void, File> {
 
 	@Override
 	protected void onPostExecute(final File helpFile) {
-
 		if (helpFile == null) {
 			Toast.makeText(getActivity(), "No se ha podido cargar el fichero de ayuda", Toast.LENGTH_SHORT).show();
 			return;
@@ -194,5 +187,9 @@ public final class OpenHelpDocumentTask extends AsyncTask<Void, Void, File> {
 						.create().show();
 			}
 		}
+	}
+
+	Activity getActivity() {
+		return this.activity;
 	}
 }
