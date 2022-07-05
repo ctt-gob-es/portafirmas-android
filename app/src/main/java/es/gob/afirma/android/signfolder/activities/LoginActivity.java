@@ -38,6 +38,7 @@ import es.gob.afirma.android.crypto.MobileKeyStoreManager.PrivateKeySelectionLis
 import es.gob.afirma.android.crypto.NfcHelper;
 import es.gob.afirma.android.fcm.NotificationUtilities;
 import es.gob.afirma.android.signfolder.AppPreferences;
+import es.gob.afirma.android.signfolder.BuildConfig;
 import es.gob.afirma.android.signfolder.ConfigureFilterDialogBuilder;
 import es.gob.afirma.android.signfolder.LoginOptionsDialogBuilder;
 import es.gob.afirma.android.signfolder.LoginOptionsDialogBuilder.LoginOptionsListener;
@@ -89,7 +90,7 @@ public final class LoginActivity extends AuthenticationFragmentActivity implemen
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
-        setTitle(R.string.app_title);
+        setTitle(getString(R.string.app_title, BuildConfig.VERSION_NAME));
 
         // Inicializamos si es necesario el listado de servidores proxy por defecto
         AppPreferences prefs = AppPreferences.getInstance();
