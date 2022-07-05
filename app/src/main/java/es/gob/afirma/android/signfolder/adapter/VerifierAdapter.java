@@ -1,11 +1,8 @@
 package es.gob.afirma.android.signfolder.adapter;
 
-import android.content.DialogInterface;
-import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
@@ -13,17 +10,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.List;
 
-import es.gob.afirma.android.signfolder.MessageDialog;
 import es.gob.afirma.android.signfolder.R;
-import es.gob.afirma.android.signfolder.SFConstants;
-import es.gob.afirma.android.signfolder.activities.AuthorizationInfoActivity;
-import es.gob.afirma.android.signfolder.activities.FindUserActivity;
-import es.gob.afirma.android.user.configuration.ConfigurationConstants;
-import es.gob.afirma.android.user.configuration.ConfigurationRole;
-import es.gob.afirma.android.user.configuration.GenericUser;
 import es.gob.afirma.android.user.configuration.Validator;
-import es.gob.afirma.android.user.configuration.VerifierUser;
-import es.gob.afirma.android.util.PfLog;
 
 /**
  * Clase que implementa el adaptador para la lista de usuarios con rol de validador.

@@ -1,15 +1,12 @@
 package es.gob.afirma.android.signfolder.proxy;
 
 import java.io.IOException;
-import java.util.List;
 
 import es.gob.afirma.android.signfolder.CommonsUtils;
 import es.gob.afirma.android.signfolder.DateTimeFormatter;
 import es.gob.afirma.android.user.configuration.Authorization;
-import es.gob.afirma.android.user.configuration.AuthorizedUser;
 import es.gob.afirma.android.user.configuration.ConfigurationRole;
 import es.gob.afirma.android.user.configuration.GenericUser;
-import es.gob.afirma.android.user.configuration.UserInfo;
 import es.gob.afirma.android.user.configuration.Validator;
 import es.gob.afirma.android.util.Base64;
 import es.gob.afirma.android.util.PfLog;

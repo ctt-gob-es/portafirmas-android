@@ -2,7 +2,6 @@ package es.gob.afirma.android.signfolder.proxy;
 
 import java.util.List;
 
-
 import es.gob.afirma.android.user.configuration.ContactData;
 import es.gob.afirma.android.user.configuration.UserProfile;
 

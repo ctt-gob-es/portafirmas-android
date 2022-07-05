@@ -2,8 +2,6 @@ package es.gob.afirma.android.crypto;
 
 import android.nfc.Tag;
 
-import javax.security.auth.callback.CallbackHandler;
-
 import es.gob.afirma.android.signfolder.SFConstants;
 import es.gob.afirma.android.util.PfLog;
 import es.gob.jmulticard.android.callbacks.CachePasswordCallback;

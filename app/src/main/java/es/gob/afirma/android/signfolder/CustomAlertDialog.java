@@ -95,7 +95,7 @@ public final class CustomAlertDialog extends DialogFragment {
 
 	    if (getArguments().getString(BUNDLE_ID_MESSAGE) != null) {
         	dialogBuilder.setMessage(getArguments().getString(BUNDLE_ID_MESSAGE));
-        } else if (vista !=null){
+        } else if (vista != null){
         	dialogBuilder.setView(vista);
         }
 

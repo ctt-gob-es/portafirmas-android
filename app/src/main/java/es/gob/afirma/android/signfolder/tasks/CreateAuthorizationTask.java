@@ -2,20 +2,10 @@ package es.gob.afirma.android.signfolder.tasks;
 
 import android.os.AsyncTask;
 
-import org.xml.sax.SAXException;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-
 import es.gob.afirma.android.signfolder.SFConstants;
 import es.gob.afirma.android.signfolder.proxy.CommManager;
 import es.gob.afirma.android.signfolder.proxy.GenericResponse;
-import es.gob.afirma.android.signfolder.proxy.ServerControlledException;
 import es.gob.afirma.android.user.configuration.Authorization;
-import es.gob.afirma.android.user.configuration.ConfigurationRole;
-import es.gob.afirma.android.user.configuration.GenericUser;
 import es.gob.afirma.android.util.PfLog;
 
 /**

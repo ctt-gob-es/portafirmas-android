@@ -1,21 +1,21 @@
 package es.gob.afirma.android.crypto;
 
+import android.app.Activity;
+
+import androidx.fragment.app.FragmentActivity;
+import androidx.fragment.app.FragmentTransaction;
+
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
 
-import android.app.Activity;
-import android.util.Log;
-
-import androidx.fragment.app.FragmentActivity;
-import androidx.fragment.app.FragmentTransaction;
-
+import es.gob.afirma.android.signfolder.SFConstants;
+import es.gob.afirma.android.util.PfLog;
 import es.gob.jmulticard.android.callbacks.CachePasswordCallback;
 import es.gob.jmulticard.android.callbacks.DialogDoneChecker;
 import es.gob.jmulticard.android.callbacks.PinDialog;
 import es.gob.jmulticard.android.callbacks.ShowPinDialogTask;
-import es.gob.jmulticard.android.nfc.AndroidNfcConnection;
 import es.gob.jmulticard.callback.CustomAuthorizeCallback;
 import es.gob.jmulticard.callback.CustomTextInputCallback;
 
@@ -23,14 +23,16 @@ import es.gob.jmulticard.callback.CustomTextInputCallback;
  * @author Sergio Mart&iacute;nez Rico. */
 public class AndroidDnieNFCCallbackHandler implements CallbackHandler {
 
-    private static final String TAG = AndroidNfcConnection.class.getSimpleName();
-
 	private final Activity activity;
 	private final DialogDoneChecker dialogDone;
 	private CachePasswordCallback canPasswordCallback;
 	private CachePasswordCallback pinPasswordCallback;
 
-	/** CallbackHandler que gestiona los Callbacks de petici&oacute;n de informaci&oacute;n al usuario.
+	/** CallbackHandler que gestiona los Callbacks de petici&oacute;n de informaci&oacute;n al
+	 * usuario. Este CallbackHandler est&aacute; adaptado al funcionamiento del Portafirmas
+	 * m&oacute;vil. El CAN nunca se deber&iacute;a pedir a trav&eacute;s del di&aacute;logo de este
+	 * CallbackHandler, siempre se debe proporcionar de forma externa, mientras que el PIN si se
+	 * pedir&aacute; a trav&eacute;s del di&aacute;logo interno.
 	 * @param ac Handler de la actividad desde la que se llama.
 	 * @param ddc Instancia de la clase utilizada para utilizar wait() y notify() al esperar el PIN.
 	 * @param passwordCallback Instancia que contiene el CAN pedido antes a la lectura NFC.*/
@@ -55,6 +57,8 @@ public class AndroidDnieNFCCallbackHandler implements CallbackHandler {
 								cb,
 								this.dialogDone
 								);
+						dialog.setCancelable(false);
+
 						final FragmentTransaction ft = ((FragmentActivity)this.activity).getSupportFragmentManager().beginTransaction();
 						final ShowPinDialogTask spdt = new ShowPinDialogTask(dialog, ft, this.activity, this.dialogDone);
 						input = spdt.getInput();
@@ -70,23 +74,26 @@ public class AndroidDnieNFCCallbackHandler implements CallbackHandler {
 				}
 				String input;
 				if (cb instanceof CustomTextInputCallback) {
+
+					// El canPasswordCallback nunca deberia ser nulo en este punto
 					if (this.canPasswordCallback == null) {
+
 						final PinDialog dialog = new PinDialog(
 							true,
 							this.activity,
 							cb,
 							this.dialogDone
 						);
+						dialog.setCancelable(false);
 
 						final FragmentTransaction ft = ((FragmentActivity)this.activity).getSupportFragmentManager().beginTransaction();
 						final ShowPinDialogTask spdt = new ShowPinDialogTask(dialog, ft, this.activity, this.dialogDone);
 						input = spdt.getInput();
+
+						this.canPasswordCallback = new CachePasswordCallback(input.toCharArray());
 					}
 					else {
 						input = new String(this.canPasswordCallback.getPassword());
-
-						// En caso de fallar el primer CAN lo pedira de nuevo al ususario
-						this.canPasswordCallback = null;
 					}
 
 					((CustomTextInputCallback) cb).setText(input);
@@ -98,26 +105,12 @@ public class AndroidDnieNFCCallbackHandler implements CallbackHandler {
 					return;
 				}
 
-				Log.e(TAG, "Se ha solicitado un tipo de entrada desconocido: " + cb.getClass().getName());
+				PfLog.e(SFConstants.LOG_TAG, "Se ha solicitado un tipo de entrada desconocido: " + cb.getClass().getName());
 			}
 		}
 		else {
-			Log.w(TAG, "Se ha recibido un array de Callbacks nulo"); //$NON-NLS-1$
+			PfLog.w(SFConstants.LOG_TAG, "Se ha recibido un array de Callbacks nulo"); //$NON-NLS-1$
 			throw new UnsupportedCallbackException(null);
-		}
-	}
-
-	public void clearPin() {
-		if (this.pinPasswordCallback != null) {
-			this.pinPasswordCallback.clearPassword();
-			this.pinPasswordCallback = null;
-		}
-	}
-
-	public void clearCan() {
-		if (this.canPasswordCallback != null) {
-			this.canPasswordCallback.clearPassword();
-			this.canPasswordCallback = null;
 		}
 	}
 }

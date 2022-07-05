@@ -14,9 +14,6 @@ import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import org.xml.sax.SAXException;
-
-import java.io.IOException;
 import java.util.List;
 
 import es.gob.afirma.android.signfolder.MessageDialog;
@@ -24,7 +21,6 @@ import es.gob.afirma.android.signfolder.R;
 import es.gob.afirma.android.signfolder.SFConstants;
 import es.gob.afirma.android.signfolder.adapter.UserAdapter;
 import es.gob.afirma.android.signfolder.proxy.RequestAppConfiguration;
-import es.gob.afirma.android.signfolder.proxy.ServerControlledException;
 import es.gob.afirma.android.signfolder.tasks.FindUserTask;
 import es.gob.afirma.android.user.configuration.ConfigurationConstants;
 import es.gob.afirma.android.user.configuration.ConfigurationRole;

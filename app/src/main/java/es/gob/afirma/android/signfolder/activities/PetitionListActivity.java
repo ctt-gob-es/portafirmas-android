@@ -12,7 +12,6 @@ import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Base64;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -60,17 +59,16 @@ import es.gob.afirma.android.signfolder.CryptoConfiguration;
 import es.gob.afirma.android.signfolder.CustomAlertDialog;
 import es.gob.afirma.android.signfolder.ErrorManager;
 import es.gob.afirma.android.signfolder.R;
-import es.gob.afirma.android.signfolder.RequestSigner;
 import es.gob.afirma.android.signfolder.SFConstants;
 import es.gob.afirma.android.signfolder.SignfolderApp;
 import es.gob.afirma.android.signfolder.listeners.DialogFragmentListener;
+import es.gob.afirma.android.signfolder.listeners.OperationRequestListener;
 import es.gob.afirma.android.signfolder.proxy.CommManager;
 import es.gob.afirma.android.signfolder.proxy.RequestResult;
 import es.gob.afirma.android.signfolder.proxy.SignRequest;
 import es.gob.afirma.android.signfolder.proxy.SignRequest.RequestType;
 import es.gob.afirma.android.signfolder.tasks.ApproveRequestsTask;
 import es.gob.afirma.android.signfolder.tasks.CleanTempFilesTask;
-import es.gob.afirma.android.signfolder.tasks.FireLoadDataTask;
 import es.gob.afirma.android.signfolder.tasks.FireSignTask;
 import es.gob.afirma.android.signfolder.tasks.LoadSignRequestsTask;
 import es.gob.afirma.android.signfolder.tasks.LoadSignRequestsTask.LoadSignRequestListener;
@@ -402,7 +400,7 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
                 AppPreferences.PREFERENCES_KEY_PREFIX_NOTIFICATION_ACTIVE + userProxyId,
                 false);
 
-        Log.d(SFConstants.LOG_TAG, "El token de notificaciones esta registrado: " + tokenRegistered);
+        PfLog.d(SFConstants.LOG_TAG, "El token de notificaciones esta registrado: " + tokenRegistered);
 
         return tokenRegistered;
     }
@@ -439,8 +437,7 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
         //boolean tokenChanged = !currentToken.equals(registeredToken);
         boolean tokenChanged = !currentToken.startsWith(registeredToken);
 
-
-        Log.d(SFConstants.LOG_TAG, "El token ha cambiado: " + tokenChanged);
+        PfLog.d(SFConstants.LOG_TAG, "El token ha cambiado: " + tokenChanged);
 
         return tokenChanged;
     }
@@ -452,7 +449,7 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
      */
     private void registryNotificationToken(String userProxyId, boolean noticeUser) {
 
-        Log.d(SFConstants.LOG_TAG, "Iniciamos el registro del nuevo token de notificacion");
+        PfLog.d(SFConstants.LOG_TAG, "Iniciamos el registro del nuevo token de notificacion");
 
         Intent intent = new Intent(this, RegistrationIntentService.class);
         if (this.certB64 != null) {
@@ -897,9 +894,6 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
         else if (item.getItemId() == R.id.filter) {
             // Almacenamos el filtro actual de forma temporal para poder restaurarlo
             // en caso de que se pulse "cancelar".
-//            deepCopyFilterConfig();
-//            showDialog(DIALOG_FILTER, this.filterConfig == null ? new Bundle()
-//                    : this.filterConfig.copyToBundle(null));
             showDialog(DIALOG_FILTER, this.filterConfig.copyToBundle(null));
         }
         // Eliminar filtro
@@ -1114,21 +1108,8 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
                 this.numRequestToVerifyPending--;
             }
 
-            if (this.numRequestToSignPending <= 0
-                    && this.numRequestToApprovePending <= 0
-                    && this.numRequestToRejectPending <= 0
-                    && this.numRequestToVerifyPending <= 0) {
+            showResultIfFinished(operation);
 
-                dismissProgressDialog();
-
-                // Una vez finalizada una operacion, si se produjo algun error,
-                // mostramos un dialogo informandolo. Si no, se recarga el listado
-                if (anyError) {
-                    showProcessingError(operation);
-                } else {
-                    updateCurrentList(FIRST_PAGE);
-                }
-            }
         }
     }
 
@@ -1138,7 +1119,7 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
 
         synchronized (this) {
 
-            anyError = true;
+            this.anyError = true;
 
             if (operation == SIGN_OPERATION) {
                 this.numRequestToSignPending--;
@@ -1150,19 +1131,11 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
                 this.numRequestToVerifyPending--;
             }
 
-            if (this.numRequestToSignPending <= 0
-                    && this.numRequestToApprovePending <= 0
-                    && this.numRequestToRejectPending <= 0
-                    && this.numRequestToVerifyPending <= 0) {
-
-                dismissProgressDialog();
-
-                if (t != null) {
-                    PfLog.e(SFConstants.LOG_TAG, "Error al procesar las peticiones de firma", t); //$NON-NLS-1$
-                }
-
-                showProcessingError(operation);
+            if (t != null) {
+                PfLog.e(SFConstants.LOG_TAG, "Error al procesar las peticiones de firma", t); //$NON-NLS-1$
             }
+
+            showResultIfFinished(operation);
         }
     }
 
@@ -1178,6 +1151,37 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
             PfLog.i(SFConstants.LOG_TAG, "Operacion cancelada por el usuario"); //$NON-NLS-1$
 
             dismissProgressDialog();
+        }
+    }
+
+    @Override
+    protected void enabledNfcCancelled() {
+
+        this.numRequestToSignPending = 0;
+        Toast.makeText(getApplicationContext(), R.string.nfc_disabled_signing_requests, Toast.LENGTH_SHORT).show();
+
+        showResultIfFinished(OperationRequestListener.SIGN_OPERATION);
+    }
+
+    /**
+     * Comportamiento a seguir cuando han terminado el procesado de todas las operaciones.
+     * @param lastOperation Tipo de la &uacute;ltima operaci&oacute;n realizada.
+     */
+    private void showResultIfFinished(int lastOperation) {
+        if (this.numRequestToSignPending <= 0
+                && this.numRequestToApprovePending <= 0
+                && this.numRequestToRejectPending <= 0
+                && this.numRequestToVerifyPending <= 0) {
+
+            dismissProgressDialog();
+
+            // Una vez finalizada una operacion, si se produjo algun error,
+            // mostramos un dialogo informandolo. Si no, se recarga el listado
+            if (this.anyError) {
+                showProcessingError(lastOperation);
+            } else {
+                updateCurrentList(FIRST_PAGE);
+            }
         }
     }
 
@@ -1227,7 +1231,7 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
 
     @Override
     public void onUpdatePushNotsError(boolean enable, Throwable exception) {
-        Log.e("es.gob.afirma", "No ha sido posible actualizar el estado de las notificaciones push: " + exception.getMessage()); //$NON-NLS-1$ //$NON-NLS-2$
+        PfLog.e(SFConstants.LOG_TAG, "No ha sido posible actualizar el estado de las notificaciones push: " + exception, exception); //$NON-NLS-1$ //$NON-NLS-2$
         Toast.makeText(this, R.string.toast_msg_update_push_nots_error, Toast.LENGTH_LONG).show();
         if (enable) {
             menuRef.findItem(R.id.notifications).setTitle(R.string.enable_notifications);
@@ -1558,6 +1562,8 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
     protected Dialog onCreateDialog(final int id,
                                     final Bundle savedInstanceState) {
 
+        // Aqui solo deberiamos llegar cuando se usa el valor DIALOG_FILTER,
+        // para crear el dialogo de configuracion de filtros
         this.filterDialogBuilder = new ConfigureFilterDialogBuilder(
                 savedInstanceState, this.appIds.toArray(new String[0]),
                 this.appNames.toArray(new String[0]), this.roleSelected, this.userConfig.isUserWithVerifiers(), this);
@@ -1657,6 +1663,10 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
                     requestToApprove.add(req);
                 }
             }
+
+            // Establecemos el valor bandera para identificar a posteriori los errores
+            anyError = false;
+
             // Mandamos a aprobar las peticiones de visto bueno.
             this.numRequestToApprovePending = requestToApprove.size();
             if (this.numRequestToApprovePending > 0) {
@@ -1693,8 +1703,6 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
      * @param requests Listado de peticiones de visto bueno.
      */
     private void approveRequests(final SignRequest[] requests) {
-        // Antes de iniciar el proceso, reiniciamos la bandera que senala los errores
-        anyError = false;
         new ApproveRequestsTask(requests,
                 CommManager.getInstance(), this).execute();
     }
@@ -1706,16 +1714,14 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
      * @param requests Listado de peticiones de validación.
      */
     private void verifyRequests(final SignRequest[] requests) {
-        // Antes de iniciar el proceso, reiniciamos la bandera que senala los errores
-        anyError = false;
         new VerifyRequestsTask(requests, CommManager.getInstance(), this).execute();
     }
 
     /**
      * Manda a rechazar el listado de peticiones indicado.
-     * Llama a la operación de éxito o fallo del listener una vez por cada petición.
-     *
-     * @param requests Listado de peticiones de validación.
+     * Llama a la operación de &eacute;xito o fallo del listener una vez por cada petici&oacute;n.
+     * @param reason Raz&oacute;n del rechazo.
+     * @param signRequests Listado de peticiones de validaci&oacute;n.
      */
     protected RejectRequestsTask rejectRequests(final String reason, final SignRequest... signRequests) {
         // Antes de iniciar el proceso, reiniciamos la bandera que senala los errores
@@ -1726,40 +1732,6 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
         return rrt;
     }
 
-    /**
-     * Manda a firmar (a traves de una tarea as&iacute;ncrona) el listado de
-     * peticiones de firma indicado. Llamar&aacute; a la operaci&oacute;n de
-     * &eacute;xito o fallo del listener, una vez por cada petici&oacute;n
-     * procesada.
-     *
-     * @param alias    Alias del certificado de firma que se debe usar.
-     * @param requests Listado de peticiones de firma.
-     */
-    private void signRequets(final String alias, final SignRequest[] requests) {
-        // Antes de iniciar el proceso, reiniciamos la bandera que senala los errores
-        anyError = false;
-        new RequestSigner(alias, this, this).sign(requests);
-    }
-
-    /**
-     * Inicia la tarea de firma con FIRe.
-     *
-     * @param requests Peticiones a firmar.
-     */
-    private void doSignWithFire(final SignRequest[] requests) {
-        FireLoadDataTask cct = new FireLoadDataTask(requests, this);
-        cct.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-    }
-
-    /**
-     * Inicia el proceso de firma con DNIe.
-     */
-    private void doSignWithDnie(final SignRequest[] requests) {
-        //TODO: Implementar firma con DNIe
-//        FireLoadDataTask cct = new FireLoadDataTask(requests, this);
-//        cct.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-    }
-
     @Override
     public void onDialogNegativeClick(final int dialogId) {
         // No se implementa comportamiento
@@ -1767,7 +1739,6 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
 
     @Override
     protected void showProgressDialog(final String message, final Context ctx, final AsyncTask<?, ?, ?>... tasks) {
-
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -1821,7 +1792,7 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
     }
 
     @Override
-    void requestedSignatureSuccess() {
+    void requestedSignatureSuccess(SignRequest[] signRequests) {
         synchronized (this) {
             this.numRequestToSignPending = 0;
 
@@ -1833,7 +1804,7 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
     }
 
     @Override
-    void requestedSignatureFailed(Throwable cause) {
+    void requestedSignatureFailed(SignRequest[] signRequests, Throwable cause) {
         PfLog.e(SFConstants.LOG_TAG, "Ha fallado en la postfirma la operacion de firma con Cl@ve Firma", cause); //$NON-NLS-1$
 
         synchronized (this) {
@@ -2020,7 +1991,7 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
     /**
      * Adaptador para la lista de l&iacute;neas de firma.
      */
-    class PetitionListArrayAdapter extends ArrayAdapter<PetitionListAdapterItem> {
+    static class PetitionListArrayAdapter extends ArrayAdapter<PetitionListAdapterItem> {
 
         private final LayoutInflater mInflater;
 
@@ -2134,7 +2105,7 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
         }
     }
 
-    private class PanelTitle implements PetitionListAdapterItem {
+    private static class PanelTitle implements PetitionListAdapterItem {
 
         final String text;
         final Context context;
@@ -2168,7 +2139,7 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
     /**
      * Clase para la comparacion de peticiones por fecha de caducidad.
      */
-    private class SignRequestComparator implements Comparator<SignRequest> {
+    private static class SignRequestComparator implements Comparator<SignRequest> {
 
         DateFormat dateFormat;
 

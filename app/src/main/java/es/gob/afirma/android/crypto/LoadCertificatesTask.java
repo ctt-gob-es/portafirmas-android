@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.os.AsyncTask;
-import android.util.Log;
 
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -17,6 +16,8 @@ import javax.security.auth.callback.CallbackHandler;
 import es.gob.afirma.android.gui.CertificateInfoForAliasSelect;
 import es.gob.afirma.android.gui.SelectAliasDialog;
 import es.gob.afirma.android.signfolder.R;
+import es.gob.afirma.android.signfolder.SFConstants;
+import es.gob.afirma.android.util.PfLog;
 import es.gob.afirma.core.misc.AOUtil;
 import es.gob.jmulticard.android.callbacks.CachePasswordCallback;
 import es.gob.jmulticard.android.callbacks.DialogDoneChecker;
@@ -25,8 +26,6 @@ import es.gob.jmulticard.android.callbacks.DialogDoneChecker;
  * Created by a621914 on 09/06/2016.
  */
 public class LoadCertificatesTask extends AsyncTask<Void, Void, Exception> {
-
-    private static final String ES_GOB_AFIRMA = "es.gob.afirma";
 
     private final KeyStore ks;
     private final CachePasswordCallback ksPasswordCallback;
@@ -58,7 +57,7 @@ public class LoadCertificatesTask extends AsyncTask<Void, Void, Exception> {
             // el almacen del sistema
         }
         catch (Exception e) {
-            Log.e(ES_GOB_AFIRMA, "No se pudieron cargar los certificados del almacen: " + e);
+            PfLog.e(SFConstants.LOG_TAG, "No se pudieron cargar los certificados del almacen: " + e);
             return e;
         }
 
@@ -94,14 +93,14 @@ public class LoadCertificatesTask extends AsyncTask<Void, Void, Exception> {
         catch (final NullPointerException e) {
             // Se dara esta excepcion cuando no haya un KeyStore definido, lo que ocurrira cuando
             // se deba cargar el almacen del sistema
-            Log.e(ES_GOB_AFIRMA, "Error al cargar el almacen de claves"); //$NON-NLS-1$
+            PfLog.e(SFConstants.LOG_TAG, "Error al cargar el almacen de claves"); //$NON-NLS-1$
             dnieManager.setCallbackHandler(null);
             throw e;
         }
         catch (final Exception e) {
             // Estamos en una conexion NFC y encapsulamos
             // las excepciones para que se procesen adecuadamente
-            Log.e(ES_GOB_AFIRMA, "Error al cargar el almacen de claves del dispositivo. Es posible que CAN introducido fuese incorrecto: " + e); //$NON-NLS-1$
+            PfLog.e(SFConstants.LOG_TAG, "Error al cargar el almacen de claves del dispositivo. Es posible que CAN introducido fuese incorrecto: " + e); //$NON-NLS-1$
             dnieManager.setCallbackHandler(null);
             throw encapsuleException(e);
         }
@@ -110,7 +109,7 @@ public class LoadCertificatesTask extends AsyncTask<Void, Void, Exception> {
         try {
             aliases = this.ks.aliases();
         } catch (final Exception e) {
-            Log.e(ES_GOB_AFIRMA, "Error extrayendo los alias de los certificados del almacen: " + e); //$NON-NLS-1$
+            PfLog.e(SFConstants.LOG_TAG, "Error extrayendo los alias de los certificados del almacen: " + e); //$NON-NLS-1$
             throw encapsuleException(e);
         }
 
@@ -122,7 +121,7 @@ public class LoadCertificatesTask extends AsyncTask<Void, Void, Exception> {
             try {
                 cert = (X509Certificate) this.ks.getCertificate(alias);
             } catch (final KeyStoreException e) {
-                Log.w(ES_GOB_AFIRMA, "No se ha podido extraer el certificado '" + alias + "': " + e);  //$NON-NLS-1$//$NON-NLS-2$
+                PfLog.w(SFConstants.LOG_TAG, "No se ha podido extraer el certificado '" + alias + "': " + e);  //$NON-NLS-1$//$NON-NLS-2$
                 throw encapsuleException(e);
             } catch (final Exception e) {
                 // Gestion a medida de un DNIe bloqueado (usando JMultiCard)
@@ -130,7 +129,7 @@ public class LoadCertificatesTask extends AsyncTask<Void, Void, Exception> {
                     manageLockedDnie(e, this.activity, this.ksmListener);
                     return;
                 }
-                Log.e(ES_GOB_AFIRMA, "Error obteniendo el certificado con alias '" + alias + "': " + e, e); //$NON-NLS-1$ //$NON-NLS-2$
+                PfLog.e(SFConstants.LOG_TAG, "Error obteniendo el certificado con alias '" + alias + "': " + e, e); //$NON-NLS-1$ //$NON-NLS-2$
                 throw encapsuleException(e);
             }
             arrayListCertificate.add(
@@ -145,7 +144,7 @@ public class LoadCertificatesTask extends AsyncTask<Void, Void, Exception> {
         }
 
 //        if (KeyStoreManagerFactory.ksflStatic == null) {
-//            Log.e(ES_GOB_AFIRMA, "No se ha establecido la tarea para la obtencion del almacen de certificados con setLoadKeyStoreManagerTask()");  //$NON-NLS-1$
+//            Log.e(SFConstants.LOG_TAG, "No se ha establecido la tarea para la obtencion del almacen de certificados con setLoadKeyStoreManagerTask()");  //$NON-NLS-1$
 //            if (KeyStoreManagerFactory.ksmlStatic != null) {
 //                KeyStoreManagerFactory.ksmlStatic.onLoadingKeyStoreError(
 //                        "No se ha establecido la tarea para la obtencion del almacen de certificados con setLoadKeyStoreManagerTask()", null
@@ -182,7 +181,7 @@ public class LoadCertificatesTask extends AsyncTask<Void, Void, Exception> {
     private void manageLockedDnie(final Throwable e, final Activity activity, final KeyStoreManagerListener ksListener) {
         activity.runOnUiThread(new Runnable() {
             public void run() {
-                Log.e(ES_GOB_AFIRMA, "El DNIe esta bloqueado: " + e); //$NON-NLS-1$
+                PfLog.e(SFConstants.LOG_TAG, "El DNIe esta bloqueado: " + e); //$NON-NLS-1$
 
                 final AlertDialog.Builder dniBloqueado = new AlertDialog.Builder(activity);
 

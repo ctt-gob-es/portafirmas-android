@@ -51,11 +51,11 @@ public final class AOPkcs1Signer {
 				sig = Signature.getInstance(algorithm, "AETProvider"); //$NON-NLS-1$
 			}
 			else if ("es.gob.jmulticard.jse.provider.DniePrivateKey".equals(key.getClass().getName())) { //$NON-NLS-1$
-				java.util.logging.Logger.getLogger("es.gob.afirma").info("Detectada clave privada DNIe 100% Java"); //$NON-NLS-1$ //$NON-NLS-2$
+				PfLog.i(SFConstants.LOG_TAG, "Detectada clave privada DNIe 100% Java"); //$NON-NLS-1$ //$NON-NLS-2$
 				sig = Signature.getInstance(algorithm, "DNIeJCAProvider"); //$NON-NLS-1$
 			}
 			else if ("es.gob.jmulticard.jse.provider.ceres.CeresPrivateKey".equals(key.getClass().getName())) { //$NON-NLS-1$
-				java.util.logging.Logger.getLogger("es.gob.afirma").info("Detectada clave privada CERES 100% Java"); //$NON-NLS-1$ //$NON-NLS-2$
+				PfLog.i(SFConstants.LOG_TAG, "Detectada clave privada CERES 100% Java"); //$NON-NLS-1$ //$NON-NLS-2$
 				sig = Signature.getInstance(algorithm, "CeresJCAProvider"); //$NON-NLS-1$
 			}
 			else {
@@ -93,12 +93,10 @@ public final class AOPkcs1Signer {
 			signature = sig.sign();
 		}
 		catch (final Exception e) {
-			// El fallo de la firma puede ser por un error con el PIN cuando se firma con DNIe, asi
-			// que hay que reiniciar el CallbackHandler para que lo vuelva a pedir
-			DnieConnectionManager dnieManager = DnieConnectionManager.getInstance();
-			if (dnieManager.getCallbackHandler() != null) {
-				DnieConnectionManager.getInstance().getCallbackHandler().clearPin();
-			}
+			// El fallo de la firma puede ser por un error con el PIN cuando se firma con DNIe,
+			// pero puede ocurrir tambien que la conexion con la tarjeta este en un estado
+			// inesperado, asi que la reiniciamos por completo
+			DnieConnectionManager.getInstance().reset();
 			throw new AOException("Error durante el proceso de firma PKCS#1: " + e, e); //$NON-NLS-1$
 		}
 		return signature;

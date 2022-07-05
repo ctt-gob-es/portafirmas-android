@@ -1,7 +1,5 @@
 package es.gob.afirma.android.signfolder.adapter;
 
-import android.app.Activity;
-import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,17 +11,10 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.List;
 
-import es.gob.afirma.android.signfolder.MessageDialog;
 import es.gob.afirma.android.signfolder.R;
-import es.gob.afirma.android.signfolder.SFConstants;
-import es.gob.afirma.android.signfolder.activities.CreateNewAuthorizedActivity;
-import es.gob.afirma.android.signfolder.activities.CreateNewVerifierActivity;
-import es.gob.afirma.android.signfolder.activities.PetitionListActivity;
 import es.gob.afirma.android.signfolder.proxy.RequestAppConfiguration;
-import es.gob.afirma.android.user.configuration.ConfigurationConstants;
 import es.gob.afirma.android.user.configuration.ConfigurationRole;
 import es.gob.afirma.android.user.configuration.GenericUser;
-import es.gob.afirma.android.util.PfLog;
 
 /**
  * Clase que implementa el adaptador para la lista de usuarios.

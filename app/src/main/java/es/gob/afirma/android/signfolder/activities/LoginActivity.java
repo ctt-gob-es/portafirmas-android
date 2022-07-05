@@ -12,7 +12,6 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.security.KeyChain;
-import android.security.KeyChainException;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -29,21 +28,17 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.KeyStore;
-import java.security.KeyStoreException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
 import es.gob.afirma.android.crypto.AuthenticationResult;
-import es.gob.afirma.android.crypto.KeyStoreManagerListener;
 import es.gob.afirma.android.crypto.LoadKeyStoreManagerTask;
-import es.gob.afirma.android.crypto.MobileKeyStoreManager.KeySelectedEvent;
 import es.gob.afirma.android.crypto.MobileKeyStoreManager.PrivateKeySelectionListener;
 import es.gob.afirma.android.crypto.NfcHelper;
 import es.gob.afirma.android.fcm.NotificationUtilities;
 import es.gob.afirma.android.signfolder.AppPreferences;
 import es.gob.afirma.android.signfolder.ConfigureFilterDialogBuilder;
-import es.gob.afirma.android.signfolder.ErrorManager;
 import es.gob.afirma.android.signfolder.LoginOptionsDialogBuilder;
 import es.gob.afirma.android.signfolder.LoginOptionsDialogBuilder.LoginOptionsListener;
 import es.gob.afirma.android.signfolder.MessageDialog;
@@ -496,6 +491,12 @@ public final class LoginActivity extends AuthenticationFragmentActivity implemen
             intent.putExtra(KeyChain.EXTRA_PKCS12, certContent);
             startActivity(intent);
         }
+    }
+
+    @Override
+    protected void enabledNfcCancelled() {
+        dismissProgressDialog();
+        Toast.makeText(getApplicationContext(), R.string.nfc_still_disabled, Toast.LENGTH_SHORT).show();
     }
 
     private byte[] readDataFromFile(File dataFile) throws IOException {

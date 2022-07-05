@@ -1,6 +1,5 @@
 package es.gob.afirma.android.signfolder.tasks;
 
-import android.app.Activity;
 import android.content.Context;
 import android.os.AsyncTask;
 
@@ -8,9 +7,9 @@ import java.io.File;
 import java.util.Locale;
 
 import es.gob.afirma.android.signfolder.SFConstants;
-import es.gob.afirma.android.signfolder.tasks.SaveFileTask.SaveFileListener;
 import es.gob.afirma.android.signfolder.proxy.CommManager;
 import es.gob.afirma.android.signfolder.proxy.DocumentData;
+import es.gob.afirma.android.signfolder.tasks.SaveFileTask.SaveFileListener;
 import es.gob.afirma.android.util.PfLog;
 
 /** Tarea as&iacute;ncrona para la previsualizaci&oacute;n de documentos. */

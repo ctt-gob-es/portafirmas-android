@@ -2,8 +2,6 @@ package es.gob.afirma.android.signfolder.proxy;
 
 import java.util.List;
 
-import es.gob.afirma.android.user.configuration.GenericUser;
-
 /**
  * Clase que representa el resultado parcial para el servicio "GetUsersByRole".
  */

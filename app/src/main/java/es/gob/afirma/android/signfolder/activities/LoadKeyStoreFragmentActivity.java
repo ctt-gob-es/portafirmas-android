@@ -28,6 +28,7 @@ import es.gob.afirma.android.crypto.NfcHelper;
 import es.gob.afirma.android.crypto.UnsupportedNfcCardException;
 import es.gob.afirma.android.signfolder.R;
 import es.gob.afirma.android.signfolder.SFConstants;
+import es.gob.afirma.android.signfolder.SignfolderApp;
 import es.gob.afirma.android.signfolder.listeners.SettingNfcListener;
 import es.gob.afirma.android.util.PfLog;
 import es.gob.jmulticard.android.callbacks.CachePasswordCallback;
@@ -123,6 +124,7 @@ public abstract class LoadKeyStoreFragmentActivity extends FragmentActivity
 				}
 				else {
 					PfLog.i(SFConstants.LOG_TAG, "No se ha habilitado NFC. Se cancela la operacion");
+					enabledNfcCancelled();
 				}
 			}
 		});
@@ -134,7 +136,7 @@ public abstract class LoadKeyStoreFragmentActivity extends FragmentActivity
 	 */
 	private void openNfcSystemSettings(SettingNfcListener settingNfcListener) {
 		this.settingNfcListener = settingNfcListener;
-		Toast.makeText(getApplicationContext(), R.string.enable_nfc, Toast.LENGTH_LONG).show();
+		Toast.makeText(getApplicationContext(), R.string.enable_nfc, Toast.LENGTH_SHORT).show();
 		startActivityForResult(
 				new Intent(android.provider.Settings.ACTION_WIRELESS_SETTINGS),
 				REQUEST_CODE_ENABLE_NFC);
@@ -259,6 +261,12 @@ public abstract class LoadKeyStoreFragmentActivity extends FragmentActivity
 	 * Oculta el di&aacute;logo de progreso.
 	 */
 	protected abstract void dismissProgressDialog();
+
+	/**
+	 * Define el comportamiento si el usuario cancela la activaci&oacute;n del NFC cuando es
+	 * requerido.
+	 */
+	protected abstract void enabledNfcCancelled();
 
 	/** Operaci&oacute;n de firma. */
 	protected enum KeyStoreOperation {

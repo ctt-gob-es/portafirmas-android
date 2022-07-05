@@ -1,9 +1,10 @@
 package es.gob.afirma.android.signfolder.tasks;
 
 import android.os.AsyncTask;
-import android.util.Log;
 
+import es.gob.afirma.android.signfolder.SFConstants;
 import es.gob.afirma.android.signfolder.proxy.CommManager;
+import es.gob.afirma.android.util.PfLog;
 
 /**
  * Clase que implementa la tarea encargada de actualizar el estado de las notificacione push.
@@ -41,7 +42,7 @@ public class UpdatePushNotificationsTask extends AsyncTask<Void, Void, Boolean> 
         try {
             result = CommManager.getInstance().updatePushNotifications(requestedState);
         } catch (Exception e) {
-            Log.e("es.gob.afirma", "No ha sido posible actualizar el estado de las notificaciones push: " + e.getMessage()); //$NON-NLS-1$ //$NON-NLS-2$
+            PfLog.e(SFConstants.LOG_TAG, "No ha sido posible actualizar el estado de las notificaciones push: " + e.getMessage()); //$NON-NLS-1$ //$NON-NLS-2$
             this.t = e;
         }
         return result;
@@ -50,7 +51,7 @@ public class UpdatePushNotificationsTask extends AsyncTask<Void, Void, Boolean> 
     @Override
     protected void onPostExecute(Boolean result) {
         if (this.t == null) {
-            this.listener.onUpdatePushNotsSuccess(this.requestedState, result != null ? result.booleanValue() : false);
+            this.listener.onUpdatePushNotsSuccess(this.requestedState, result != null && result.booleanValue());
         } else {
             this.listener.onUpdatePushNotsError(this.requestedState, this.t);
         }

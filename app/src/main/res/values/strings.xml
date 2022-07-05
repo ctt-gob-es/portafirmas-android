@@ -173,18 +173,18 @@
     <string name="error_title_keystore_empty">Almac\u00E9n vac\u00EDo</string>
     <string name="error_input_params_creation_role">Los valores introducidos no son correctos</string>
 
-    <string name="toast_msg_rejects_ok">Las peticiones se han rechazado correctamente</string>
-    <string name="toast_msg_reject_ok">La petici\u00F3n se ha rechazado correctamente</string>
-    <string name="toast_msg_rejects_ko">Error rechazar %1$d de las %2$d peticiones seleccionadas</string>
-    <string name="toast_msg_reject_ko">Error rechazar la petici\u00F3n seleccionada</string>
+    <string name="toast_msg_rejects_ok">Peticiones rechazadas correctamente</string>
+    <string name="toast_msg_reject_ok">Petici\u00F3n rechazada correctamente</string>
+    <string name="toast_msg_rejects_ko">Error al rechazar %1$d de las %2$d peticiones</string>
+    <string name="toast_msg_reject_ko">Error al rechazar la petici\u00F3n</string>
     <string name="toast_msg_signs_ok">Las peticiones se han firmado correctamente</string>
     <string name="toast_msg_sign_ok">La petici\u00F3n se ha firmado correctamente</string>
-    <string name="toast_msg_signs_ko">Error al firmar %1$d de las %2$d peticiones seleccionadas</string>
-    <string name="toast_msg_sign_ko">Error al firmar la petici\u00F3n seleccionada</string>
-    <string name="toast_msg_download_ok">La firma se ha guardado correctamente en su directorio de Descargas</string>
-    <string name="toast_msg_gcm_connection_ok">Se han habilitado las notificaciones en el dispositivo para este Portafirmas.</string>
+    <string name="toast_msg_signs_ko">Error al firmar %1$d de las %2$d peticiones</string>
+    <string name="toast_msg_sign_ko">Error al firmar la petici\u00F3n</string>
+    <string name="toast_msg_download_ok">Firma guardada en el directorio Descargas</string>
+    <string name="toast_msg_gcm_connection_ok">Notificaciones habilitadas para este Portafirmas.</string>
     <string name="toast_msg_gcm_connection_ko">Error al conectar con el servidor de notificaciones.</string>
-    <string name="toast_msg_fire_comunication_ko">No se ha podido establecer la comunicaci\u00F3n con Cl@ve Firma.</string>
+    <string name="toast_msg_fire_comunication_ko">Error en la comunicaci\u00F3n con Cl@ve Firma.</string>
     <string name="toast_msg_creation_auth_role_ok">Autorizaci\u00F3n creada correctamente</string>
     <string name="toast_msg_creation_auth_role_ko">Error creando autorizaci\u00F3n</string>
     <string name="toast_msg_creation_verifier_role_ok">Validador creado correctamente</string>
@@ -193,10 +193,10 @@
     <string name="toast_msg_remove_validator_ko">Error dando de baja al validador</string>
     <string name="toast_error_access_denegated">No tiene permiso para acceder al recurso</string>
     <string name="toast_msg_list_updating">Actualizando lista…</string>
-    <string name="toast_msg_update_push_nots_error">Error al actualizar el estado de las notificaciones push.</string>
+    <string name="toast_msg_update_push_nots_error">Error al actualizar el estado de las notificaciones.</string>
     <string name="toast_msg_push_activated">Notificaciones activadas</string>
     <string name="toast_msg_push_deactivated">Notificaciones desactivadas</string>
-    <string name="toast_msg_push_error_changing_state">No se ha podido actualizar el estado de las notificaciones</string>
+    <string name="toast_msg_push_error_changing_state">No se pudo actualizar el estado de las notificaciones</string>
     <string name="toast_msg_directory_doesnt_exists">No se tiene acceso a este directorio</string>
 
     <string name="toast_msg_change_auth_state_ok">Se ha actualizado el estado de la autorizaci\u00F3n</string>
@@ -418,7 +418,10 @@
     <string name="nfc_no_detected">No se ha habilitado NFC. Se usar\u00E1 el almac\u00E9n del sistema.</string>
     <string name="nfc_cancelled">Se ha cancelado el uso de NFC. Se usar\u00E1 el almac\u00E9n del sistema.</string>
     <string name="cancel_nfc">Cancelar</string>
-    <string name="enable_nfc">Por favor, active el NFC para usar DNIe y pulsa atr\u00E1s para volver</string>
+    <string name="enable_nfc">Por favor, active el NFC para usar DNIe y pulsa atr\u00E1s para volver.</string>
+    <string name="nfc_still_disabled">No se ha activado el NFC. Se cancela la operaci\u00F3n.</string>
+    <string name="nfc_disabled_signing_requests">No se ha activado el NFC. Se cancelar\u00E1 la firma de peticiones.</string>
+
     <string name="dialog_msg_loading_keystore">Cargando almac\u00E9n de claves</string>
     <string name="dialog_msg_connecting_dnie">Conectado con su DNIe</string>
     <string name="error_dni_blocked_dlg">Lo sentimos, su DNI est\u00E1 bloqueado.</string>

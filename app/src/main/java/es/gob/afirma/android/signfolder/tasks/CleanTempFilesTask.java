@@ -1,6 +1,5 @@
 package es.gob.afirma.android.signfolder.tasks;
 
-import android.content.Context;
 import android.os.AsyncTask;
 
 import java.io.File;
@@ -8,7 +7,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import es.gob.afirma.android.signfolder.SFConstants;
-import es.gob.afirma.android.signfolder.proxy.CommManager;
 import es.gob.afirma.android.util.PfLog;
 
 /** Vacia el directorio de temporales de la aplicaci&oacute;n. */

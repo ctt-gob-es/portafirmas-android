@@ -5,18 +5,11 @@ import android.os.Bundle;
 
 import androidx.fragment.app.FragmentActivity;
 
-import java.net.HttpURLConnection;
-import java.net.URL;
-
-import javax.net.ssl.SSLHandshakeException;
-
 import es.gob.afirma.android.signfolder.AppPreferences;
 import es.gob.afirma.android.signfolder.activities.LoginActivity;
 import es.gob.afirma.android.signfolder.activities.PetitionListActivity;
-import es.gob.afirma.android.signfolder.SFConstants;
 import es.gob.afirma.android.signfolder.proxy.CommManager;
 import es.gob.afirma.android.user.configuration.ConfigurationConstants;
-import es.gob.afirma.android.util.PfLog;
 
 
 /**

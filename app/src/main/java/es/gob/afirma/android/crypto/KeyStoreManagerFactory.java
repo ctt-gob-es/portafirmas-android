@@ -1,7 +1,5 @@
 package es.gob.afirma.android.crypto;
 
-import android.util.Log;
-
 import androidx.fragment.app.FragmentActivity;
 
 import java.security.KeyStore;
@@ -10,7 +8,6 @@ import java.security.Provider;
 import java.security.Security;
 
 import es.gob.afirma.android.signfolder.SFConstants;
-import es.gob.afirma.android.signfolder.activities.NFCDetectorActivity;
 import es.gob.afirma.android.util.PfLog;
 import es.gob.jmulticard.android.nfc.AndroidNfcConnection;
 import es.gob.jmulticard.apdu.connection.ApduConnection;
@@ -35,7 +32,7 @@ public final class KeyStoreManagerFactory {
 											   final KeyStoreManagerListener ksml) {
 
 		// Si no encontramos el almacen anterior, accedemos al almacen del sistema
-		Log.i(ES_GOB_AFIRMA, "Estableciendo almacen del sistema"); //$NON-NLS-1$
+		PfLog.i(SFConstants.LOG_TAG, "Estableciendo almacen del sistema"); //$NON-NLS-1$
 
 		ksml.onLoadingKeyStoreResult(new LoadingKeyStoreResult(new Android4KeyStoreManager(activity)));
 	}
@@ -71,10 +68,10 @@ public final class KeyStoreManagerFactory {
 				}
 
 			} catch (final KeyStoreException e) {
-				Log.e(ES_GOB_AFIRMA, "Se ha encontrado una tarjeta por NFC, pero no es un DNIe: " + e); //$NON-NLS-1$ //$NON-NLS-2$
+				PfLog.e(SFConstants.LOG_TAG,  "Se ha encontrado una tarjeta por NFC, pero no es un DNIe: " + e); //$NON-NLS-1$ //$NON-NLS-2$
 				throw new UnsupportedNfcCardException("Se ha encontrado una tarjeta por NFC distinta al DNIe", e);
 			} catch (final Exception e) {
-				Log.e(ES_GOB_AFIRMA, "No se ha podido instanciar el controlador del DNIe por NFC: " + e, e); //$NON-NLS-1$ //$NON-NLS-2$
+				PfLog.e(SFConstants.LOG_TAG, "No se ha podido instanciar el controlador del DNIe por NFC: " + e, e); //$NON-NLS-1$ //$NON-NLS-2$
 				throw new InitializingNfcCardException("Error inicializando la tarjeta", e);
 			}
 		}

@@ -29,6 +29,7 @@ import es.gob.afirma.android.signfolder.SFConstants;
 import es.gob.afirma.android.signfolder.listeners.OperationRequestListener;
 import es.gob.afirma.android.signfolder.proxy.CommManager;
 import es.gob.afirma.android.signfolder.proxy.FireLoadDataResult;
+import es.gob.afirma.android.signfolder.proxy.RequestResult;
 import es.gob.afirma.android.signfolder.proxy.SignRequest;
 import es.gob.afirma.android.signfolder.tasks.FireLoadDataTask;
 import es.gob.afirma.android.signfolder.tasks.FireSignTask;
@@ -142,12 +143,6 @@ public abstract class SignatureFragmentActivity extends LoadKeyStoreFragmentActi
 			return;
 		}
 
-		// Ya cargado el certificado, eliminamos el CAN de memoria y el objeto para que se vuelva a pedir
-//		if (getCanPasswordCallback() != null) {
-//			getCanPasswordCallback().clearPassword();
-//			setCanPasswordCallback(null);
-//		}
-
 		showProgressDialog(getString(R.string.dialog_msg_processing_requests), this);
 
 		// Iniciamos las tareas de firma de cada peticion
@@ -172,7 +167,6 @@ public abstract class SignatureFragmentActivity extends LoadKeyStoreFragmentActi
 		dismissProgressDialog();
 		requestOperationCancelled(OperationRequestListener.SIGN_OPERATION);
 	}
-
 
 	/**
 	 * Cuando se finaliza correctamente el llamada a FIRe que procesa las peticiones,
@@ -207,31 +201,20 @@ public abstract class SignatureFragmentActivity extends LoadKeyStoreFragmentActi
 	@Override
 	public void fireSignSuccess(boolean allOk) {
 		if (allOk) {
-			requestedSignatureSuccess();
+			requestedSignatureSuccess(this.requestsToSign);
 		} else {
 			PfLog.e(SFConstants.LOG_TAG, "Ha fallado la firma con FIRe"); //$NON-NLS-1$
-			requestedSignatureFailed(null);
+			requestedSignatureFailed(this.requestsToSign, null);
 		}
 	}
 
 	@Override
 	public void fireSignFailed(Throwable cause) {
 		PfLog.e(SFConstants.LOG_TAG, "Ha fallado la operacion de firma con FIRe", cause); //$NON-NLS-1$
-		requestedSignatureFailed(cause);
+		requestedSignatureFailed(this.requestsToSign, cause);
 	}
 
+	abstract void requestedSignatureSuccess(SignRequest[] requests);
 
-
-	@Override
-	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		if (requestCode == WEBVIEW_REQUEST_CODE) {
-			signRequestWithFire();
-		}
-
-		super.onActivityResult(requestCode, resultCode, data);
-	}
-
-	abstract void requestedSignatureSuccess();
-
-	abstract void requestedSignatureFailed(Throwable cause);
+	abstract void requestedSignatureFailed(SignRequest[] requests, Throwable cause);
 }

@@ -2,13 +2,10 @@ package es.gob.afirma.android.signfolder.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.text.Layout;
 import android.text.method.LinkMovementMethod;
 import android.view.View;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import es.gob.afirma.android.crypto.NfcHelper;

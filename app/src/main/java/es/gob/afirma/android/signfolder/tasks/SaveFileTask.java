@@ -1,6 +1,5 @@
 package es.gob.afirma.android.signfolder.tasks;
 
-import android.app.Activity;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Environment;

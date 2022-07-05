@@ -15,7 +15,6 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -27,6 +26,8 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.DialogFragment;
 
 import es.gob.afirma.android.signfolder.R;
+import es.gob.afirma.android.signfolder.SFConstants;
+import es.gob.afirma.android.util.PfLog;
 import es.gob.jmulticard.android.callbacks.CachePasswordCallback;
 
 /** Di&acute;logo para introducir el PIN.
@@ -35,13 +36,12 @@ import es.gob.jmulticard.android.callbacks.CachePasswordCallback;
 
 public final class CanDialog extends DialogFragment {
 
-	private static final String ES_GOB_AFIRMA = "es.gob.afirma"; //$NON-NLS-1$
-
 	//public static CachePasswordCallback passwordCallback;
 	private CanResult canResult;
+	private CanDialogListener listener;
 
 	/** Construye un di&acute;logo para introducir el CAN. */
-	public CanDialog() {
+	private CanDialog() {
 	}
 
 	private static CanDialog instance = null;
@@ -55,6 +55,7 @@ public final class CanDialog extends DialogFragment {
 		}
 		instance.setCanResult(canResult);
 		instance.setArguments(new Bundle());
+		instance.setListener(null);
 		return instance;
 	}
 
@@ -82,6 +83,12 @@ public final class CanDialog extends DialogFragment {
 									CanDialog.this.canResult.setCanObtained(false);
 								}
 								dialog.dismiss();
+								if (CanDialog.this.listener != null) {
+									CanDialog.this.listener.onDismiss();
+								}
+								if (CanDialog.this.listener != null) {
+									CanDialog.this.listener.onDismiss();
+								}
 								getActivity().setResult(Activity.RESULT_CANCELED);
 								getActivity().finish();
 							}
@@ -101,7 +108,7 @@ public final class CanDialog extends DialogFragment {
 					public void onClick(View view) {
 
 						if(editTextPin.getText() == null || "".equals(editTextPin.getText().toString())) { //$NON-NLS-1$
-							Log.e(ES_GOB_AFIRMA, "El CAN no puede ser vacio o nulo"); //$NON-NLS-1$
+							PfLog.e(SFConstants.LOG_TAG, "El CAN no puede ser vacio o nulo"); //$NON-NLS-1$
 							new Runnable() {
 								@Override
 								public void run() {
@@ -114,6 +121,9 @@ public final class CanDialog extends DialogFragment {
 							if (CanDialog.this.canResult != null) {
 								CanDialog.this.canResult.setCanObtained(true);
 								CanDialog.this.canResult.setPasswordCallback(new CachePasswordCallback(editTextPin.getText().toString().toCharArray()));
+							}
+							if (CanDialog.this.listener != null) {
+								CanDialog.this.listener.onDismiss();
 							}
 						}
 					}
@@ -137,5 +147,13 @@ public final class CanDialog extends DialogFragment {
 		});
 
 		return alertDialog;
+	}
+
+	public void setListener(CanDialogListener listener) {
+		this.listener = listener;
+	}
+
+	public static interface CanDialogListener {
+		void onDismiss();
 	}
 }

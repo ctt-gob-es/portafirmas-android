@@ -5,8 +5,6 @@ import android.os.AsyncTask;
 import es.gob.afirma.android.signfolder.SFConstants;
 import es.gob.afirma.android.signfolder.proxy.CommManager;
 import es.gob.afirma.android.signfolder.proxy.GenericResponse;
-import es.gob.afirma.android.user.configuration.Authorization;
-import es.gob.afirma.android.user.configuration.AuthorizationState;
 import es.gob.afirma.android.user.configuration.Validator;
 import es.gob.afirma.android.util.PfLog;
 

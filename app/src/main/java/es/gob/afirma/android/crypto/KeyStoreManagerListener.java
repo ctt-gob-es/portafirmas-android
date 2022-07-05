@@ -1,7 +1,5 @@
 package es.gob.afirma.android.crypto;
 
-import es.gob.afirma.android.crypto.MobileKeyStoreManager;
-
 /** Interfaz para la notificaci&oacute;n de finalizaci&oacute;n de la
  * carga e inicializaci&oacute;n del gestor de claves y certificados. */
 public interface KeyStoreManagerListener {

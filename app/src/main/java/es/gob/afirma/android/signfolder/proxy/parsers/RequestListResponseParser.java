@@ -6,16 +6,8 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
 import java.util.Vector;
 
-import es.gob.afirma.android.signfolder.proxy.GetRoleRequest;
-import es.gob.afirma.android.signfolder.proxy.GetUserRequest;
-import es.gob.afirma.android.signfolder.proxy.PartialResponseRolesList;
-import es.gob.afirma.android.signfolder.proxy.PartialResponseUserList;
 import es.gob.afirma.android.signfolder.proxy.PartialSignRequestsList;
 import es.gob.afirma.android.signfolder.proxy.RequestDocument;
 import es.gob.afirma.android.signfolder.proxy.ServerControlledException;
@@ -23,10 +15,6 @@ import es.gob.afirma.android.signfolder.proxy.SignRequest;
 import es.gob.afirma.android.signfolder.proxy.SignRequest.RequestType;
 import es.gob.afirma.android.signfolder.proxy.SignRequestDocument;
 import es.gob.afirma.android.signfolder.proxy.XmlUtils;
-import es.gob.afirma.android.user.configuration.AuthorizedType;
-import es.gob.afirma.android.user.configuration.ContactData;
-import es.gob.afirma.android.user.configuration.GenericUser;
-import es.gob.afirma.android.user.configuration.UserProfile;
 
 /**
  * Analizador de XML para la generaci&oacute;n de listas de peticiones de firma.

@@ -5,13 +5,8 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import es.gob.afirma.android.signfolder.proxy.GenericResponse;
-import es.gob.afirma.android.signfolder.proxy.ServerControlledException;
 import es.gob.afirma.android.signfolder.proxy.XmlUtils;
-import es.gob.afirma.android.user.configuration.GenericUser;
 
 /**
  * Analizador para el procesado de respuestas XML que indican si la operación finalizó

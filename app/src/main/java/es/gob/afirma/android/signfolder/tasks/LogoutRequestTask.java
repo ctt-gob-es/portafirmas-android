@@ -1,9 +1,7 @@
 package es.gob.afirma.android.signfolder.tasks;
 
-import android.content.Context;
 import android.os.AsyncTask;
 
-import java.io.File;
 import java.util.Timer;
 import java.util.TimerTask;
 

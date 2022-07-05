@@ -1,6 +1,5 @@
 package es.gob.afirma.android.util;
 
-import android.content.pm.ApplicationInfo;
 import android.util.Log;
 
 import es.gob.afirma.android.signfolder.BuildConfig;

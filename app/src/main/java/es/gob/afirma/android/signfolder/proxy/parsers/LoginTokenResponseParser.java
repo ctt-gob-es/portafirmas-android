@@ -5,16 +5,12 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import es.gob.afirma.android.signfolder.ErrorManager;
 import es.gob.afirma.android.signfolder.SFConstants;
 import es.gob.afirma.android.signfolder.proxy.OldProxyException;
 import es.gob.afirma.android.signfolder.proxy.RequestResult;
 import es.gob.afirma.android.signfolder.proxy.TriphaseRequest;
 import es.gob.afirma.android.signfolder.proxy.XmlUtils;
-import es.gob.afirma.android.user.configuration.ConfigurationRole;
 import es.gob.afirma.android.util.PfLog;
 
 /** Analizador de XML para la generaci&oacute;n de una petici&oacute;n de login o logout.

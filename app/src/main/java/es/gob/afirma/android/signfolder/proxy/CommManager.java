@@ -1,7 +1,5 @@
 package es.gob.afirma.android.signfolder.proxy;
 
-import android.util.Log;
-
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
@@ -598,7 +596,7 @@ public final class CommManager extends CommManagerOldVersion {
             return null;
         }
 
-        Log.i(SFConstants.LOG_TAG, "Notificamos el registro en el sistema de notificaciones");
+        PfLog.i(SFConstants.LOG_TAG, "Notificamos el registro en el sistema de notificaciones");
 
         // Realizamos la peticion
         String xml = XmlRequestsFactory.createRegisterNotificationRequest(token, device, dni);
@@ -623,7 +621,7 @@ public final class CommManager extends CommManagerOldVersion {
             byte[] data = AOUtil.getDataFromInputStream(is);
             is.close();
             is = new ByteArrayInputStream(data);
-            PfLog.w(SFConstants.LOG_TAG, "XML recibido: " + new String(data));
+            PfLog.i(SFConstants.LOG_TAG, "XML recibido: " + new String(data));
         }
         final Document doc = this.db.parse(is);
         is.close();
@@ -846,7 +844,7 @@ public final class CommManager extends CommManagerOldVersion {
      */
     public boolean updatePushNotifications(boolean activePushNots) throws IOException, SAXException {
 
-        Log.i(SFConstants.LOG_TAG, "Se van a activar las notificaciones: " + activePushNots);
+        PfLog.i(SFConstants.LOG_TAG, "Se van a activar las notificaciones: " + activePushNots);
 
         String xml = XmlRequestsFactory.createUpdatePushNotsRequest(activePushNots);
         String url = this.signFolderProxyUrl + createUrlParams(OPERATION_UPDATE_PUSH_NOTIFICATIONS, xml);

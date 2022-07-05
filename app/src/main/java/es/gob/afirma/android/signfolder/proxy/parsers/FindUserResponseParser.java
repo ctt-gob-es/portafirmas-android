@@ -8,7 +8,6 @@ import org.w3c.dom.NodeList;
 import java.util.ArrayList;
 import java.util.List;
 
-import es.gob.afirma.android.signfolder.proxy.FireLoadDataResult;
 import es.gob.afirma.android.signfolder.proxy.ServerControlledException;
 import es.gob.afirma.android.signfolder.proxy.XmlUtils;
 import es.gob.afirma.android.user.configuration.GenericUser;

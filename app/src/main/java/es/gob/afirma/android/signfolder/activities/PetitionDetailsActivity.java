@@ -33,16 +33,11 @@ import androidx.core.content.FileProvider;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.security.KeyStore.PrivateKeyEntry;
-import java.security.PrivateKey;
-import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
 
-import es.gob.afirma.android.crypto.NfcHelper;
-import es.gob.afirma.android.signfolder.AppPreferences;
 import es.gob.afirma.android.signfolder.CryptoConfiguration;
 import es.gob.afirma.android.signfolder.CustomAlertDialog;
 import es.gob.afirma.android.signfolder.MessageDialog;
@@ -52,7 +47,6 @@ import es.gob.afirma.android.signfolder.SignfolderApp;
 import es.gob.afirma.android.signfolder.listeners.DialogFragmentListener;
 import es.gob.afirma.android.signfolder.listeners.OperationRequestListener;
 import es.gob.afirma.android.signfolder.proxy.CommManager;
-import es.gob.afirma.android.signfolder.proxy.FireLoadDataResult;
 import es.gob.afirma.android.signfolder.proxy.RequestDetail;
 import es.gob.afirma.android.signfolder.proxy.RequestDocument;
 import es.gob.afirma.android.signfolder.proxy.RequestResult;
@@ -65,16 +59,13 @@ import es.gob.afirma.android.signfolder.tasks.ApproveRequestsTask;
 import es.gob.afirma.android.signfolder.tasks.CleanTempFilesTask;
 import es.gob.afirma.android.signfolder.tasks.DownloadFileTask;
 import es.gob.afirma.android.signfolder.tasks.DownloadFileTask.DownloadDocumentListener;
-import es.gob.afirma.android.signfolder.tasks.FireLoadDataTask;
 import es.gob.afirma.android.signfolder.tasks.FireSignTask;
 import es.gob.afirma.android.signfolder.tasks.LoadPetitionDetailsTask;
 import es.gob.afirma.android.signfolder.tasks.LoadPetitionDetailsTask.LoadSignRequestDetailsListener;
-import es.gob.afirma.android.signfolder.tasks.LoadSelectedPrivateKeyTask;
 import es.gob.afirma.android.signfolder.tasks.LogoutRequestTask;
 import es.gob.afirma.android.signfolder.tasks.OpenHelpDocumentTask;
 import es.gob.afirma.android.signfolder.tasks.RejectRequestsTask;
 import es.gob.afirma.android.signfolder.tasks.SaveFileTask;
-import es.gob.afirma.android.signfolder.tasks.SignRequestTask;
 import es.gob.afirma.android.signfolder.tasks.VerifyRequestsTask;
 import es.gob.afirma.android.user.configuration.ConfigurationConstants;
 import es.gob.afirma.android.user.configuration.ConfigurationRole;
@@ -792,6 +783,12 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
     }
 
     @Override
+    protected void enabledNfcCancelled() {
+        dismissProgressDialog();
+        Toast.makeText(getApplicationContext(), R.string.nfc_still_disabled, Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         // Obtenemos la respuesta tras autorizar la operacion en Cl@ve Firma
         if (requestCode == LoadKeyStoreFragmentActivity.WEBVIEW_REQUEST_CODE) {
@@ -883,19 +880,21 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
     }
 
     @Override
-    void requestedSignatureSuccess() {
+    void requestedSignatureSuccess(SignRequest[] signRequests) {
 
         dismissProgressDialog();
 
-        requestOperationFinished(OperationRequestListener.SIGN_OPERATION, null);
+        final RequestResult result = new RequestResult(signRequests[0].getId(), true);
+        requestOperationFinished(OperationRequestListener.SIGN_OPERATION, result);
     }
 
     @Override
-    void requestedSignatureFailed(Throwable cause) {
+    void requestedSignatureFailed(SignRequest[] signRequests, Throwable cause) {
 
         dismissProgressDialog();
 
-        requestOperationFailed(OperationRequestListener.SIGN_OPERATION, null, cause);
+        final RequestResult result = new RequestResult(signRequests[0].getId(), false);
+        requestOperationFailed(OperationRequestListener.SIGN_OPERATION, result, cause);
     }
 
     /**
@@ -926,15 +925,22 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
+
+                ProgressDialog currentProgressDialog = getProgressDialog();
+                if (currentProgressDialog != null && currentProgressDialog.isShowing()) {
+                    currentProgressDialog.dismiss();
+                }
+
                 try {
-                    setProgressDialog(ProgressDialog.show(ctx, null, message, true));
+                    currentProgressDialog = ProgressDialog.show(ctx, null, message, true);
+                    setProgressDialog(currentProgressDialog);
                 } catch (final Exception e) {
                     PfLog.e(SFConstants.LOG_TAG, "No se ha podido mostrar el dialogo de progreso: " + e, e); //$NON-NLS-1$
                     return;
                 }
 
                 // Definimos el comportamiento para cancelar los dialogos de espera
-                getProgressDialog().setOnKeyListener(new DialogInterface.OnKeyListener() {
+                currentProgressDialog.setOnKeyListener(new DialogInterface.OnKeyListener() {
                     @Override
                     public boolean onKey(final DialogInterface dialog, final int keyCode, final KeyEvent event) {
                         if (keyCode == KeyEvent.KEYCODE_BACK) {
@@ -945,7 +951,7 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
                                     }
                                 }
                             }
-                            dismissProgressDialog();
+                            dialog.dismiss();
                             return true;
                         }
                         return false;

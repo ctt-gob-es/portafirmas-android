@@ -10,8 +10,6 @@
 
 package es.gob.afirma.android.network;
 
-import android.util.Log;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -115,7 +113,7 @@ public final class AndroidUrlHttpManager {
 			response.setCookieId(extractCookieId(conn));
 		}
 		catch (SocketTimeoutException e) {
-			Log.e(SFConstants.LOG_TAG, "Timeout", e);
+			PfLog.e(SFConstants.LOG_TAG, "Timeout", e);
 			throw e;
 		}
 		finally {

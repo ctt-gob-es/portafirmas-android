@@ -22,7 +22,6 @@ import es.gob.afirma.android.signfolder.adapter.AppAdapter;
 import es.gob.afirma.android.signfolder.proxy.RequestAppConfiguration;
 import es.gob.afirma.android.user.configuration.ConfigurationConstants;
 import es.gob.afirma.android.user.configuration.GenericUser;
-import es.gob.afirma.android.user.configuration.UserInfo;
 
 /**
  * Clase que gestiona la actividad de creación de nuevos validadores.

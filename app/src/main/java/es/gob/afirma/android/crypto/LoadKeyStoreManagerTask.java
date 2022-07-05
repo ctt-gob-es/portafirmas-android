@@ -11,20 +11,14 @@
 package es.gob.afirma.android.crypto;
 
 import android.os.AsyncTask;
-import android.util.Log;
 
 import androidx.fragment.app.FragmentActivity;
-
-import javax.security.auth.callback.PasswordCallback;
 
 /** Tarea de carga e inicializaci&oacute;n del gestor de claves y certificados en Android. */
 public final class LoadKeyStoreManagerTask extends AsyncTask<Void, Void, Void> {
 
-	private static final String ES_GOB_AFIRMA = "es.gob.afirma"; //$NON-NLS-1$
-
 	private final KeyStoreManagerListener kmListener;
 	private final FragmentActivity activity;
-	private final PasswordCallback passwordCallback;
 
 	/** Crea una tarea de carga e inicializaci&oacute;n del gestor de claves y certificados en Android.
 	 * @param kml Clase a la que hay que notificar cuando se finaliza la
@@ -33,25 +27,10 @@ public final class LoadKeyStoreManagerTask extends AsyncTask<Void, Void, Void> {
 	public LoadKeyStoreManagerTask(final KeyStoreManagerListener kml, final FragmentActivity act) {
 		this.kmListener = kml;
 		this.activity = act;
-		this.passwordCallback = null;
-	}
-
-	/**
-	 * Crea una tarea de carga e inicializaci&oacute;n del gestor de claves y certificados en Android.
-	 * @param kml Clase a la que hay que notificar cuando se finaliza la
-	 * carga e inicializaci&oacute;n del gestor de claves y certificados
-	 * @param act Actividad padre
-	 * @param  passwordCallback Callback con la contrase&ntilde;a del almac&eacute;n.
-	 */
-	public LoadKeyStoreManagerTask(final KeyStoreManagerListener kml, final FragmentActivity act, final PasswordCallback passwordCallback) {
-		this.kmListener = kml;
-		this.activity = act;
-		this.passwordCallback = passwordCallback;
 	}
 
 	@Override
 	protected Void doInBackground(Void[] params) {
-		Log.i(ES_GOB_AFIRMA, "Inicializamos el almacen"); //$NON-NLS-1$
 		// Se obtiene el KeyStore
 		KeyStoreManagerFactory.initKeyStoreManager(this.activity, this.kmListener);
 
