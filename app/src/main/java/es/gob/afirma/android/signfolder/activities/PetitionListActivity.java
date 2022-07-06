@@ -51,6 +51,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
+import es.gob.afirma.android.crypto.DnieConnectionManager;
 import es.gob.afirma.android.fcm.RegistrationIntentService;
 import es.gob.afirma.android.signfolder.AppPreferences;
 import es.gob.afirma.android.signfolder.ConfigureFilterDialogBuilder;
@@ -1613,6 +1614,11 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
                 PfLog.e(SFConstants.LOG_TAG,
                         "No se ha podido ejecutar la tarea de borrado de temporales", e); //$NON-NLS-1$
             }
+
+            // Eliminamos la informacion de conexion con el DNIe si la hubiese
+            DnieConnectionManager.getInstance().clearCan();
+            DnieConnectionManager.getInstance().reset();
+
             try {
                 LogoutRequestTask lrt = new LogoutRequestTask(CommManager.getInstance());
                 lrt.execute();
