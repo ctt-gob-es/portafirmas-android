@@ -14,6 +14,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.List;
+import java.util.Properties;
 
 import es.gob.afirma.android.network.AndroidUrlHttpManager;
 import es.gob.afirma.android.network.ConnectionResponse;
@@ -358,7 +359,13 @@ public final class CommManager extends CommManagerOldVersion {
         if (!oldProxy) {
             String xml = XmlRequestsFactory.createPresignRequest(request);
             String url = this.signFolderProxyUrl + createUrlParams(OPERATION_PRESIGN, xml);
-            return PresignsResponseParser.parse(getRemoteDocument(url));
+
+            // Agregamos la cabecera Expect: 100-Continue para que el servidor no se queje de
+            // peticiones grandes
+            final Properties headers = new Properties();
+            headers.setProperty("Expect", "100-Continue"); //$NON-NLS-1$ //$NON-NLS-2$
+
+            return PresignsResponseParser.parse(getRemoteDocument(url, headers));
         } else {
             CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
             InputStream in = new ByteArrayInputStream(Base64.decode(this.certb64));
@@ -382,7 +389,13 @@ public final class CommManager extends CommManagerOldVersion {
                 XmlRequestsFactoryOldVersion.createPostsignRequest(requests, this.certb64) :
                 XmlRequestsFactory.createPostsignRequest(requests);
         String url = this.signFolderProxyUrl + createUrlParams(OPERATION_POSTSIGN, xml);
-        return PostsignsResponseParser.parse(getRemoteDocument(url));
+
+        // Agregamos la cabecera Expect: 100-Continue para que el servidor no se queje de
+        // peticiones grandes
+        final Properties headers = new Properties();
+        headers.setProperty("Expect", "100-Continue"); //$NON-NLS-1$ //$NON-NLS-2$
+
+        return PostsignsResponseParser.parse(getRemoteDocument(url, headers));
     }
 
     /**
@@ -613,8 +626,21 @@ public final class CommManager extends CommManagerOldVersion {
      * @throws SAXException Error al parsear el XML.
      */
     private Document getRemoteDocument(final String url) throws SAXException, IOException {
+        return getRemoteDocument(url, null);
+    }
 
-        InputStream is = getRemoteDocumentIs(url);
+    /**
+     * Descarga un XML remoto de una URL dada.
+     *
+     * @param url URL de donde descargar el XML.
+     * @param headers Cabeceras que agregar a la petici&oacute;n.
+     * @return &Aacute;rbol XML descargado.
+     * @throws IOException  Error en la lectura del documento.
+     * @throws SAXException Error al parsear el XML.
+     */
+    private Document getRemoteDocument(final String url, Properties headers) throws SAXException, IOException {
+
+        InputStream is = getRemoteDocumentIs(url, headers);
 
         // En entornos de depuracion hacemos una precarga de los datos para mostrarlos en el log
         if (!PfLog.isProduction) {
@@ -637,9 +663,22 @@ public final class CommManager extends CommManagerOldVersion {
      * @throws IOException Error en la lectura del documento.
      */
     public InputStream getRemoteDocumentIs(final String url) throws IOException {
-        final ConnectionResponse response = getRemoteData(url);
+        return getRemoteDocumentIs(url, null);
+    }
+
+    /**
+     * Obtiene el flujo de entrada de los datos a descargar.
+     *
+     * @param url URL de donde descargar los datos.
+     * @param headers Cabeceras que agregar a la petici&oacute;n.
+     * @return Flujo de datos para la descarga.
+     * @throws IOException Error en la lectura del documento.
+     */
+    public InputStream getRemoteDocumentIs(final String url, final Properties headers) throws IOException {
+        final ConnectionResponse response = getRemoteData(url, headers);
         return response.getDataIs();
     }
+
 
     /**
      * Obtiene el flujo de entrada de los datos a descargar.
@@ -649,6 +688,18 @@ public final class CommManager extends CommManagerOldVersion {
      * @throws IOException Error en la lectura del documento.
      */
     private ConnectionResponse getRemoteData(final String url) throws IOException {
+        return getRemoteData(url, null);
+    }
+
+    /**
+     * Obtiene el flujo de entrada de los datos a descargar.
+     *
+     * @param url URL de donde descargar los datos.
+     * @param headers Cabeceras que agregar a la petici&oacute;n.
+     * @return Flujo de datos para la descarga.
+     * @throws IOException Error en la lectura del documento.
+     */
+    private ConnectionResponse getRemoteData(final String url, final Properties headers) throws IOException {
 
         if (!PfLog.isProduction) {
             PfLog.i(SFConstants.LOG_TAG, "PETICION AL PROXY NUEVO");
@@ -665,7 +716,7 @@ public final class CommManager extends CommManagerOldVersion {
             }
         }
 
-        final ConnectionResponse response = AndroidUrlHttpManager.getRemoteDataByPost(url, this.timeout);
+        final ConnectionResponse response = AndroidUrlHttpManager.getRemoteDataByPost(url, this.timeout, headers);
 
         if (url.startsWith(HTTPS)) {
             AndroidUrlHttpManager.enableSslChecks();

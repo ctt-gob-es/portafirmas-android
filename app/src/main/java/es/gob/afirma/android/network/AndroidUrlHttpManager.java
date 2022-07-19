@@ -23,6 +23,7 @@ import java.net.URL;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
+import java.util.Properties;
 import java.util.StringTokenizer;
 
 import javax.net.ssl.HostnameVerifier;
@@ -75,6 +76,18 @@ public final class AndroidUrlHttpManager {
 	 * @return Contenido de la URL
 	 * @throws IOException Si no se puede leer la URL */
 	public static ConnectionResponse getRemoteDataByPost(final String url, final int timeout) throws IOException {
+		return getRemoteDataByPost(url, timeout, null);
+	}
+
+	/** Lee una URL HTTP o HTTPS por POST si se indican par&aacute;metros en la URL y por GET en caso contrario.
+	 * En HTTPS no se hacen comprobaciones del certificado servidor.
+	 * @param url URL a leer
+	 * @param timeout Tiempo m&aacute;ximo en milisegundos que se debe esperar por la respuesta. Un timeout de 0
+	 * se interpreta como un timeout infinito. Si se indica -1, se usar&aacute; el por defecto de Java.
+	 * @param headers Cabeceras que agregar a la petici&oacute;n.
+	 * @return Contenido de la URL
+	 * @throws IOException Si no se puede leer la URL */
+	public static ConnectionResponse getRemoteDataByPost(final String url, final int timeout, Properties headers) throws IOException {
 		if (url == null) {
 			throw new IllegalArgumentException("La URL a leer no puede ser nula"); //$NON-NLS-1$
 		}
@@ -96,6 +109,12 @@ public final class AndroidUrlHttpManager {
 			conn.setConnectTimeout(timeout);
 			conn.setReadTimeout(timeout);
 			conn.setRequestMethod("POST"); //$NON-NLS-1$
+
+			if (headers != null) {
+				for (String key : headers.keySet().toArray(new String[0])) {
+					conn.setRequestProperty(key, headers.getProperty(key));
+				}
+			}
 
 			conn.setDoOutput(true);
 

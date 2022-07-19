@@ -323,14 +323,21 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
                 registryNotificationToken(userProxyId, false);
             }
         }
-        // En el nuevo proxy, comprobaremos si esta la plataforma de notificaciones configurada y
-        // si el usuario tiene activas las notificaciones. En caso afirmativo, se registrara el token
-        // de notificaciones tanto si el usuario no tiene registradas las notificaciones (se activaron
-        // desde otro dispositivo) como si ha cambiado el token
+        // En el nuevo proxy, comprobaremos si esta la plataforma de notificaciones configurada
         else if (this.userConfig.isSimConfig() && this.userConfig.isPushActivated()) {
             String userProxyId = getUserProxyId();
-            if (!isNotificationTokenRegistered(userProxyId) || isNotificationTokenChanged(userProxyId)) {
-                registryNotificationToken(userProxyId, false);
+            // Si las notificaciones en local estan activas, nos aseguramos de que las
+            // notificaciones en el servidor estan activas y que el toquen este actualizado
+            if (isNotificationTokenRegistered(userProxyId)) {
+                // Si el token ha cambiado, pedimos el alta del nuevo token
+                if (isNotificationTokenChanged(userProxyId)) {
+                    registryNotificationToken(userProxyId, false);
+                }
+                // Si no ha cambiado el token, pero las notificaciones en servidor estan
+                // desactivadas, las activamos
+                else if (!this.userConfig.isPushActivated()) {
+                    new UpdatePushNotificationsTask(true, this).execute();
+                }
             }
         }
 
@@ -404,6 +411,22 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
         PfLog.d(SFConstants.LOG_TAG, "El token de notificaciones esta registrado: " + tokenRegistered);
 
         return tokenRegistered;
+    }
+
+
+    /**
+     * Desactiva las notificaciones en local al usuario de este portafirmas estableciendo
+     * que el token de notificaciones no est&aacute; registrado. Esto har&aacute; que al volver
+     * a habilitarlo se vuelva a dar el alta, aunque el token no haya cambiado.
+     * @param  userProxyId Identificador asociado a la combinación usuario/proxy.
+     */
+    private void disableNotifications(String userProxyId) {
+        AppPreferences prefs = AppPreferences.getInstance();
+        prefs.setPreferenceBool(
+                AppPreferences.PREFERENCES_KEY_PREFIX_NOTIFICATION_ACTIVE + userProxyId,
+                false);
+
+        PfLog.d(SFConstants.LOG_TAG, "Desactivada las notificaciones en local");
     }
 
     /**

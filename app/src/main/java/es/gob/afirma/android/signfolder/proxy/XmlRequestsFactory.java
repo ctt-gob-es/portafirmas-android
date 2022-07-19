@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import es.gob.afirma.android.signfolder.CommonsUtils;
 import es.gob.afirma.android.signfolder.DateTimeFormatter;
+import es.gob.afirma.android.signfolder.SFConstants;
 import es.gob.afirma.android.user.configuration.Authorization;
 import es.gob.afirma.android.user.configuration.ConfigurationRole;
 import es.gob.afirma.android.user.configuration.GenericUser;
@@ -146,9 +147,6 @@ final class XmlRequestsFactory {
         sb.append("\">"); //$NON-NLS-1$
         documents = request.getDocs();
         for (final SignRequestDocument document : documents) {
-
-            PfLog.i("es.gob.afirma", "Parametros que se agregan:\n" + document.getParams()); //$NON-NLS-1$ //$NON-NLS-2$
-
             sb.append("<doc docid=\"") //$NON-NLS-1$
                     .append(document.getId())
                     .append("\" cop=\"") //$NON-NLS-1$
@@ -199,9 +197,6 @@ final class XmlRequestsFactory {
             if (request.isStatusOk()) {
                 documents = request.getDocumentsRequests();
                 for (final TriphaseSignDocumentRequest document : documents) {
-
-                    PfLog.i("es.gob.afirma", "Parametros que se agregan:\n" + document.getParams()); //$NON-NLS-1$ //$NON-NLS-2$
-
                     sb.append("<doc docid=\"") //$NON-NLS-1$
                             .append(document.getId())
                             .append("\" cop=\"") //$NON-NLS-1$
@@ -225,14 +220,6 @@ final class XmlRequestsFactory {
         sb.append(XML_REQUESTS_CLOSE);
 
         sb.append(XML_TRISIGN_CLOSE);
-
-        // Imprimimos la peticion en el log
-        PfLog.i("es.gob.afirma", "Peticion postfirma:"); //$NON-NLS-1$ //$NON-NLS-2$
-        final int BUFFER_LENGTH = 1000;
-        final String urlString = sb.toString();
-        for (int i = 0; i < urlString.length() / BUFFER_LENGTH + 1; i++) {
-            PfLog.i("es.gob.afirma", urlString.substring(i * BUFFER_LENGTH, Math.min((i + 1) * BUFFER_LENGTH, urlString.length()))); //$NON-NLS-1$
-        }
 
         return sb.toString();
     }
