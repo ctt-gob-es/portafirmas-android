@@ -108,6 +108,10 @@
     <string name="dialog_msg_confirm_new_valitor">¿Desea dar de alta a %1s como su nuevo validador?</string>
     <string name="dialog_msg_confirm_remove_validator">¿Desea dar de baja a %1s como validador?</string>
     <string name="dialog_msg_pending_authorizations">Tiene autorizaciones pendientes de aceptar o rechazar.</string>
+    <string name="download">Descargar</string>
+    <string name="share">Compartir</string>
+    <string name="toast_error_sharing">Error al compartir el documento</string>
+    <string name="notif_download_file_title">Archivo descargado</string>
 
     <string name="button_import_cert">Importar certificado</string>
     <string name="button_login">Acceder</string>

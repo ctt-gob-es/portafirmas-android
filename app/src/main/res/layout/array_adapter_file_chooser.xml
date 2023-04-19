@@ -17,6 +17,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginLeft="5dip"
+        android:layout_marginRight="50dip"
         android:layout_marginTop="5dip"
         android:layout_toRightOf="@id/fileIcon"
         android:singleLine="true"
@@ -32,5 +33,16 @@
         android:layout_toRightOf="@id/fileIcon"
         android:layout_below="@id/TextView01"
         android:textIsSelectable="false" />
-    
+
+    <TextView
+        android:id="@+id/textViewOptions"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:paddingLeft="25dp"
+        android:paddingRight="25dp"
+        android:text="&#8942;"
+        android:textSize="30sp"
+        android:textAppearance="?android:textAppearanceLarge" />
+
 </RelativeLayout>

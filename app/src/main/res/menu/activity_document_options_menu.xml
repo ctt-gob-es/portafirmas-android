@@ -1,0 +1,16 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item android:id="@+id/docdownload"
+            android:icon="@drawable/icon_download"
+            android:alphabeticShortcut="D"
+            app:showAsAction="always"
+            android:title="@string/download"></item>
+
+    <item android:id="@+id/share"
+        android:icon="@drawable/icon_share"
+        android:alphabeticShortcut="S"
+        app:showAsAction="always"
+        android:title="@string/share"></item>
+
+</menu>

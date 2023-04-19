@@ -1,6 +1,9 @@
 package es.gob.afirma.android.signfolder.activities;
 
 import android.Manifest;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
@@ -9,9 +12,13 @@ import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -22,19 +29,29 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.PopupMenu;
 import android.widget.TabHost;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+
+import es.gob.afirma.android.fcm.NotificationUtilities;
+import es.gob.afirma.android.signfolder.BuildConfig;
+import es.gob.afirma.android.util.Base64;
 import java.util.List;
 import java.util.Vector;
 
@@ -48,6 +65,7 @@ import es.gob.afirma.android.signfolder.SignfolderApp;
 import es.gob.afirma.android.signfolder.listeners.DialogFragmentListener;
 import es.gob.afirma.android.signfolder.listeners.OperationRequestListener;
 import es.gob.afirma.android.signfolder.proxy.CommManager;
+import es.gob.afirma.android.signfolder.proxy.DocumentData;
 import es.gob.afirma.android.signfolder.proxy.RequestDetail;
 import es.gob.afirma.android.signfolder.proxy.RequestDocument;
 import es.gob.afirma.android.signfolder.proxy.RequestResult;
@@ -67,11 +85,13 @@ import es.gob.afirma.android.signfolder.tasks.LogoutRequestTask;
 import es.gob.afirma.android.signfolder.tasks.OpenHelpDocumentTask;
 import es.gob.afirma.android.signfolder.tasks.RejectRequestsTask;
 import es.gob.afirma.android.signfolder.tasks.SaveFileTask;
+import es.gob.afirma.android.signfolder.tasks.ShareFileTask;
 import es.gob.afirma.android.signfolder.tasks.VerifyRequestsTask;
 import es.gob.afirma.android.user.configuration.ConfigurationConstants;
 import es.gob.afirma.android.user.configuration.ConfigurationRole;
 import es.gob.afirma.android.user.configuration.RoleInfo;
 import es.gob.afirma.android.user.configuration.UserConfig;
+import es.gob.afirma.android.util.AOUtil;
 import es.gob.afirma.android.util.PfLog;
 
 /**
@@ -109,7 +129,6 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
     static final int RESULT_SESSION_CLOSED = 6;
     static final int REQUEST_CODE = 3;
     private static final int REQUEST_WRITE_STORAGE = 112;
-    private static final String PDF_MIMETYPE = "application/pdf"; //$NON-NLS-1$
     private static final String PDF_FILE_EXTENSION = ".pdf"; //$NON-NLS-1$
     private static final String DOC_FILE_EXTENSION = ".doc"; //$NON-NLS-1$
     private static final String DOCX_FILE_EXTENSION = ".docx"; //$NON-NLS-1$
@@ -453,7 +472,7 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
     /**
      * Muestra un mensaje solicitando confirmacion al usuario para descargar y previsualizar
      * el fichero seleccionado.
-     */
+    */
     private void showConfirmPreviewDialog() {
 
         if (selectedDocItem == null) {
@@ -468,6 +487,168 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
         }
     }
 
+    /**
+     * Muestra un mensaje solicitando confirmacion al usuario para descargar y almacenar
+     * el fichero seleccionado.
+     */
+    private void showConfirmDownloadAndSaveDialog() {
+
+        if (selectedDocItem == null) {
+            return;
+        }
+
+        // Si tenemos permisos de escritura, procedemos a la descarga. Si no, los pedimos
+        if (writePerm) {
+            downloadAndSaveFile();
+        } else {
+            requestStoragePerm();
+        }
+    }
+
+    /**
+     * Ejecuta el proceso necesario para compartir un archivo con otras aplicaciones
+     */
+    private void shareFile() {
+
+        if (selectedDocItem == null) {
+            return;
+        }
+
+        DocumentData data = getDataToShare(selectedDocItem.docId, selectedDocItem.docType, selectedDocItem.name, selectedDocItem.mimetype);
+        if (data != null && data.getDataIs() != null) {
+            File file = null;
+            try {
+                byte[] fileData = AOUtil.getDataFromInputStream(data.getDataIs());
+                String dataEncoded = Base64.encode(fileData);
+                file = createAndSaveFileFromBase64Url("data:"+ data.getMimetype() + ";base64," + dataEncoded, true);
+                Uri uri = FileProvider.getUriForFile(PetitionDetailsActivity.this,
+                        BuildConfig.APPLICATION_ID + ".fileprovider", file);
+
+                Intent shareIntent = new Intent();
+                shareIntent.setAction(Intent.ACTION_SEND);
+                shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
+                shareIntent.setType(selectedDocItem.mimetype);
+                startActivity(Intent.createChooser(shareIntent, getResources().getText(R.string.share)));
+                if (this.tempDocuments == null) {
+                    this.tempDocuments = new ArrayList<>();
+                }
+                this.tempDocuments.add(file);
+            } catch (IOException ioe) {
+                if (file != null) {
+                    if (file.exists()) {
+                        if (this.tempDocuments == null) {
+                            this.tempDocuments = new ArrayList<>();
+                        }
+                        this.tempDocuments.add(file);
+                    }
+                }
+                shareDocumentError();
+            }
+        }
+    }
+
+    /**
+     * Ejecuta el proceso necesario para compartir un archivo con otras aplicaciones
+     */
+    private void downloadAndSaveFile() {
+
+        if (selectedDocItem == null) {
+            return;
+        }
+
+        DocumentData data = getDataToShare(selectedDocItem.docId, selectedDocItem.docType, selectedDocItem.name, selectedDocItem.mimetype);
+        if (data != null && data.getDataIs() != null) {
+            try {
+                byte[] fileData = AOUtil.getDataFromInputStream(data.getDataIs());
+                String dataEncoded = Base64.encode(fileData);
+                showProgressDialog(getString(R.string.doc_download), this);
+                createAndSaveFileFromBase64Url("data:"+ data.getMimetype() + ";base64," + dataEncoded, false);
+            } catch (IOException ioe) {
+                shareDocumentError();
+            }
+        }
+    }
+
+    public File createAndSaveFileFromBase64Url(String url, boolean isShared) {
+        File path;
+        if (isShared) {
+            path = SignfolderApp.getInternalTempDir();
+        } else {
+            path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+        }
+        String filetype = url.substring(url.indexOf("/") + 1, url.indexOf(";"));
+        String filename = selectedDocItem.name.substring(0, selectedDocItem.name.lastIndexOf(".")) + "-" + System.currentTimeMillis() + "." + filetype;
+        File file = new File(path, filename);
+        try {
+            if(!path.exists()) {
+                path.mkdirs();
+            }
+            if(!file.exists()) {
+                file.createNewFile();
+            }
+
+            String base64EncodedString = url.substring(url.indexOf(",") + 1);
+            byte[] decodedBytes = Base64.decode(base64EncodedString);
+            OutputStream os = new FileOutputStream(file);
+            os.write(decodedBytes);
+            os.close();
+
+            MediaScannerConnection.scanFile(this,
+                    new String[]{file.toString()}, null,
+                    new MediaScannerConnection.OnScanCompletedListener() {
+                        public void onScanCompleted(String path, Uri uri) {
+                            Log.i("ExternalStorage", "Scanned " + path + ":");
+                            Log.i("ExternalStorage", "-> uri=" + uri);
+                 }
+            });
+
+            if (!isShared) {
+                notifyDownloadAndSave(file);
+            }
+
+        } catch (IOException e) {
+            downloadDocumentError();
+            return null;
+        }
+
+        return file;
+    }
+
+    /**
+     * Metodo para crear y enviar notificacion al dispositivo sobre el archivo almacenado
+     * @param file informacion sobre el archivo descargado
+     */
+    private void notifyDownloadAndSave(File file) {
+        Intent intent = new Intent();
+        intent.setAction(android.content.Intent.ACTION_VIEW);
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        Uri uri = FileProvider.getUriForFile(PetitionDetailsActivity.this,
+                BuildConfig.APPLICATION_ID + ".fileprovider", file);
+        intent.setDataAndType(uri, selectedDocItem.mimetype);
+
+        // Creacion de la notificacion a mostrar
+        Object resNotification = NotificationUtilities.createNotification(this, getString(R.string.notif_download_file_title),
+                "El archivo " + selectedDocItem.name + " se ha descargado",
+                R.drawable.ic_notification, Notification.DEFAULT_ALL, Notification.PRIORITY_HIGH,
+                "PORTAFIRMAS", "DOWNLOAD_FILE",
+                null, true,
+                null, null);
+
+        NotificationCompat.Builder mBuilder = (NotificationCompat.Builder) resNotification;
+
+        PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
+                intent, PendingIntent.FLAG_CANCEL_CURRENT);
+        mBuilder.setContentIntent(contentIntent);
+        mBuilder.setAutoCancel(true);
+
+        int notId = 888221;
+
+        NotificationManager mNotifyMgr =
+                (NotificationManager) this.getSystemService(NOTIFICATION_SERVICE);
+        mNotifyMgr.cancel(notId);
+        mNotifyMgr.notify(notId, mBuilder.build());
+    }
+
     private void downloadDocument(final String docId, final String filename, final String mimetype, final int docType) {
 
         // Para las firmas, avisaremos de que unicamente se van a descargar, mientras que el resto
@@ -476,7 +657,7 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
             final OnClickListener listener = new OnClickListener() {
                 @Override
                 public void onClick(final DialogInterface dlg, final int which) {
-                    download(docId, docType, filename, mimetype, true);
+                   download(docId, docType, filename, mimetype, true);
                 }
             };
             final MessageDialog confirmPreviewDialog = new MessageDialog();
@@ -505,6 +686,22 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
                         CommManager.getInstance(), this, getApplicationContext());
         showProgressDialog(getString(R.string.loading_doc), this, dlfTask);
         dlfTask.execute();
+    }
+
+    private DocumentData getDataToShare(final String docId, final int docType, final String filename, final String mimetype)  {
+        final ShareFileTask sfTask =
+                new ShareFileTask(docId, docType,
+                        filename,
+                        mimetype,
+                        CommManager.getInstance(), this);
+        showProgressDialog(getString(R.string.loading_doc), this, sfTask);
+        AsyncTask result = sfTask.execute();
+        try {
+            return (DocumentData) result.get();
+        } catch (Exception e) {
+            shareDocumentError();
+            return null;
+        }
     }
 
     private void requestStoragePerm() {
@@ -595,6 +792,31 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
                 DIALOG_MSG_ERROR,
                 getString(R.string.error),
                 getString(R.string.toast_error_previewing),
+                getString(android.R.string.ok),
+                null,
+                this
+        );
+
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    dlg.show(getSupportFragmentManager(), DIALOG_TAG);
+                }
+                catch (Exception e) {
+                    PfLog.w(SFConstants.LOG_TAG, "No se pudo mostrar el mensaje de error", e); //$NON-NLS-1$
+                }
+            }
+        });
+    }
+
+    private void shareDocumentError() {
+        dismissProgressDialog();
+
+        final CustomAlertDialog dlg = CustomAlertDialog.newInstance(
+                DIALOG_MSG_ERROR,
+                getString(R.string.error),
+                getString(R.string.toast_error_sharing),
                 getString(android.R.string.ok),
                 null,
                 this
@@ -1258,7 +1480,7 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
         }
     }
 
-    final class DocItem implements RequestDetailAdapterItem, View.OnClickListener {
+    final class DocItem implements RequestDetailAdapterItem, View.OnClickListener  {
         private final String docId;
         private final String name;
         private final String mimetype;
@@ -1312,10 +1534,38 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
                 icon.setImageResource(R.drawable.icon_file);
             }
 
+            final TextView t3 = view.findViewById(R.id.textViewOptions);
+            final DocItem docItemViewed = this;
+            t3.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    PetitionDetailsActivity.this.selectedDocItem = docItemViewed;
+                    PopupMenu popup = new PopupMenu(PetitionDetailsActivity.this, t3);
+                    // Se mostraran los iconos a partir de Android 10 (API 29)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        popup.setForceShowIcon(true);
+                    }
+                    popup.getMenuInflater().inflate(R.menu.activity_document_options_menu, popup.getMenu());
+                    popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                    public boolean onMenuItemClick(MenuItem item) {
+                        if (item.getTitle().equals(getString(R.string.download))) {
+                            showConfirmDownloadAndSaveDialog();
+                        } else if (item.getTitle().equals(getString(R.string.share))) {
+                            shareFile();
+                        }
+                        return true;
+                    }
+                    });
+
+                    popup.show(); //showing popup menu
+                }
+            });
+
             t1.setText(this.name);
             if (this.size != -1) {
                 t2.setText(getString(R.string.file_chooser_tamano_del_fichero, formatFileSize(this.size)));
             }
+
             view.setOnClickListener(this);
 
             return view;
@@ -1369,6 +1619,7 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
             } else {
                 buffer.append(nString);
             }
+
             return buffer.toString();
         }
 
@@ -1379,41 +1630,41 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
         }
     }
 
-    /**
-     * Adaptador para la lista de l&iacute;neas de firma.
-     */
-    class SignLineArrayAdapter extends ArrayAdapter<RequestDetailAdapterItem> {
+        /**
+         * Adaptador para la lista de l&iacute;neas de firma.
+         */
+        class SignLineArrayAdapter extends ArrayAdapter<RequestDetailAdapterItem> {
 
-        private final LayoutInflater mInflater;
+            private final LayoutInflater mInflater;
 
-        private SignLineArrayAdapter(final Context context, final List<RequestDetailAdapterItem> objects) {
-            super(context, 0, objects);
-            this.mInflater = LayoutInflater.from(context);
+            private SignLineArrayAdapter(final Context context, final List<RequestDetailAdapterItem> objects) {
+                super(context, 0, objects);
+                this.mInflater = LayoutInflater.from(context);
+            }
+
+            @Override
+            public boolean areAllItemsEnabled() {
+                return false;
+            }
+
+            @Override
+            public boolean isEnabled(int position) {
+                return false;
+            }
+
+            @Override
+            public int getViewTypeCount() {
+                return SignLineItemType.values().length;
+            }
+
+            @Override
+            public int getItemViewType(final int position) {
+                return getItem(position).getViewType();
+            }
+
+            @Override
+            public View getView(final int position, final View convertView, final ViewGroup parent) {
+                return getItem(position).getView(this.mInflater, convertView);
+            }
         }
-
-        @Override
-        public boolean areAllItemsEnabled() {
-            return false;
-        }
-
-        @Override
-        public boolean isEnabled(int position) {
-            return false;
-        }
-
-        @Override
-        public int getViewTypeCount() {
-            return SignLineItemType.values().length;
-        }
-
-        @Override
-        public int getItemViewType(final int position) {
-            return getItem(position).getViewType();
-        }
-
-        @Override
-        public View getView(final int position, final View convertView, final ViewGroup parent) {
-            return getItem(position).getView(this.mInflater, convertView);
-        }
-    }
 }
