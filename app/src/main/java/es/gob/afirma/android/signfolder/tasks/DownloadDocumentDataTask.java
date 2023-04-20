@@ -3,17 +3,14 @@ package es.gob.afirma.android.signfolder.tasks;
 import android.content.Context;
 import android.os.AsyncTask;
 
-import java.io.File;
-import java.util.Locale;
 
 import es.gob.afirma.android.signfolder.SFConstants;
 import es.gob.afirma.android.signfolder.proxy.CommManager;
 import es.gob.afirma.android.signfolder.proxy.DocumentData;
-import es.gob.afirma.android.signfolder.tasks.SaveFileTask.SaveFileListener;
 import es.gob.afirma.android.util.PfLog;
 
 /** Tarea as&iacute;ncrona para compartir documentos. */
-public final class ShareFileTask extends AsyncTask<Void, Void, DocumentData> {
+public final class DownloadDocumentDataTask extends AsyncTask<Void, Void, DocumentData> {
 
 	private static final String PDF_MIMETYPE = "application/pdf"; //$NON-NLS-1$
 
@@ -37,8 +34,8 @@ public final class ShareFileTask extends AsyncTask<Void, Void, DocumentData> {
 	 * @param commManager Manejador de los servicios de comunicaci&oacute;n con el portafirmas.
 	 * @param context Contexto sobre el que mostrar las notificaciones.
 	 */
-	public ShareFileTask(final String documentId, final int type, final String proposedName,
-                         final String mimetype, final CommManager commManager, final Context context) {
+	public DownloadDocumentDataTask(final String documentId, final int type, final String proposedName,
+									final String mimetype, final CommManager commManager, final Context context) {
 		this.documentId = documentId;
 		this.type = type;
 		this.proposedName = proposedName;
@@ -76,6 +73,7 @@ public final class ShareFileTask extends AsyncTask<Void, Void, DocumentData> {
 
 	@Override
 	protected void onPostExecute(final DocumentData documentData) {
+
 		if (isCancelled() || documentData == null) {
 			return;
 		}

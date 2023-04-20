@@ -35,7 +35,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
@@ -85,7 +84,7 @@ import es.gob.afirma.android.signfolder.tasks.LogoutRequestTask;
 import es.gob.afirma.android.signfolder.tasks.OpenHelpDocumentTask;
 import es.gob.afirma.android.signfolder.tasks.RejectRequestsTask;
 import es.gob.afirma.android.signfolder.tasks.SaveFileTask;
-import es.gob.afirma.android.signfolder.tasks.ShareFileTask;
+import es.gob.afirma.android.signfolder.tasks.DownloadDocumentDataTask;
 import es.gob.afirma.android.signfolder.tasks.VerifyRequestsTask;
 import es.gob.afirma.android.user.configuration.ConfigurationConstants;
 import es.gob.afirma.android.user.configuration.ConfigurationRole;
@@ -514,7 +513,8 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
             return;
         }
 
-        DocumentData data = getDataToShare(selectedDocItem.docId, selectedDocItem.docType, selectedDocItem.name, selectedDocItem.mimetype);
+        showProgressDialog(getString(R.string.loading_doc), this);
+        DocumentData data = downloadDocData(selectedDocItem.docId, selectedDocItem.docType, selectedDocItem.name, selectedDocItem.mimetype);
         if (data != null && data.getDataIs() != null) {
             File file = null;
             try {
@@ -545,6 +545,7 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
                 shareDocumentError();
             }
         }
+        dismissProgressDialog();
     }
 
     /**
@@ -556,13 +557,14 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
             return;
         }
 
-        DocumentData data = getDataToShare(selectedDocItem.docId, selectedDocItem.docType, selectedDocItem.name, selectedDocItem.mimetype);
+        DocumentData data = downloadDocData(selectedDocItem.docId, selectedDocItem.docType, selectedDocItem.name, selectedDocItem.mimetype);
         if (data != null && data.getDataIs() != null) {
             try {
+                showProgressDialog(getString(R.string.loading_doc), this);
                 byte[] fileData = AOUtil.getDataFromInputStream(data.getDataIs());
                 String dataEncoded = Base64.encode(fileData);
-                showProgressDialog(getString(R.string.doc_download), this);
                 createAndSaveFileFromBase64Url("data:"+ data.getMimetype() + ";base64," + dataEncoded, false);
+                dismissProgressDialog();
             } catch (IOException ioe) {
                 shareDocumentError();
             }
@@ -688,13 +690,12 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
         dlfTask.execute();
     }
 
-    private DocumentData getDataToShare(final String docId, final int docType, final String filename, final String mimetype)  {
-        final ShareFileTask sfTask =
-                new ShareFileTask(docId, docType,
+    private DocumentData downloadDocData(final String docId, final int docType, final String filename, final String mimetype)  {
+        final DownloadDocumentDataTask sfTask =
+                new DownloadDocumentDataTask(docId, docType,
                         filename,
                         mimetype,
                         CommManager.getInstance(), this);
-        showProgressDialog(getString(R.string.loading_doc), this, sfTask);
         AsyncTask result = sfTask.execute();
         try {
             return (DocumentData) result.get();
@@ -1547,14 +1548,14 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
                     }
                     popup.getMenuInflater().inflate(R.menu.activity_document_options_menu, popup.getMenu());
                     popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-                    public boolean onMenuItemClick(MenuItem item) {
-                        if (item.getTitle().equals(getString(R.string.download))) {
-                            showConfirmDownloadAndSaveDialog();
-                        } else if (item.getTitle().equals(getString(R.string.share))) {
-                            shareFile();
+                        public boolean onMenuItemClick(MenuItem item) {
+                            if (item.getTitle().equals(getString(R.string.download))) {
+                                showConfirmDownloadAndSaveDialog();
+                            } else if (item.getTitle().equals(getString(R.string.share))) {
+                                shareFile();
+                            }
+                            return true;
                         }
-                        return true;
-                    }
                     });
 
                     popup.show(); //showing popup menu
