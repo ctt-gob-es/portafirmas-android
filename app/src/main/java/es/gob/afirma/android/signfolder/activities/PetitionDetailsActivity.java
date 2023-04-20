@@ -513,39 +513,45 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
             return;
         }
 
-        showProgressDialog(getString(R.string.loading_doc), this);
-        DocumentData data = downloadDocData(selectedDocItem.docId, selectedDocItem.docType, selectedDocItem.name, selectedDocItem.mimetype);
-        if (data != null && data.getDataIs() != null) {
-            File file = null;
-            try {
-                byte[] fileData = AOUtil.getDataFromInputStream(data.getDataIs());
-                String dataEncoded = Base64.encode(fileData);
-                file = createAndSaveFileFromBase64Url("data:"+ data.getMimetype() + ";base64," + dataEncoded, true);
-                Uri uri = FileProvider.getUriForFile(PetitionDetailsActivity.this,
-                        BuildConfig.APPLICATION_ID + ".fileprovider", file);
+        // Si tenemos permisos de escritura, procedemos a la descarga. Si no, los pedimos
+        if (writePerm) {
+            showProgressDialog(getString(R.string.loading_doc), this);
+            DocumentData data = downloadDocData(selectedDocItem.docId, selectedDocItem.docType, selectedDocItem.name, selectedDocItem.mimetype);
+            if (data != null && data.getDataIs() != null) {
+                File file = null;
+                try {
+                    byte[] fileData = AOUtil.getDataFromInputStream(data.getDataIs());
+                    String dataEncoded = Base64.encode(fileData);
+                    file = createAndSaveFileFromBase64Url("data:"+ data.getMimetype() + ";base64," + dataEncoded, true);
+                    Uri uri = FileProvider.getUriForFile(PetitionDetailsActivity.this,
+                            BuildConfig.APPLICATION_ID + ".fileprovider", file);
 
-                Intent shareIntent = new Intent();
-                shareIntent.setAction(Intent.ACTION_SEND);
-                shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
-                shareIntent.setType(selectedDocItem.mimetype);
-                startActivity(Intent.createChooser(shareIntent, getResources().getText(R.string.share)));
-                if (this.tempDocuments == null) {
-                    this.tempDocuments = new ArrayList<>();
-                }
-                this.tempDocuments.add(file);
-            } catch (IOException ioe) {
-                if (file != null) {
-                    if (file.exists()) {
-                        if (this.tempDocuments == null) {
-                            this.tempDocuments = new ArrayList<>();
-                        }
-                        this.tempDocuments.add(file);
+                    Intent shareIntent = new Intent();
+                    shareIntent.setAction(Intent.ACTION_SEND);
+                    shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
+                    shareIntent.setType(selectedDocItem.mimetype);
+                    startActivity(Intent.createChooser(shareIntent, getResources().getText(R.string.share)));
+                    if (this.tempDocuments == null) {
+                        this.tempDocuments = new ArrayList<>();
                     }
+                    this.tempDocuments.add(file);
+                } catch (IOException ioe) {
+                    if (file != null) {
+                        if (file.exists()) {
+                            if (this.tempDocuments == null) {
+                                this.tempDocuments = new ArrayList<>();
+                            }
+                            this.tempDocuments.add(file);
+                        }
+                    }
+                    shareDocumentError();
                 }
-                shareDocumentError();
             }
+            dismissProgressDialog();
+        } else {
+            requestStoragePerm();
         }
-        dismissProgressDialog();
+
     }
 
     /**
