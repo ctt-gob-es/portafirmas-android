@@ -18,6 +18,13 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.text.Html;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.method.LinkMovementMethod;
+import android.text.style.URLSpan;
+import android.text.util.Linkify;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -346,13 +353,13 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
         ((TextView) findViewById(R.id.applicationValue)).setText(details.getApp());
 
 
-
-
         if (details.getMessage() != null) {
-            ((TextView) findViewById(R.id.messageValue)).setText(
+            TextView messageValue = (TextView) findViewById(R.id.messageValue);
+            messageValue.setText(
                     details.getMessage() != null ?
-                            details.getMessage() : ""
+                            linkifyHtml(details.getMessage(), Linkify.ALL) : ""
             );
+            messageValue.setMovementMethod(LinkMovementMethod.getInstance());
         }
 
         if (findViewById(R.id.rejectReasonValue) != null) {
@@ -400,6 +407,21 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
         tv.setText(getString(R.string.signature_lines_header_list, details.getSignLinesType()));
         SignLineArrayAdapter signLines = new SignLineArrayAdapter(this, prepareSignLineItems(details.getSignLines()));
         signLinesList.setAdapter(signLines);
+    }
+
+    private static Spannable linkifyHtml(String html, int linkifyMask) {
+        Spanned text = Html.fromHtml(html);
+        URLSpan[] currentSpans = text.getSpans(0, text.length(), URLSpan.class);
+
+        SpannableString buffer = new SpannableString(text);
+        Linkify.addLinks(buffer, linkifyMask);
+
+        for (URLSpan span : currentSpans) {
+            int end = text.getSpanEnd(span);
+            int start = text.getSpanStart(span);
+            buffer.setSpan(span, start, end, 0);
+        }
+        return buffer;
     }
 
     private List<RequestDetailAdapterItem> prepareDocsItems(final List<SignRequestDocument> documentsList, final List<RequestDocument> attachedList) {
