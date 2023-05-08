@@ -90,9 +90,6 @@ public final class CommManager extends CommManagerOldVersion {
 
     private static final String OPERATION_VERIFY = "20"; //$NON-NLS-1$
 
-    //TODO: Identificador de servicio no habilitado aún. Servicio de creación de role.
-//    private static final String OPERATION_CREATE_ROLE = "21"; //$NON-NLS-1$
-
     private static final String OPERATION_UPDATE_PUSH_NOTIFICATIONS = "23";
 
     // Servicio de listado de autorizaciones
@@ -373,6 +370,7 @@ public final class CommManager extends CommManagerOldVersion {
             return CommManagerOldVersion.getInstance().preSignRequests(request, cert);
         }
     }
+
 
     /**
      * Inicia la post-firma remota de las peticiones.
@@ -702,7 +700,7 @@ public final class CommManager extends CommManagerOldVersion {
     private ConnectionResponse getRemoteData(final String url, final Properties headers) throws IOException {
 
         if (!PfLog.isProduction) {
-            PfLog.i(SFConstants.LOG_TAG, "PETICION AL PROXY NUEVO");
+            PfLog.d(SFConstants.LOG_TAG, "PETICION AL PROXY NUEVO");
             PfLog.i(SFConstants.LOG_TAG, "URL de peticion: " + url);
         }
 

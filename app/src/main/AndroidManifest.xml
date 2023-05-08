@@ -92,7 +92,8 @@
         <activity
             android:name=".activities.NFCDetectorActivity"
             android:label="@string/nfc_approach"
-            android:screenOrientation="portrait">
+            android:screenOrientation="portrait"
+            android:exported="false" >
             <intent-filter>
                 <action android:name="android.nfc.action.TECH_DISCOVERED" />
             </intent-filter>

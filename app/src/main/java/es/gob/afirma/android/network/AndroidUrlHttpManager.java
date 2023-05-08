@@ -156,7 +156,7 @@ public final class AndroidUrlHttpManager {
 			cookieField = conn.getHeaderField("Set-Cookie2");
 		}
 
-		PfLog.i(SFConstants.LOG_TAG, "Cookie: " + cookieField);
+		PfLog.d(SFConstants.LOG_TAG, "Cookie: " + cookieField);
 
 		if (cookieField != null) {
 			String[] params = cookieField.split(";");

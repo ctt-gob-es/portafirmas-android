@@ -35,10 +35,13 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.Vector;
 
 import es.gob.afirma.android.crypto.DnieConnectionManager;
+import es.gob.afirma.android.gui.ConfirmSignatureDialog;
 import es.gob.afirma.android.signfolder.CryptoConfiguration;
 import es.gob.afirma.android.signfolder.CustomAlertDialog;
 import es.gob.afirma.android.signfolder.MessageDialog;
@@ -56,6 +59,7 @@ import es.gob.afirma.android.signfolder.proxy.SignLineElement;
 import es.gob.afirma.android.signfolder.proxy.SignRequest;
 import es.gob.afirma.android.signfolder.proxy.SignRequest.RequestType;
 import es.gob.afirma.android.signfolder.proxy.SignRequestDocument;
+import es.gob.afirma.android.signfolder.proxy.SignaturePermission;
 import es.gob.afirma.android.signfolder.tasks.ApproveRequestsTask;
 import es.gob.afirma.android.signfolder.tasks.CleanTempFilesTask;
 import es.gob.afirma.android.signfolder.tasks.DownloadFileTask;
@@ -72,14 +76,14 @@ import es.gob.afirma.android.user.configuration.ConfigurationConstants;
 import es.gob.afirma.android.user.configuration.ConfigurationRole;
 import es.gob.afirma.android.user.configuration.RoleInfo;
 import es.gob.afirma.android.user.configuration.UserConfig;
+import es.gob.afirma.android.util.Base64;
 import es.gob.afirma.android.util.PfLog;
 
 /**
  * Actividad con el detalle de las peticiones.
  */
 public final class PetitionDetailsActivity extends SignatureFragmentActivity implements LoadSignRequestDetailsListener,
-        DownloadDocumentListener,
-        DialogFragmentListener {
+        DownloadDocumentListener, DialogFragmentListener, ConfirmSignatureDialog.ConfirmSignatureDialogListener {
 
     /**
      * Identificador de la firma PAdES.
@@ -155,6 +159,11 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
     private ArrayList<String> appNames;
     private UserConfig userConfig;
 
+    /**
+     * Cadena con el listado de parametros para conceder o denegar los permisos necesarios
+     * para completar las operaciones de firma de las peticiones que se estan procesando.
+     */
+    private String confirmationPermissionConfig;
 
     //metodo para crear la pestana del tab customizada
     private static View createTabView(final Context context, final String text) {
@@ -572,7 +581,7 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
             }
             this.tempDocuments.add(documentFile);
 
-            openFile(documentFile, mimetype, externalDir);
+            openFile(documentFile, mimetype);
         } else {
             try {
                 runOnUiThread(new Runnable() {
@@ -619,21 +628,15 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
      * @param documentFile Documento que se debe abrir.
      * @param mimetype     Tipo del documento.
      */
-    private void openFile(final File documentFile, final String mimetype, final boolean external) {
+    private void openFile(final File documentFile, final String mimetype) {
 
         PfLog.i(SFConstants.LOG_TAG, "Abrimos el documento descargado con el MimeType: " + mimetype);
 
-        Uri fileUri;
-/*        if (external) {
-            fileUri = Uri.fromFile(documentFile);
-        }
-        else {*/
-        fileUri = FileProvider.getUriForFile(
+        Uri fileUri = FileProvider.getUriForFile(
                 this,
                 getPackageName() + ".fileprovider",
                 documentFile);
         this.grantUriPermission(getPackageName(), fileUri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        /*}*/
 
         final Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
@@ -771,7 +774,13 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
     }
 
     protected void signRequest() {
-        signRequests(new SignRequest[]{this.reqDetails});
+        signRequest(this.reqDetails);
+    }
+
+    protected void signRequest(SignRequest request) {
+        // Reiniciamos la configuracion
+        this.confirmationPermissionConfig = null;
+        signRequests(new SignRequest[]{ request });
     }
 
     /**
@@ -898,6 +907,53 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
         requestOperationFailed(OperationRequestListener.SIGN_OPERATION, result, cause);
     }
 
+    @Override
+    public void requestOperationPendingToConfirm(SignRequest pendingRequest) {
+        dismissProgressDialog();
+
+        processPendingSignatures(pendingRequest.getPermissions().iterator());
+    }
+
+    /**
+     * Procesa las peticiones pendientes, solicitando permisos si aun no se han concedido todos.
+     * @param permissionsRequiredIt Iterador del listado de permisos.
+     */
+    private void processPendingSignatures(Iterator<SignaturePermission> permissionsRequiredIt) {
+        // Comprobamos si quedan mas permisos sin pedir y lo hacemos en tal caso
+        if (permissionsRequiredIt.hasNext()) {
+            ConfirmSignatureDialog dialog = new ConfirmSignatureDialog();
+            dialog.setPermissionIterator(permissionsRequiredIt);
+            dialog.show(getFragmentManager(), "ConfirmSignatureDialog");
+        }
+        // Si ya hemos pedido todos los permisos, asignamos el valor que corresponde a cada uno
+        // y volvemos a enviar las firmas
+        else {
+            // Incluimos los permisos en una copia de la peticion. No lo hacemos sobre la peticion
+            // original por si hubiese problemas en la operacion, que en los siguientes intentos
+            // se vuelva a pedir las confirmaciones
+            SignRequest requestCopy = copyToSign(this.reqDetails);
+            for (SignRequestDocument doc : requestCopy.getDocs()) {
+                if (doc.getParams() == null || doc.getParams().trim().isEmpty()) {
+                    doc.setParams(Base64.encode(this.confirmationPermissionConfig.getBytes()));
+                } else {
+                    doc.setParams(Base64.encode((doc.getParams() + "\n" + this.confirmationPermissionConfig).getBytes()));
+                }
+            }
+            signRequest(requestCopy);
+        }
+    }
+
+    private SignRequest copyToSign(SignRequest reqDetails) {
+
+        SignRequestDocument[] docs = reqDetails.getDocs();
+        SignRequestDocument[] newDocs = new SignRequestDocument[docs.length];
+        for (int i = 0; i < docs.length; i++) {
+            newDocs[i] = (SignRequestDocument) docs[i].clone();
+        }
+        return new SignRequest(reqDetails.getId(), reqDetails.getType(), newDocs);
+    }
+
+
     /**
      * Muestra un mensaje en un toast.
      *
@@ -1018,6 +1074,29 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
     @Override
     public void onDialogNegativeClick(final int dialogId) {
         // Si el usuario cancela el dialogo, se cierra y no hacemos nada
+    }
+
+    public void onConfirmSignatureDialogPositiveButton(SignaturePermission permission, Iterator<SignaturePermission> permissionsRequiredIt) {
+        // Configuramos el permiso como concedido
+        String permissionProperty = permission.getExtraParam() + "=true";
+        if (this.confirmationPermissionConfig == null) {
+            this.confirmationPermissionConfig = permissionProperty;
+        } else {
+            this.confirmationPermissionConfig += "\n" + permissionProperty;
+        }
+
+        processPendingSignatures(permissionsRequiredIt);
+    }
+    public void onConfirmSignatureDialogNegativeButton(SignaturePermission permission, Iterator<SignaturePermission> permissionsRequiredIt) {
+        // Configuramos el permiso como concedido
+        String permissionProperty = permission.getExtraParam() + "=false";
+        if (this.confirmationPermissionConfig == null) {
+            this.confirmationPermissionConfig = permissionProperty;
+        } else {
+            this.confirmationPermissionConfig += "\n" + permissionProperty;
+        }
+
+        processPendingSignatures(permissionsRequiredIt);
     }
 
     // Definimos el menu de opciones de la aplicacion, cuyas opciones estan

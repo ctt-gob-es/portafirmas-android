@@ -10,7 +10,6 @@
 
 package es.gob.afirma.android.signfolder.activities;
 
-import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.security.KeyChainException;
@@ -29,7 +28,6 @@ import es.gob.afirma.android.signfolder.SFConstants;
 import es.gob.afirma.android.signfolder.listeners.OperationRequestListener;
 import es.gob.afirma.android.signfolder.proxy.CommManager;
 import es.gob.afirma.android.signfolder.proxy.FireLoadDataResult;
-import es.gob.afirma.android.signfolder.proxy.RequestResult;
 import es.gob.afirma.android.signfolder.proxy.SignRequest;
 import es.gob.afirma.android.signfolder.tasks.FireLoadDataTask;
 import es.gob.afirma.android.signfolder.tasks.FireSignTask;

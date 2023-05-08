@@ -15,7 +15,7 @@ public final class TriphaseSignDocumentRequest {
 
 	private static final String DEFAULT_ALGORITHM = "SHA-512"; //$NON-NLS-1$
 
-	private static final String DEFAULT_CRYPTO_OPERATION = "sign"; //$NON-NLS-1$
+	private static final String DEFAULT_CRYPTO_OPERATION = CRYPTO_OPERATION_SIGN; //$NON-NLS-1$
 
 	/** Identificador del documento. */
 	private final String id;
@@ -27,13 +27,40 @@ public final class TriphaseSignDocumentRequest {
 	private final String signatureFormat;
 
 	/** Propiedades de configuracion de la firma codificadas en Base64. */
-	private final String params;
+	private String params;
 
 	/** Atributos de configuracion trifasica de la firma. */
 	private TriphaseConfigData partialResult;
 
 	/** Algoritmo de firma. */
 	private final String algorithm;
+
+	/** Si la operaci&oacute;n requiere confirmaci&oacute;n del usuario para completarse. */
+	private boolean needConfirmation = false;
+
+//	/** Construye un objeto petici&oacute;n de prefirma de un documento.
+//	 * @param docId Identificador del documento.
+//	 * @param signatureFormat Formato de firma electr&oacute;nica.
+//	 * @param messageDigestAlgorithm Algoritmo de huella digital utilizado en la operaci&oacute;n de firma.
+//	 * @param params Par&aacute;metros de configuraci&oacute;n de la prefirma.
+//	 */
+//	public TriphaseSignDocumentRequest(final String docId, final String confirmationRequestorTexts) {
+//		this(docId, DEFAULT_CRYPTO_OPERATION, null, null, null, null);
+//		this.confirmationRequestorTexts = confirmationRequestorTexts;
+//		if (this.confirmationRequestorTexts != null) {
+//			this.needConfirmation = true;
+//		}
+//	}
+
+	/** Construye un objeto petici&oacute;n de prefirma de un documento.
+	 * @param docId Identificador del documento.
+	 * @param needConfirmation {@code true} para indicar que el documento necesita de alguna
+	 *    confirmaci&oacute;n para firmarse, {@code false} en caso contrario.
+	 */
+	public TriphaseSignDocumentRequest(final String docId, final boolean needConfirmation) {
+		this(docId, DEFAULT_CRYPTO_OPERATION, null, null, null, null);
+		this.needConfirmation = needConfirmation;
+	}
 
 	/** Construye un objeto petici&oacute;n de prefirma de un documento.
 	 * @param docId Identificador del documento.
@@ -64,6 +91,8 @@ public final class TriphaseSignDocumentRequest {
 		this.params = params;
 		this.partialResult = partialResult;
 		this.algorithm = messageDigestAlgorithm != null ? messageDigestAlgorithm : DEFAULT_ALGORITHM;
+//		this.confirmationRequestorTexts = null;
+		this.needConfirmation = false;
 	}
 
 	/** Recupera el identificador del documento.
@@ -97,6 +126,11 @@ public final class TriphaseSignDocumentRequest {
 		return this.params;
 	}
 
+	/** Establece las propiedades de configuraci&oacute;n para la firma.
+	 * @param params Propiedades de configuraci&oacute;n codificadas en Base64 URL SAFE. */
+	public void setParams(String params) {
+		this.params = params;
+	}
 	/** Recupera la configuraci&oacute;n del resultado parcial obtenido en la fase actual de la firma.
 	 * @return Datos actuales de la firma (que dependen de la fase en la que est&eacute;)
 	 * o {@code null} si aun no se ha iniciado el proceso y por lo tanto todav&iacute;a no hay ning&uacute;n resultado. */
@@ -110,7 +144,7 @@ public final class TriphaseSignDocumentRequest {
 		this.partialResult = result;
 	}
 
-	/** Clase que almacena los resultados parciales de la firma trif&aacute;sica. */
+    /** Clase que almacena los resultados parciales de la firma trif&aacute;sica. */
 	public static final class TriphaseConfigData extends HashMap<String, String> {
 
 		/** Serial Id. */
@@ -185,5 +219,23 @@ public final class TriphaseSignDocumentRequest {
 
 			return builder.toString();
 		}
+	}
+
+	/**
+	 * Indica la firma requiere confirmaci&oacute;n por parte del usuario.
+	 * @return {@code true} si se requiere confirmaci&oacute;n,
+	 * {@code false} en caso contrario.
+	 */
+	public boolean isNeedConfirmation() {
+		return this.needConfirmation;
+	}
+
+	/**
+	 * Establece si el documento necesita confirmaci&oacute;n o no.
+	 * @param needConfirmation {@code true} si necesita confirmaci&oacute;n,
+	 * {@code false} en caso contrario.
+	 */
+	public void setNeedConfirmation(final boolean needConfirmation) {
+		this.needConfirmation = needConfirmation;
 	}
 }

@@ -238,7 +238,7 @@ public class CommManagerOldVersion {
 	private Document getRemoteDocument(final String url) throws SAXException, IOException {
 
 		if (!PfLog.isProduction) {
-			PfLog.i(SFConstants.LOG_TAG, "PETICION AL PROXY ANTIGUO");
+			PfLog.d(SFConstants.LOG_TAG, "PETICION AL PROXY ANTIGUO");
 			PfLog.i(SFConstants.LOG_TAG, url);
 		}
 

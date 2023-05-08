@@ -86,9 +86,6 @@ public final class CanDialog extends DialogFragment {
 								if (CanDialog.this.listener != null) {
 									CanDialog.this.listener.onDismiss();
 								}
-								if (CanDialog.this.listener != null) {
-									CanDialog.this.listener.onDismiss();
-								}
 								getActivity().setResult(Activity.RESULT_CANCELED);
 								getActivity().finish();
 							}

@@ -11,7 +11,6 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.util.Base64;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -48,11 +47,15 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 import es.gob.afirma.android.crypto.DnieConnectionManager;
 import es.gob.afirma.android.fcm.RegistrationIntentService;
+import es.gob.afirma.android.gui.ConfirmSignatureDialog;
 import es.gob.afirma.android.signfolder.AppPreferences;
 import es.gob.afirma.android.signfolder.ConfigureFilterDialogBuilder;
 import es.gob.afirma.android.signfolder.ConfigureFilterDialogBuilder.FilterConfig;
@@ -68,6 +71,8 @@ import es.gob.afirma.android.signfolder.proxy.CommManager;
 import es.gob.afirma.android.signfolder.proxy.RequestResult;
 import es.gob.afirma.android.signfolder.proxy.SignRequest;
 import es.gob.afirma.android.signfolder.proxy.SignRequest.RequestType;
+import es.gob.afirma.android.signfolder.proxy.SignRequestDocument;
+import es.gob.afirma.android.signfolder.proxy.SignaturePermission;
 import es.gob.afirma.android.signfolder.tasks.ApproveRequestsTask;
 import es.gob.afirma.android.signfolder.tasks.CleanTempFilesTask;
 import es.gob.afirma.android.signfolder.tasks.FireSignTask;
@@ -82,6 +87,7 @@ import es.gob.afirma.android.user.configuration.ConfigurationConstants;
 import es.gob.afirma.android.user.configuration.ConfigurationRole;
 import es.gob.afirma.android.user.configuration.RoleInfo;
 import es.gob.afirma.android.user.configuration.UserConfig;
+import es.gob.afirma.android.util.Base64;
 import es.gob.afirma.android.util.PfLog;
 
 /**
@@ -96,7 +102,7 @@ import es.gob.afirma.android.util.PfLog;
  */
 public final class PetitionListActivity extends SignatureFragmentActivity implements
         LoadSignRequestListener, OnItemClickListener, DialogFragmentListener,
-        UpdatePushNotificationsTask.UpdatePushNotsListener {
+        UpdatePushNotificationsTask.UpdatePushNotsListener, ConfirmSignatureDialog.ConfirmSignatureDialogListener {
 
     public final static String EXTRA_RESOURCE_DNI = "es.gob.afirma.signfolder.dni"; //$NON-NLS-1$
     public final static String EXTRA_RESOURCE_CERT_ALIAS = "es.gob.afirma.signfolder.alias"; //$NON-NLS-1$
@@ -167,6 +173,19 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
     int numRequestToApprovePending;
     int numRequestToRejectPending;
     int numRequestToVerifyPending;
+
+    /** Peticiones a medias pendientes de confirmacion de permisos. */
+    private List<SignRequest> confirmationPendingRequests = new ArrayList<>();
+    /** Listado de permisos que hay que pedir al usuario para completar las firmas. */
+    private Set<SignaturePermission> signPermissionsRequired = new HashSet<>();
+    private List<SignaturePermission> signPermissionsGranted = new ArrayList<>();
+
+    /**
+     * Cadena con el listado de parametros para conceder o denegar los permisos necesarios
+     * para completar las operaciones de firma de las peticiones que se estan procesando.
+     */
+    private String confirmationPermissionConfig = null;
+
     /**
      * Indica si debe recargarse el listado de peticiones. Esto se usa cuando la logica de la propia
      * actividad obliga a la recarga.
@@ -414,20 +433,20 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
     }
 
 
-    /**
-     * Desactiva las notificaciones en local al usuario de este portafirmas estableciendo
-     * que el token de notificaciones no est&aacute; registrado. Esto har&aacute; que al volver
-     * a habilitarlo se vuelva a dar el alta, aunque el token no haya cambiado.
-     * @param  userProxyId Identificador asociado a la combinación usuario/proxy.
-     */
-    private void disableNotifications(String userProxyId) {
-        AppPreferences prefs = AppPreferences.getInstance();
-        prefs.setPreferenceBool(
-                AppPreferences.PREFERENCES_KEY_PREFIX_NOTIFICATION_ACTIVE + userProxyId,
-                false);
-
-        PfLog.d(SFConstants.LOG_TAG, "Desactivada las notificaciones en local");
-    }
+//    /**
+//     * Desactiva las notificaciones en local al usuario de este portafirmas estableciendo
+//     * que el token de notificaciones no est&aacute; registrado. Esto har&aacute; que al volver
+//     * a habilitarlo se vuelva a dar el alta, aunque el token no haya cambiado.
+//     * @param  userProxyId Identificador asociado a la combinación usuario/proxy.
+//     */
+//    private void disableNotifications(String userProxyId) {
+//        AppPreferences prefs = AppPreferences.getInstance();
+//        prefs.setPreferenceBool(
+//                AppPreferences.PREFERENCES_KEY_PREFIX_NOTIFICATION_ACTIVE + userProxyId,
+//                false);
+//
+//        PfLog.d(SFConstants.LOG_TAG, "Desactivada las notificaciones en local");
+//    }
 
     /**
      * Indica si el token de notificaciones actual ha cambiado con respecto al último que el usuario
@@ -506,7 +525,7 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
         if (this.dni != null) {
             md.update(this.dni.getBytes());
         }
-        return Base64.encodeToString(md.digest(), Base64.NO_PADDING).trim();
+        return Base64.encode(md.digest());
     }
 
     private void loadSavedInstances(final Bundle savedInstanceState) {
@@ -1002,18 +1021,16 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
                                            @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        switch (requestCode) {
-            case PERMISSION_TO_OPEN_HELP: {
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    PfLog.i(SFConstants.LOG_TAG, "Permisos concedidos para abrir el fichero de ayuda");
-                    openHelp();
-                } else {
-                    Toast.makeText(
-                            this,
-                            getString(R.string.nopermtoopenhelp),
-                            Toast.LENGTH_LONG
-                    ).show();
-                }
+        if (requestCode == PERMISSION_TO_OPEN_HELP) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                PfLog.i(SFConstants.LOG_TAG, "Permisos concedidos para abrir el fichero de ayuda");
+                openHelp();
+            } else {
+                Toast.makeText(
+                        this,
+                        getString(R.string.nopermtoopenhelp),
+                        Toast.LENGTH_LONG
+                ).show();
             }
         }
     }
@@ -1133,7 +1150,21 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
             }
 
             showResultIfFinished(operation);
+        }
+    }
 
+
+
+    @Override
+    public void requestOperationPendingToConfirm(final SignRequest pendingRequest) {
+
+        synchronized (this) {
+
+            this.numRequestToSignPending--;
+            this.confirmationPendingRequests.add(pendingRequest);
+            this.signPermissionsRequired.addAll(pendingRequest.getPermissions());
+            this.signPermissionsGranted.clear();
+            showResultIfFinished(SIGN_OPERATION);
         }
     }
 
@@ -1199,11 +1230,22 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
 
             dismissProgressDialog();
 
-            // Una vez finalizada una operacion, si se produjo algun error,
-            // mostramos un dialogo informandolo. Si no, se recarga el listado
-            if (this.anyError) {
+            // Una vez finalizada una operacion:
+            // - Si alguna operacion requiere confirmacion, se solicita.
+            // - Si se produjo algun error, mostramos un dialogo informandolo.
+            // - Si todo fue correcto, se recarga el listado.
+            if (!confirmationPendingRequests.isEmpty()) {
+                this.numRequestToSignPending = confirmationPendingRequests.size();
+                if (this.numRequestToSignPending > 0) {
+                    PfLog.i(SFConstants.LOG_TAG, "Numero de peticiones que reintentamos firmar: " + this.numRequestToSignPending); //$NON-NLS-1$
+                    Iterator<SignaturePermission> permissionsRequiredIt = this.signPermissionsRequired.iterator();
+                    processPendingSignatures(permissionsRequiredIt);
+                }
+            }
+            else if (this.anyError) {
                 showProcessingError(lastOperation);
-            } else {
+            }
+            else {
                 updateCurrentList(FIRST_PAGE);
             }
         }
@@ -1569,7 +1611,7 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
     }
 
     @Override
-    protected void onSaveInstanceState(final Bundle outState) {
+    protected void onSaveInstanceState(@NonNull final Bundle outState) {
         super.onSaveInstanceState(outState);
 
         outState.putBoolean(KEY_SAVEINSTANCE_NEED_RELOAD, this.needReload);
@@ -1654,6 +1696,9 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
         // Dialogo de confirmacion de rechazo de peticiones.
         else if (dialogId == DIALOG_CONFIRM_REJECT) {
 
+            // Establecemos el valor bandera para identificar a posteriori los errores
+            this.anyError = false;
+
             final SignRequest[] selectedRequests = getSelectedRequests();
             if (selectedRequests == null || selectedRequests.length == 0) {
                 // Esto no deberia ocurrir nunca, ya que se se comprobo anteriormente que
@@ -1694,7 +1739,10 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
             }
 
             // Establecemos el valor bandera para identificar a posteriori los errores
-            anyError = false;
+            this.anyError = false;
+            // Establecemos que ninguna peticion esta pendiente de confirmacion
+            this.confirmationPendingRequests = new ArrayList<>();
+            this.signPermissionsRequired = new HashSet<>();
 
             // Mandamos a aprobar las peticiones de visto bueno.
             this.numRequestToApprovePending = requestToApprove.size();
@@ -1752,13 +1800,10 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
      * @param reason Raz&oacute;n del rechazo.
      * @param signRequests Listado de peticiones de validaci&oacute;n.
      */
-    protected RejectRequestsTask rejectRequests(final String reason, final SignRequest... signRequests) {
-        // Antes de iniciar el proceso, reiniciamos la bandera que senala los errores
-        anyError = false;
+    protected void rejectRequests(final String reason, final SignRequest... signRequests) {
         final RejectRequestsTask rrt = new RejectRequestsTask(signRequests, CommManager.getInstance(), this, reason);
         showProgressDialog(getString(R.string.dialog_msg_processing_requests), this, rrt);
         rrt.execute();
-        return rrt;
     }
 
     @Override
@@ -1878,10 +1923,88 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
         LocalBroadcastManager.getInstance(this).unregisterReceiver(bReceiver);
     }
 
+    @Override
+    public void onConfirmSignatureDialogPositiveButton(SignaturePermission permission, Iterator<SignaturePermission> permissionsRequiredIt) {
+        // Configuramos el permiso como concedido
+        String permissionProperty = permission.getExtraParam() + "=true";
+        this.signPermissionsGranted.add(permission);
+        if (this.confirmationPermissionConfig == null) {
+            this.confirmationPermissionConfig = permissionProperty;
+        } else {
+            this.confirmationPermissionConfig += "\n" + permissionProperty;
+        }
+
+        processPendingSignatures(permissionsRequiredIt);
+    }
+
+    @Override
+    public void onConfirmSignatureDialogNegativeButton(SignaturePermission permission, Iterator<SignaturePermission> permissionsRequiredIt) {
+        // Configuramos el permiso como denegado
+        String permissionProperty = permission.getExtraParam() + "=false";
+        if (this.confirmationPermissionConfig == null) {
+            this.confirmationPermissionConfig = permissionProperty;
+        } else {
+            this.confirmationPermissionConfig += "\n" + permissionProperty;
+        }
+
+        processPendingSignatures(permissionsRequiredIt);
+    }
+
     /**
-     * Tipo de elemento de la lista de peticiones (petici&oacute;n, panel de
-     * paginaci&oacute;n).
+     * Procesa las peticiones pendientes, solicitando permisos si aun no se han concedido todos.
+     * @param permissionsRequiredIt Iterador del listado de permisos.
      */
+    private void processPendingSignatures(Iterator<SignaturePermission> permissionsRequiredIt) {
+        // Comprobamos si quedan mas permisos sin pedir y lo hacemos en tal caso
+        if (permissionsRequiredIt.hasNext()) {
+            ConfirmSignatureDialog dialog = new ConfirmSignatureDialog();
+            dialog.setPermissionIterator(permissionsRequiredIt);
+            dialog.show(getFragmentManager(), "ConfirmSignatureDialog");
+        }
+        // Si ya hemos pedido todos los permisos, asignamos el valor que corresponde a cada uno
+        // y volvemos a enviar las firmas
+        else {
+            for (SignRequest pendingRequest : this.confirmationPendingRequests) {
+                for (SignRequestDocument reqDoc : pendingRequest.getDocs()) {
+                    if (reqDoc.getParams() == null || reqDoc.getParams().trim().isEmpty()) {
+                        reqDoc.setParams(Base64.encode(this.confirmationPermissionConfig.getBytes()));
+                    } else {
+                        reqDoc.setParams(Base64.encode((reqDoc.getParams() + "\n" + this.confirmationPermissionConfig).getBytes()));
+                    }
+                }
+            }
+
+            // Retiramos del listado aquellas peticiones que no se puedan firmar por
+            // falta de permisos
+            for (int i = this.confirmationPendingRequests.size() - 1; i >= 0; i--) {
+                SignRequest signRequest = this.confirmationPendingRequests.get(i);
+                Iterator<SignaturePermission> permissionstIt = signRequest.getPermissions().iterator();
+                while (permissionstIt.hasNext()) {
+                    SignaturePermission permission = permissionstIt.next();
+                    if (!signPermissionsGranted.contains(permission)) {
+                        this.confirmationPendingRequests.remove(i);
+                        break;
+                    }
+                }
+            }
+
+            // Si no se puede firmar ninguna peticion mas por falta de permisos, se termina
+            // la operacion
+            if (this.confirmationPendingRequests.isEmpty()) {
+                showResultIfFinished(SIGN_OPERATION);
+                return;
+            }
+
+            // Hacemos una copia y mandamos a firmar las peticiones para las que se hayan
+            // otorgado todos los permisos necesarios
+            SignRequest[] pendingRequests = this.confirmationPendingRequests.toArray(new SignRequest[0]);
+            this.confirmationPendingRequests.clear();
+            this.confirmationPermissionConfig = null;
+            signRequests(pendingRequests);
+        }
+    }
+
+    /** Tipo de elemento de la lista de peticiones (petici&oacute;n, panel de paginaci&oacute;n). */
     private enum PetitionListItemType {
         PETITION_ITEM, TITLE_ITEM, PAGINATION_PANEL
     }
