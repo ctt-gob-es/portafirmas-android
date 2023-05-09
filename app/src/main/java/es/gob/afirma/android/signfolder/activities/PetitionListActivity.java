@@ -1,6 +1,7 @@
 package es.gob.afirma.android.signfolder.activities;
 
 import android.Manifest;
+import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
@@ -210,6 +211,16 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
      * Informaci&oacute;n del rol seleccionado.
      */
     private RoleInfo roleSelectedInfo;
+
+    /**
+     * Tipo de vista actual.
+     */
+    private boolean compactView = true;
+
+    /**
+     * Peticiones cargadas
+     */
+    List<SignRequest> loadedRequests;
     /**
      * Configuraci&oacute;n de usuario.
      */
@@ -957,6 +968,32 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
             intent.putExtra(SIGN_REQUEST_STATE_KEY, currentState);
             startActivityForResult(intent, UserConfigurationActivity.REQUEST_CODE);
         }
+        // Vistas.
+        else if (item.getItemId() == R.id.views) {
+            String[] items = { getString(R.string.compact_view), getString(R.string.extended_view) };
+            AlertDialog.Builder builder = new AlertDialog.Builder(PetitionListActivity.this);
+            int checkedItem = this.compactView ? 0 : 1;
+            builder.setTitle(R.string.select_view);
+            builder.setSingleChoiceItems(items, checkedItem, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+
+                    if (i == 0 && !compactView) {
+                        compactView = true;
+                    } else if (i == 1 && compactView) {
+                        compactView = false;
+                    }
+
+                    // Mostramos el listado de peticiones con la nueva vista seleccionada
+                    getListView().setAdapter(preparePetitionList(
+                            currentState, numPages > 1));
+
+                    dialogInterface.cancel();
+                }
+            });
+            builder.create();
+            builder.show();
+        }
         // Cambiar de rol.
         else if (item.getItemId() == R.id.changeRole) {
             Intent intent = new Intent(this, LoginWithRoleActivity.class);
@@ -1296,6 +1333,8 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
 
         dismissProgressDialog();
 
+        this.loadedRequests = requests;
+
         // Se termina la carga
         ((SwipeRefreshLayout) findViewById(R.id.swiperefresh)).setRefreshing(false);
 
@@ -1314,7 +1353,7 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
         this.numPages = numOfPages;
 
         // Mostramos el listado de peticiones
-        getListView().setAdapter(preparePetitionList(requests,
+        getListView().setAdapter(preparePetitionList(
                 this.currentState, numOfPages > 1));
     }
 
@@ -1322,19 +1361,28 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
      * Preparamos las peticiones para mostrarlas, anteponiendo las proximas a caducar
      * y ajustando el layout de los datos.
      *
-     * @param requests   Peticiones de firma.
      * @param state          Estado de las peticiones (pendientes, procesadas o rechazadas).
      * @param needPagination Indica si debe mostrarse el elemento para la paginaci&oacute;n.
      * @return Listado de peticiones.
      */
-    private PetitionListArrayAdapter preparePetitionList(
-            final List<SignRequest> requests, final String state, final boolean needPagination) {
+    private PetitionListArrayAdapter preparePetitionList(final String state, final boolean needPagination) {
 
         final List<PetitionListAdapterItem> plAdapterItem = new ArrayList<>();
 
         // En el caso del listado de peticiones pendientes, situaremos al principio de la lista
         // las peticiones proximas a caducar. Para ello, las extraeremos de la lista, las
         // ordenaremos por fecha de caducidad y las agregaremos al principio del listado final
+
+        //Segun el tipo de vista (compacta o expandida) cargamos el array adapter de una forma u otra
+        int unresolvedRequestLayoutTypeAdapter;
+        int resolvedRequestLayoutTypeAdapter;
+        if (compactView) {
+            unresolvedRequestLayoutTypeAdapter = R.layout.array_adapter_unresolved_request;
+            resolvedRequestLayoutTypeAdapter = R.layout.array_adapter_resolved_request;
+        } else {
+            unresolvedRequestLayoutTypeAdapter = R.layout.array_adapter_unresolved_request_extended;
+            resolvedRequestLayoutTypeAdapter = R.layout.array_adapter_resolved_request_extended;
+        }
 
         if (SignRequest.STATE_UNRESOLVED.equals(state)) {
             // Obtenemos el numero de dias para el cual consideramos una peticion que caduca proximamente
@@ -1349,8 +1397,8 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
 
             // Creamos una lista con las peticiones proximas a caducar
             List<SignRequest> priorityList = new ArrayList<>();
-            for (int i = requests.size() - 1; i >= 0; i--) {
-                SignRequest signRequest = requests.get(i);
+            for (int i = this.loadedRequests.size() - 1; i >= 0; i--) {
+                SignRequest signRequest = this.loadedRequests.get(i);
                 if (signRequest.getExpirationDate() != null) {
                     // Obtenemos la fecha de caducidad
                     Date date;
@@ -1364,7 +1412,7 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
                     // Comprobamos si la fecha de caducidad es menor que la fecha limite
                     if (dateFuture.compareTo(date) > -1) {
                         priorityList.add(signRequest);
-                        requests.remove(i);
+                        this.loadedRequests.remove(i);
                     }
                 }
             }
@@ -1382,7 +1430,7 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
                 for (final SignRequest request : priorityList) {
                     plAdapterItem.add(new PetitionElement(
                             request,
-                            R.layout.array_adapter_unresolved_request,
+                            unresolvedRequestLayoutTypeAdapter,
                             this));
                 }
 
@@ -1393,12 +1441,12 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
         }
 
         // Incluimos el resto de peticiones
-        for (final SignRequest request : requests) {
+        for (final SignRequest request : loadedRequests) {
             plAdapterItem.add(new PetitionElement(
                     request,
                     SignRequest.STATE_UNRESOLVED.equals(state) ?
-                            R.layout.array_adapter_unresolved_request
-                            : R.layout.array_adapter_resolved_request,
+                            unresolvedRequestLayoutTypeAdapter
+                            : resolvedRequestLayoutTypeAdapter,
                     this));
         }
 

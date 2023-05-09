@@ -14,6 +14,11 @@
         android:title="@string/settings" />
 
     <item
+        android:id="@+id/views"
+        android:alphabeticShortcut="V"
+        android:title="@string/views" />
+
+    <item
         android:id="@+id/changeRole"
         android:alphabeticShortcut="R"
         android:title="@string/change_role" />

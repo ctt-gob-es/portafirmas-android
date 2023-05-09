@@ -104,6 +104,10 @@
     <string name="pending">Pendiente de validación</string>
     <string name="rejected">Rechazada</string>
     <string name="dni">DNI</string>
+    <string name="select_view">Seleccione una vista</string>
+    <string name="views">Vistas</string>
+    <string name="compact_view">Vista compacta</string>
+    <string name="extended_view">Vista expandida</string>
     <string name="change_role">Cambiar rol</string>
     <string name="dialog_msg_confirm_new_valitor">¿Desea dar de alta a %1s como su nuevo validador?</string>
     <string name="dialog_msg_confirm_remove_validator">¿Desea dar de baja a %1s como validador?</string>
