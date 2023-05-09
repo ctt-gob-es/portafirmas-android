@@ -52,6 +52,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -551,7 +552,12 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
                     Intent shareIntent = new Intent();
                     shareIntent.setAction(Intent.ACTION_SEND);
                     shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
-                    shareIntent.setType(selectedDocItem.mimetype);
+                    if (selectedDocItem.mimetype != null) {
+                        shareIntent.setType(selectedDocItem.mimetype);
+                    } else {
+                        String mimeType = URLConnection.guessContentTypeFromName(file.getName());
+                        shareIntent.setType(mimeType);
+                    }
                     startActivity(Intent.createChooser(shareIntent, getResources().getText(R.string.share)));
                     if (this.tempDocuments == null) {
                         this.tempDocuments = new ArrayList<>();
@@ -606,7 +612,14 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
         } else {
             path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
         }
-        String filetype = url.substring(url.indexOf("/") + 1, url.indexOf(";"));
+        String filetype = "";
+        if (selectedDocItem.docType == DownloadFileTask.DOCUMENT_TYPE_SIGN) {
+            if (selectedDocItem.name != null && selectedDocItem.name.indexOf('.') != -1) {
+                filetype = selectedDocItem.name.substring(selectedDocItem.name.lastIndexOf('.'));
+            }
+        } else {
+            filetype = url.substring(url.indexOf("/") + 1, url.indexOf(";"));
+        }
         String filename = selectedDocItem.name.substring(0, selectedDocItem.name.lastIndexOf(".")) + "-" + System.currentTimeMillis() + "." + filetype;
         File file = new File(path, filename);
         try {

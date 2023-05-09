@@ -129,6 +129,12 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
 
     private static final String KEY_DAYS_TO_EXPIRE = "caducidad";
 
+    /**
+     * Clave usada internamente para guardar el estado de la propiedad
+     * "compactView"
+     */
+    private static final String COMPACT_VIEW = "compactView";
+
     private static final int DEFAULT_DAYS_TO_EXPIRE = 3;
     private final static int PAGE_SIZE = 50;
     /**
@@ -291,6 +297,8 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
         }
         this.forceReload = getIntent().getBooleanExtra(
                 ConfigurationConstants.EXTRA_RESOURCE_FORCE_REFRESH, false);
+
+        this.compactView = getIntent().getBooleanExtra(COMPACT_VIEW, true);
 
         // Si esta configurado que no se necesita recargar la pagina, no lo
         // hacemos
@@ -1120,6 +1128,7 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
         }
         this.needReload = true;
         getIntent().putExtra(SIGN_REQUEST_STATE_KEY, stateSigned);
+        getIntent().putExtra(COMPACT_VIEW, this.compactView);
         recreate();
     }
 
