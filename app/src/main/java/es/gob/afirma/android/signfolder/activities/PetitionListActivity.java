@@ -129,12 +129,6 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
 
     private static final String KEY_DAYS_TO_EXPIRE = "caducidad";
 
-    /**
-     * Clave usada internamente para guardar el estado de la propiedad
-     * "compactView"
-     */
-    private static final String COMPACT_VIEW = "compactView";
-
     private static final int DEFAULT_DAYS_TO_EXPIRE = 3;
     private final static int PAGE_SIZE = 50;
     /**
@@ -219,11 +213,6 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
     private RoleInfo roleSelectedInfo;
 
     /**
-     * Tipo de vista actual.
-     */
-    private boolean compactView = true;
-
-    /**
      * Peticiones cargadas
      */
     List<SignRequest> loadedRequests;
@@ -297,8 +286,6 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
         }
         this.forceReload = getIntent().getBooleanExtra(
                 ConfigurationConstants.EXTRA_RESOURCE_FORCE_REFRESH, false);
-
-        this.compactView = getIntent().getBooleanExtra(COMPACT_VIEW, true);
 
         // Si esta configurado que no se necesita recargar la pagina, no lo
         // hacemos
@@ -980,16 +967,16 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
         else if (item.getItemId() == R.id.views) {
             String[] items = { getString(R.string.compact_view), getString(R.string.extended_view) };
             AlertDialog.Builder builder = new AlertDialog.Builder(PetitionListActivity.this);
-            int checkedItem = this.compactView ? 0 : 1;
+            int checkedItem = AppPreferences.getInstance().getIsCompactView() ? 0 : 1;
             builder.setTitle(R.string.select_view);
             builder.setSingleChoiceItems(items, checkedItem, new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialogInterface, int i) {
 
-                    if (i == 0 && !compactView) {
-                        compactView = true;
-                    } else if (i == 1 && compactView) {
-                        compactView = false;
+                    if (i == 0 && !AppPreferences.getInstance().getIsCompactView()) {
+                        AppPreferences.getInstance().setIsCompactView(true);
+                    } else if (i == 1 && AppPreferences.getInstance().getIsCompactView()) {
+                        AppPreferences.getInstance().setIsCompactView(false);
                     }
 
                     // Mostramos el listado de peticiones con la nueva vista seleccionada
@@ -999,6 +986,13 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
                     dialogInterface.cancel();
                 }
             });
+
+            if (!AppPreferences.getInstance().getIsCompactView()) {
+                // Mostramos el listado de peticiones con la nueva vista seleccionada
+                getListView().setAdapter(preparePetitionList(
+                        currentState, numPages > 1));
+            }
+
             builder.create();
             builder.show();
         }
@@ -1128,7 +1122,6 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
         }
         this.needReload = true;
         getIntent().putExtra(SIGN_REQUEST_STATE_KEY, stateSigned);
-        getIntent().putExtra(COMPACT_VIEW, this.compactView);
         recreate();
     }
 
@@ -1385,7 +1378,7 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
         //Segun el tipo de vista (compacta o expandida) cargamos el array adapter de una forma u otra
         int unresolvedRequestLayoutTypeAdapter;
         int resolvedRequestLayoutTypeAdapter;
-        if (compactView) {
+        if (AppPreferences.getInstance().getIsCompactView()) {
             unresolvedRequestLayoutTypeAdapter = R.layout.array_adapter_unresolved_request;
             resolvedRequestLayoutTypeAdapter = R.layout.array_adapter_resolved_request;
         } else {

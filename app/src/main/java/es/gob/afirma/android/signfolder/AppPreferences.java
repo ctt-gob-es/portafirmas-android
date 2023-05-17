@@ -71,6 +71,9 @@ public final class AppPreferences {
 	/** Token actual para el env&iacute;o de notificaciones. */
 	static final String PREFERENCES_KEY_CURRENT_TOKEN = "currentToken";
 
+	/** Clave de preferencia del tipo de vista de las peticiones. */
+	private static final String PREFERENCES_IS_COMPACT_VIEW = "isCompactView"; //$NON-NLS-1$
+
 	private static final String CONFIG_SEPARATOR = ";"; //$NON-NLS-1$
 
 	/** Alias del portafirmas por defecto de la AGE. */
@@ -341,4 +344,21 @@ public final class AppPreferences {
 
 		setSelectedProxy(DEFAULT_PROXY_GOB_ALIAS, DEFAULT_PROXY_GOB_URL);
 	}
+
+	/**
+	 * Establece el tipo de vista utilizado en las peticiones.
+	 * @param isCompactView si es true se utiliza la compacta, false si es la expandida.
+	 */
+	public void setIsCompactView(boolean isCompactView) {
+		setPreferenceBool(PREFERENCES_IS_COMPACT_VIEW, isCompactView);
+	}
+
+	/**
+	 * Recupera el tipo de vista utilizado en las peticiones.
+	 * @return si es true se utiliza la compacta, false si es la expandida.
+	 */
+	public boolean getIsCompactView() {
+		return getPreferenceBool(PREFERENCES_IS_COMPACT_VIEW, true);
+	}
+
 }

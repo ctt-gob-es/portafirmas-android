@@ -358,7 +358,7 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
             TextView messageValue = (TextView) findViewById(R.id.messageValue);
             messageValue.setText(
                     details.getMessage() != null ?
-                            linkifyHtml(details.getMessage(), Linkify.ALL) : ""
+                            linkifyHtml( details.getMessage().replaceAll("\r\n", "<br>") , Linkify.ALL) : ""
             );
             messageValue.setMovementMethod(LinkMovementMethod.getInstance());
         }
@@ -615,20 +615,29 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
         String filetype = "";
         if (selectedDocItem.docType == DownloadFileTask.DOCUMENT_TYPE_SIGN) {
             if (selectedDocItem.name != null && selectedDocItem.name.indexOf('.') != -1) {
-                filetype = selectedDocItem.name.substring(selectedDocItem.name.lastIndexOf('.'));
+                filetype = selectedDocItem.name.substring(selectedDocItem.name.lastIndexOf('.') + 1);
             }
         } else {
             filetype = url.substring(url.indexOf("/") + 1, url.indexOf(";"));
         }
-        String filename = selectedDocItem.name.substring(0, selectedDocItem.name.lastIndexOf(".")) + "-" + System.currentTimeMillis() + "." + filetype;
-        File file = new File(path, filename);
+
+        File file = null;
+
         try {
             if(!path.exists()) {
                 path.mkdirs();
             }
-            if(!file.exists()) {
-                file.createNewFile();
+
+            String filename = selectedDocItem.name.substring(0, selectedDocItem.name.lastIndexOf(".")) +  "." + filetype;
+            file = new File(path, filename);
+
+            int cont = 0;
+            while (file.exists()) {
+                cont++;
+                filename = selectedDocItem.name.substring(0, selectedDocItem.name.lastIndexOf(".")) + "("+ cont +")" + "." + filetype;
+                file = new File(path, filename);
             }
+            file.createNewFile();
 
             String base64EncodedString = url.substring(url.indexOf(",") + 1);
             byte[] decodedBytes = Base64.decode(base64EncodedString);
@@ -671,7 +680,7 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
 
         // Creacion de la notificacion a mostrar
         Object resNotification = NotificationUtilities.createNotification(this, getString(R.string.notif_download_file_title),
-                "El archivo " + selectedDocItem.name + " se ha descargado",
+                "El archivo " + file.getName() + " se ha descargado",
                 R.drawable.ic_notification, Notification.DEFAULT_ALL, Notification.PRIORITY_HIGH,
                 "PORTAFIRMAS", "DOWNLOAD_FILE",
                 null, true,
@@ -700,7 +709,7 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
             final OnClickListener listener = new OnClickListener() {
                 @Override
                 public void onClick(final DialogInterface dlg, final int which) {
-                   download(docId, docType, filename, mimetype, true);
+                    downloadAndSaveFile();
                 }
             };
             final MessageDialog confirmPreviewDialog = new MessageDialog();
