@@ -43,6 +43,7 @@
         <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout/dialog_aliases.xml" value="0.234375" />
         <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout/dialog_info.xml" value="0.1482638888888889" />
         <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout/dialog_list.xml" value="0.1482638888888889" />
+        <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout/dialog_pin.xml" value="0.17708333333333334" />
         <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout/dialog_server_title.xml" value="0.1482638888888889" />
         <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout/dialog_view_reject_sign_vb.xml" value="0.1953125" />
         <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/layout/roles_tab_view.xml" value="0.24166666666666667" />
@@ -56,6 +57,8 @@
         <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/menu/activity_petition_list_signed_options_menu.xml" value="0.25833333333333336" />
         <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/menu/activity_petition_list_unresolved_options_menu.xml" value="0.178125" />
         <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/menu/test.xml" value="0.22447916666666667" />
+        <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml" value="0.18784722222222222" />
+        <entry key="..\:/Users/carlos.gamuci/Documents/Afirma/Repositorios_GitHub/portafirmas-android/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml" value="0.18784722222222222" />
       </map>
     </option>
   </component>
@@ -103,7 +106,7 @@
       </value>
     </option>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="1.8" project-jdk-type="JavaSDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" project-jdk-name="1.8" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/build/classes" />
   </component>
   <component name="ProjectType">

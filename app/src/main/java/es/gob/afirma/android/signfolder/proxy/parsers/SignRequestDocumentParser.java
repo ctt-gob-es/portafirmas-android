@@ -34,6 +34,7 @@ public class SignRequestDocumentParser {
 		final String name;
 		int size = -1;
 		final String mimeType;
+		String cop = null;
 		final String signatureFormat;
 		final String messageDigestAlgorithm;
 		String params = null;
@@ -41,8 +42,7 @@ public class SignRequestDocumentParser {
 		// Atributos del nodo
 		final Node idNode = signRequestDocumentNode.getAttributes().getNamedItem(ID_ATTRIBUTE);
 		if (idNode == null) {
-			throw new IllegalArgumentException("Existe un documento sin el atributo '" + ID_ATTRIBUTE + //$NON-NLS-1$
-					"'"); //$NON-NLS-1$
+			throw new IllegalArgumentException("Existe un documento sin el atributo '" + ID_ATTRIBUTE + "'"); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 		docId = idNode.getNodeValue();
 
@@ -51,8 +51,7 @@ public class SignRequestDocumentParser {
 		final NodeList childNodes = signRequestDocumentNode.getChildNodes();
 		elementIndex = XmlUtils.nextNodeElementIndex(childNodes, 0);
 		if (elementIndex == -1 || !NAME_NODE.equalsIgnoreCase(childNodes.item(elementIndex).getNodeName())) {
-			throw new IllegalArgumentException("Existe un documento sin el elemento '" + NAME_NODE + //$NON-NLS-1$
-					"'"); //$NON-NLS-1$
+			throw new IllegalArgumentException("Existe un documento sin el elemento '" + NAME_NODE + "'"); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 		name = XmlUtils.getTextContent(childNodes.item(elementIndex));
 

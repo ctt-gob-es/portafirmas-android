@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.security.PrivateKey;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
+import java.util.List;
+import java.util.Set;
 
 import es.gob.afirma.android.signfolder.SFConstants;
 import es.gob.afirma.android.signfolder.TriSigner;
@@ -16,6 +18,7 @@ import es.gob.afirma.android.signfolder.listeners.OperationRequestListener;
 import es.gob.afirma.android.signfolder.proxy.CommManager;
 import es.gob.afirma.android.signfolder.proxy.RequestResult;
 import es.gob.afirma.android.signfolder.proxy.SignRequest;
+import es.gob.afirma.android.signfolder.proxy.SignaturePermission;
 import es.gob.afirma.android.util.AOException;
 import es.gob.afirma.android.util.PfLog;
 
@@ -95,7 +98,14 @@ public final class SignRequestTask extends AsyncTask<Void, Void, RequestResult>{
 	protected void onPostExecute(final RequestResult result) {
 
 		if (this.t == null && result != null && result.isStatusOk()) {
-			this.operationListener.requestOperationFinished(OperationRequestListener.SIGN_OPERATION, result);
+			if (result.getPermissionsNeeded() != null) {
+				Set<SignaturePermission> permissions = result.getPermissionsNeeded();
+				this.signRequest.setPermissionsNeeded(permissions);
+				this.operationListener.requestOperationPendingToConfirm(this.signRequest);
+			}
+			else {
+				this.operationListener.requestOperationFinished(OperationRequestListener.SIGN_OPERATION, result);
+			}
 		}
 		else {
 			this.operationListener.requestOperationFailed(OperationRequestListener.SIGN_OPERATION, result, this.t);

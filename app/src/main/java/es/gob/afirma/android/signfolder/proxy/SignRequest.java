@@ -1,6 +1,10 @@
 package es.gob.afirma.android.signfolder.proxy;
 
 
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
+
 /**
  * Petici&oacute;n de firma.
  */
@@ -85,14 +89,21 @@ public class SignRequest {
      * Tipo de la petici&oacute;n.
      */
     private RequestType type;
+
     /**
      * Listado de documentos de la petici&oacute;n.
      */
     private SignRequestDocument[] docs;
+
     /**
      * Listado de anexos de la petici&oacute;n.
      */
     private RequestDocument[] attached;
+
+    /**
+     * Conjunto de permisos necesarios para firmar la pertici&oacute;n.
+     */
+    private Set<SignaturePermission> permissions = null;
 
     /**
      * Construye la petici&oacute;n de firma.
@@ -142,6 +153,20 @@ public class SignRequest {
         this.type = type;
         this.docs = docs; //TODO: No se puede clonar por JME, hay que copiar con System.ArrayCopy
         this.attached = attached;
+    }
+
+    /**
+     * Construye una petici&oacute;n b&aacute;sica s&oacute;lo su procesado.
+     * @param id             Identificador &uacute;nico.
+     * @param type           Tipo de petici&oacute;n.
+     * @param docs           Documentos de la petici&oacute;n.
+     */
+    public SignRequest(final String id,
+                       final SignRequest.RequestType type,
+                       final SignRequestDocument[] docs) {
+        this.id = id;
+        this.type = type;
+        this.docs = docs; //TODO: No se puede clonar por JME, hay que copiar con System.ArrayCopy
     }
 
     /**
@@ -351,6 +376,24 @@ public class SignRequest {
     }
 
     /**
+     * Recupera el conjunto de permisos que se requieren para completar la firma de la
+     * petici&oacute;n.
+     * @return Conjunto de permisos o {@code null} si no se requieren o no se han identificado.
+     */
+    public Set<SignaturePermission> getPermissions() {
+        return this.permissions;
+    }
+
+    /**
+     * Establece el conjunto de permisos que se requieren para completar la firma de la
+     * petici&oacute;n.
+     * @param permissions Conjunto de permisos.
+     */
+    public void setPermissionsNeeded(Set<SignaturePermission> permissions) {
+        this.permissions = new HashSet<>(permissions);
+    }
+
+    /**
      * Indica si el elemento esta seleccionado en el listado presentado al usuario.
      *
      * @return {@code true} si el elemento est&aacute; selecionado, {@code false} en caso contrario.
@@ -397,6 +440,19 @@ public class SignRequest {
     @Override
     public String toString() {
         return this.subject + " (" + this.id + ")"; //$NON-NLS-1$ //$NON-NLS-2$
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        SignRequest that = (SignRequest) o;
+        return id.equals(that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return id.hashCode();
     }
 
     /**

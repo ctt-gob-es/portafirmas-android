@@ -7,9 +7,12 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.Vector;
 
 import es.gob.afirma.android.signfolder.SFConstants;
+import es.gob.afirma.android.signfolder.proxy.SignaturePermission;
 import es.gob.afirma.android.signfolder.proxy.TriphaseRequest;
 import es.gob.afirma.android.signfolder.proxy.TriphaseSignDocumentRequest;
 import es.gob.afirma.android.signfolder.proxy.TriphaseSignDocumentRequest.TriphaseConfigData;
@@ -86,6 +89,7 @@ public final class PresignsResponseParser {
 		private static final String ID_ATTRIBUTE = "id"; //$NON-NLS-1$
 		private static final String STATUS_ATTRIBUTE = "status"; //$NON-NLS-1$
 		private static final String EXCEPTION_B64_ATTRIBUTE = "exceptionb64"; //$NON-NLS-1$
+		private static final String CONFIRMATIONS_TEXTS_ATTRIBUTE = "rqstText"; //$NON-NLS-1$
 
 		static TriphaseRequest parse(final Node presignRequestNode) {
 
@@ -128,6 +132,21 @@ public final class PresignsResponseParser {
 				return new TriphaseRequest(ref, false, exception);
 			}
 
+			Set<SignaturePermission> permissions = null;
+
+			attributeNode = attributes.getNamedItem(CONFIRMATIONS_TEXTS_ATTRIBUTE);
+			if (attributeNode != null && !attributeNode.getNodeValue().isEmpty()) {
+				permissions = new HashSet<>();
+				for (String requirement : attributeNode.getNodeValue().split(";")) {
+					SignaturePermission permission = SignaturePermission.parse(requirement);
+					if (permission == null) {
+						return new TriphaseRequest(ref, false, "Se requiere confirmacion no soportada por parte del usuario: " + requirement);
+					}
+					permissions.add(permission);
+				}
+			}
+
+
 			// Cargamos el listado de peticiones
 			final NodeList requestsNode = presignRequestNode.getChildNodes();
 			for (int i = 0; i < requestsNode.getLength(); i++) {
@@ -142,7 +161,7 @@ public final class PresignsResponseParser {
 			final TriphaseSignDocumentRequest[] tmpReqs = new TriphaseSignDocumentRequest[listDocumentRequests.size()];
 			listDocumentRequests.copyInto(tmpReqs);
 
-			return new TriphaseRequest(ref, statusOk, tmpReqs);
+			return new TriphaseRequest(ref, true, tmpReqs, permissions);
 		}
 	}
 
@@ -153,6 +172,8 @@ public final class PresignsResponseParser {
 		private static final String CRYPTO_OPERATION_ATTRIBUTE = "cop"; //$NON-NLS-1$
 		private static final String SIGNATURE_FORMAT_ATTRIBUTE = "sigfrmt"; //$NON-NLS-1$
 		private static final String MESSAGE_DIGEST_ALGORITHM_ATTRIBUTE = "mdalgo"; //$NON-NLS-1$
+		private static final String REQUEST_NEED_CONFIRMATION_ATTRIBUTE = "needcnf"; //$NON-NLS-1$
+		//private static final String REQUEST_CONFIRMATION_TEXT = "rqstText"; //$NON-NLS-1$
 		private static final String PARAMS_NODE = "params"; //$NON-NLS-1$
 		private static final String RESULT_NODE = "result"; //$NON-NLS-1$
 
@@ -187,6 +208,20 @@ public final class PresignsResponseParser {
 			}
 			docId = attributeNode.getNodeValue();
 
+//			attributeNode = attributes.getNamedItem(REQUEST_CONFIRMATION_TEXT);
+//			String requestConfirmationText = attributeNode != null ? attributeNode.getNodeValue() : null;
+//
+//			if (requestConfirmationText != null) {
+//				return new TriphaseSignDocumentRequest(docId, requestConfirmationText);
+//			}
+
+			attributeNode = attributes.getNamedItem(REQUEST_NEED_CONFIRMATION_ATTRIBUTE);
+			boolean requestConfirmation = attributeNode != null ? Boolean.parseBoolean(attributeNode.getNodeValue()) : false;
+
+			if (requestConfirmation) {
+				return new TriphaseSignDocumentRequest(docId, true);
+			}
+
 			attributeNode = attributes.getNamedItem(CRYPTO_OPERATION_ATTRIBUTE);
 			cryptoOperation = attributeNode != null ? normalizeCriptoOperationName(attributeNode.getNodeValue()) : DEFAULT_CRYPTO_OPERATION;
 
@@ -211,15 +246,16 @@ public final class PresignsResponseParser {
 			}
 
 			// Comprobamos el nodo con el resultado parcial
-			if (numIndex == -1 || !RESULT_NODE.equalsIgnoreCase(presignConfigNodes.item(numIndex).getNodeName())) {
-				throw new IllegalArgumentException("No se ha encontrado el nodo " + //$NON-NLS-1$
-						RESULT_NODE +
-						" en la respuesta de la peticion de prefirma del documento"); //$NON-NLS-1$
+			TriphaseConfigData partialResult = null;
+			if (numIndex != -1 && RESULT_NODE.equalsIgnoreCase(presignConfigNodes.item(numIndex).getNodeName())) {
+//				throw new IllegalArgumentException("No se ha encontrado el nodo " + //$NON-NLS-1$
+//						RESULT_NODE +
+//						" en la respuesta de la peticion de prefirma del documento"); //$NON-NLS-1$
+				partialResult = TriphaseConfigDataParser.parse(presignConfigNodes.item(numIndex).getChildNodes());
 			}
 
-			return new TriphaseSignDocumentRequest(
-					docId, cryptoOperation, signatureFormat, messageDigestAlgorithm, params,
-					TriphaseConfigDataParser.parse(presignConfigNodes.item(numIndex).getChildNodes()));
+			return new TriphaseSignDocumentRequest(docId, cryptoOperation, signatureFormat,
+					messageDigestAlgorithm, params, partialResult);
 		}
 
 		/**
@@ -258,8 +294,8 @@ public final class PresignsResponseParser {
 					throw new IllegalArgumentException("Se ha indicado un parametro de firma trifasica sin clave"); //$NON-NLS-1$
 				}
 
-				PfLog.i(SFConstants.LOG_TAG, "Clave: " + key); //$NON-NLS-1$
-				PfLog.i(SFConstants.LOG_TAG, "Valor: " + XmlUtils.getTextContent(param)); //$NON-NLS-1$
+				PfLog.d(SFConstants.LOG_TAG, "Clave: " + key); //$NON-NLS-1$
+				PfLog.d(SFConstants.LOG_TAG, "Valor: " + XmlUtils.getTextContent(param)); //$NON-NLS-1$
 
 				config.put(key, XmlUtils.getTextContent(param).trim());
 

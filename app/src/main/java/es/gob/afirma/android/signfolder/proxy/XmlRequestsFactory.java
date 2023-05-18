@@ -149,13 +149,18 @@ final class XmlRequestsFactory {
         for (final SignRequestDocument document : documents) {
             sb.append("<doc docid=\"") //$NON-NLS-1$
                     .append(document.getId())
-                    .append("\" cop=\"") //$NON-NLS-1$
-                    .append(document.getCryptoOperation())
                     .append("\" sigfrmt=\"") //$NON-NLS-1$
                     .append(document.getSignFormat())
                     .append("\" mdalgo=\"") //$NON-NLS-1$
-                    .append(document.getMessageDigestAlgorithm())
-                    .append("\">") //$NON-NLS-1$
+                    .append(document.getMessageDigestAlgorithm());
+            if (document.getCryptoOperation() != null) {
+                sb.append("\" cop=\"") //$NON-NLS-1$
+                        .append(document.getCryptoOperation());
+            }
+            if (document.isNeedConfirmation()) {
+                sb.append("\" needcnf=\"true"); //$NON-NLS-1$
+            }
+            sb.append("\">") //$NON-NLS-1$
                     .append(XML_PARAMS_OPEN)
                     .append(document.getParams() == null ? "" : document.getParams()) //$NON-NLS-1$
                     .append(XML_PARAMS_CLOSE)
@@ -204,8 +209,12 @@ final class XmlRequestsFactory {
                             .append("\" sigfrmt=\"") //$NON-NLS-1$
                             .append(document.getSignatureFormat())
                             .append("\" mdalgo=\"") //$NON-NLS-1$
-                            .append(document.getMessageDigestAlgorithm())
-                            .append("\">") //$NON-NLS-1$
+                            .append(document.getMessageDigestAlgorithm());
+                    if (document.isNeedConfirmation()) {
+                        sb.append("\" needcnf=\"true"); //$NON-NLS-1$
+                    }
+
+                    sb.append("\">") //$NON-NLS-1$
                             .append(XML_PARAMS_OPEN)
                             .append(document.getParams() == null ? "" : document.getParams()) //$NON-NLS-1$
                             .append(XML_PARAMS_CLOSE)

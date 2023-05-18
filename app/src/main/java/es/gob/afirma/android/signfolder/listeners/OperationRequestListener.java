@@ -1,6 +1,10 @@
 package es.gob.afirma.android.signfolder.listeners;
 
+import java.util.Set;
+
 import es.gob.afirma.android.signfolder.proxy.RequestResult;
+import es.gob.afirma.android.signfolder.proxy.SignRequest;
+import es.gob.afirma.android.signfolder.proxy.SignaturePermission;
 
 /** Escucha las operaciones realizadas sobre las peticiones del usuario y act&uacute;a seg&uacute;n el resultado. */
 public interface OperationRequestListener {
@@ -25,6 +29,13 @@ public interface OperationRequestListener {
 	 * @param t Excepcion/Error que hizo fallar el procesamiento de las peticiones.
 	 */
 	void requestOperationFailed(int operation, RequestResult requestResult, Throwable t);
+
+	/**
+	 * M&eacute;todo a ejecutar cuando la una de las operaciones de firma requiere autorizaci&oacute;n
+	 * del usuario para poder completarse.
+	 * @param pendingRequest Petici&oacute;n que queda pendiente.
+	 */
+	void requestOperationPendingToConfirm(SignRequest pendingRequest);
 
 	/**
 	 * M&eacute;todo a ejecutar cuando el usuario cancela el procesado de la petici&oacute;n.

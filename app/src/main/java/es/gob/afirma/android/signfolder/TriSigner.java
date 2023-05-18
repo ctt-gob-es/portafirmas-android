@@ -8,11 +8,15 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.HashSet;
+import java.util.Set;
 
 import es.gob.afirma.android.crypto.AOPkcs1Signer;
 import es.gob.afirma.android.signfolder.proxy.CommManager;
 import es.gob.afirma.android.signfolder.proxy.RequestResult;
 import es.gob.afirma.android.signfolder.proxy.SignRequest;
+import es.gob.afirma.android.signfolder.proxy.SignRequestDocument;
+import es.gob.afirma.android.signfolder.proxy.SignaturePermission;
 import es.gob.afirma.android.signfolder.proxy.TriphaseRequest;
 import es.gob.afirma.android.signfolder.proxy.TriphaseSignDocumentRequest;
 import es.gob.afirma.android.signfolder.proxy.TriphaseSignDocumentRequest.TriphaseConfigData;
@@ -31,7 +35,7 @@ public final class TriSigner {
 	 * @return Resultado de la operaci&oacute;n.
 	 * @throws CertificateEncodingException Cuando hay un error en la codificaci&oacute;n del certificado.
 	 * @throws IOException Cuando hay un error de lectura/escritura de datos.
-	 * @throws SAXException Cuando el XML est&aacute; mal formado. */
+	 * @throws SAXException 0Cuando el XML est&aacute; mal formado. */
 	public static RequestResult sign(final SignRequest request, final PrivateKey pk,
 			final X509Certificate[] certificateChain, final CommManager commMgr)
 			throws CertificateException, IOException, SAXException {
@@ -43,7 +47,55 @@ public final class TriSigner {
 		PfLog.i(SFConstants.LOG_TAG, "TriSigner - sign: == PREFIRMA =="); //$NON-NLS-1$
 
 		// Mandamos a prefirmar y obtenemos los resultados
-		final TriphaseRequest[] signRequest = signPhase1(request, commMgr);
+		final TriphaseRequest[] triphaseRequests = signPhase1(request, commMgr);
+
+		// Comprobamos que todas hayan terminado correctamente o esten pendientes de
+		// confirmacion
+		Set<SignaturePermission> permissionsNeeded = new HashSet<>();
+		for (TriphaseRequest triphaseRequest : triphaseRequests) {
+			if (!triphaseRequest.isStatusOk()) {
+				PfLog.w(SFConstants.LOG_TAG, "Se encontro prefirma erronea, se aborta el proceso de firma. La traza de la excepcion es: " + triphaseRequest.getException()); //$NON-NLS-1$
+				return new RequestResult(request.getId(), false);
+			}
+			// Si para firmar todos los documentos se necesita alguna confirmacion, se agrega
+			// al conjunto de permisos para despues notificarlos todos
+			if (triphaseRequest.isNeedConfirmation()) {
+
+				// Si la peticion requiere confirmaciones comprobamos que documentos exactamente
+				// son los que las requieren y establecemos que estos requirieron confirmacion
+				// y pueden no ser validos, con lo cual se debe omitir la validacion de la firma
+				// generada.
+				//TODO: Hacemos esto mutando la peticion de entrada, lo que deberia ser incorrecto
+				for (TriphaseSignDocumentRequest docRequest : triphaseRequest.getDocumentsRequests()) {
+					if (docRequest.isNeedConfirmation()) {
+						for (SignRequestDocument doc : request.getDocs()) {
+							if (doc.getId().equals(docRequest.getId())) {
+								doc.setNeedConfirmation(true);
+							}
+						}
+					}
+				}
+
+				permissionsNeeded.addAll(triphaseRequest.getPermissions());
+			}
+//			for (TriphaseSignDocumentRequest docReq : triphaseRequest.getDocumentsRequests()) {
+//				if (docReq.isNeedConfirmation()) {
+//					for (String requestorText : docReq.getConfirmationRequestorTexts().split(";")) {
+//						SignaturePermission permission = SignaturePermission.parse(requestorText);
+//						if (permission == null) {
+//							PfLog.w(SFConstants.LOG_TAG, "El servicio de firma requirio un permiso no reconocido. Se cancelara la firma de la peticion: " + triphaseRequest.getConfirmationCode()); //$NON-NLS-1$
+//							return new RequestResult(request.getId(), false);
+//						}
+//						permissionsNeeded.add(permission);
+//					}
+//				}
+//			}
+		}
+
+		// Si son necesario permisos, devolvemos un resultado parcial pendiente de la confirmacion
+		if (!permissionsNeeded.isEmpty()) {
+			return new RequestResult(request.getId(), true, null, permissionsNeeded);
+		}
 
 		// *****************************************************************************************************
 		// ******************************* FIRMA ***************************************************************
@@ -51,16 +103,12 @@ public final class TriSigner {
 
 		PfLog.i(SFConstants.LOG_TAG, "TriSigner - sign: == FIRMA =="); //$NON-NLS-1$
 
-		// Recorremos las peticiones de firma
-		for (int i = 0; i < signRequest.length; i++) {
-			// Si fallo una sola firma de la peticion, esta es erronea al completo
-			if (!signRequest[i].isStatusOk()) {
-				PfLog.w(SFConstants.LOG_TAG, "Se encontro prefirma erronea, se aborta el proceso de firma. La traza de la excepcion es: " + signRequest[i].getException()); //$NON-NLS-1$
-				return new RequestResult(request.getId(), false);
-			}
+		// Recorremos los documentos de la peticion de firma
+		for (TriphaseRequest triphaseRequest : triphaseRequests) {
 
-			// Recorremos cada uno de los documentos de cada peticion de firma
-			for (final TriphaseSignDocumentRequest docRequests : signRequest[i].getDocumentsRequests()) {
+			// Recorremos cada una de las firmas requeridas por el documento
+			for (final TriphaseSignDocumentRequest docRequests : triphaseRequest.getDocumentsRequests()) {
+
 				// Firmamos las prefirmas y actualizamos los parciales de cada documento de cada peticion
 				try {
 					signPhase2(docRequests, pk, certificateChain);
@@ -71,8 +119,9 @@ public final class TriSigner {
 					// Si un documento falla en firma toda la peticion se da por fallida
 					return new RequestResult(request.getId(), false);
 				}
-			} // Documentos de peticion
-		} // Peticiones
+
+			} // Firmas del documento
+		} // Documentos de peticion
 
 		// *****************************************************************************************************
 		// **************************** POSTFIRMA **************************************************************
@@ -80,8 +129,23 @@ public final class TriSigner {
 
 		PfLog.i(SFConstants.LOG_TAG, "TriSigner - sign: == POSTFIRMA =="); //$NON-NLS-1$
 
-		// Mandamos a postfirmar y recogemos el resultado
-		return signPhase3(signRequest, commMgr);
+
+		// Comprobamos si entre los documentos originales habia alguno que requiriese
+		// confirmacion del usuario, en cuyo caso, actualizamos la informacion aqui
+		// para que este en la postfirma
+		for (SignRequestDocument originalDoc : request.getDocs()) {
+			if (originalDoc.isNeedConfirmation()) {
+				for (TriphaseRequest triphaseRequest : triphaseRequests) {
+					for (final TriphaseSignDocumentRequest docRequest : triphaseRequest.getDocumentsRequests()) {
+						if (docRequest.getId().equals(originalDoc.getId())) {
+							docRequest.setNeedConfirmation(true);
+						}
+					}
+				}
+			}
+		}
+
+		return signPhase3(triphaseRequests, commMgr);
 	}
 
 	/**
@@ -101,7 +165,7 @@ public final class TriSigner {
 	 * @throws IOException Cuando hay un error de lectura/escritura de datos.
 	 * @throws SAXException Cuando el XML est&aacute; mal formado.
 	 */
-	public static TriphaseRequest[] signPhase1(final SignRequest request, final CommManager commMgr)
+	private static TriphaseRequest[] signPhase1(final SignRequest request, final CommManager commMgr)
 			throws CertificateException, SAXException, IOException {
 		return commMgr.preSignRequests(request);
 	}
@@ -149,7 +213,7 @@ public final class TriSigner {
 		// Configuramos la peticion de postfirma indicando las firmas PKCS#1 generadas
 		config.setPk1(pkcs1sign);
 
-		if (config.isNeedPreSign() == null || !config.isNeedPreSign().booleanValue()) {
+		if (!config.isNeedPreSign()) {
 			config.removePreSign();
 		}
 	}
@@ -158,12 +222,11 @@ public final class TriSigner {
 	 * Genera la postfirma de un listado de prefirmas.
 	 * @param request Petici&oacute;n de firma.
 	 * @param commMgr Gestor de las llamadas a servicios remotos.
-	 * @throws CertificateEncodingException Cuando hay un error en la codificaci&oacute;n del certificado.
 	 * @throws IOException Cuando hay un error de lectura/escritura de datos.
 	 * @throws SAXException Cuando el XML est&aacute; mal formado.
 	 */
-	public static RequestResult signPhase3(final TriphaseRequest[] request, final CommManager commMgr)
-			throws CertificateException, SAXException, IOException {
+	private static RequestResult signPhase3(final TriphaseRequest[] request, final CommManager commMgr)
+			throws SAXException, IOException {
 		return commMgr.postSignRequests(request);
 	}
 }

@@ -1,5 +1,7 @@
 package es.gob.afirma.android.signfolder.proxy;
 
+import java.util.Set;
+
 /**
  * Petici&oacute;n de fase de firma de documentos. */
 public class TriphaseRequest {
@@ -8,34 +10,34 @@ public class TriphaseRequest {
 	private final String ref;
 
 	/** Resultado de la petici&oacute;n de la petici&oacute;n. */
-	private boolean statusOk = true;
+	private boolean statusOk;
 
 	/** Listado de documentos de la petici&oacute;n que se desean firmar. */
-	private final TriphaseSignDocumentRequest[] documementsRequest;
+	private final TriphaseSignDocumentRequest[] documentsRequest;
 
 	/** Resultado de la petici&oacute;n de la petici&oacute;n. */
 	private String exception = null;
-	
+
+	/** C&oacute;digo que identifica al error obtenido cuando se requiere confirmaci&oacute;n del usuario. */
+	private Set<SignaturePermission> permissions = null;
+
 	/**
 	 * Construye un objeto de petici&oacute;n de prefirma o postfirma de documentos.
 	 * @param reference Referencia &uacute;nica de la petici&oacute;n.
-	 * @param documementsRequest Listado de documentos para los que se solicita la operaci&oacute;n.
+	 * @param documentsRequest Listado de documentos para los que se solicita la operaci&oacute;n.
 	 */
-	public TriphaseRequest(final String reference, final TriphaseSignDocumentRequest[] documementsRequest) {
-		this.ref = reference;
-		this.documementsRequest = documementsRequest;
+	public TriphaseRequest(final String reference, final TriphaseSignDocumentRequest[] documentsRequest) {
+		this(reference, true, documentsRequest);
 	}
 
 	/**
 	 * Construye un objeto de petici&oacute;n de firma de documentos.
 	 * @param reference Referencia &uacute;nica de la petici&oacute;n.
 	 * @param statusOk Estado de la petici&oacute;n.
-	 * @param documementsRequest Listado de documentos para los que se solicita la firma.
+	 * @param documentsRequest Listado de documentos para los que se solicita la firma.
 	 */
-	public TriphaseRequest(final String reference, final boolean statusOk, final TriphaseSignDocumentRequest[] documementsRequest) {
-		this.ref = reference;
-		this.statusOk = statusOk;
-		this.documementsRequest = documementsRequest;
+	public TriphaseRequest(final String reference, final boolean statusOk, final TriphaseSignDocumentRequest[] documentsRequest) {
+		this(reference, statusOk, documentsRequest, null);
 	}
 
 	/**
@@ -45,10 +47,21 @@ public class TriphaseRequest {
 	 * @param exception Traza de la excepci&oacute;n que provoc&oacute; el error.
 	 */
 	public TriphaseRequest(final String reference, final boolean statusOk, final String exception) {
+		this(reference, statusOk, null, null);
+		this.exception = exception;
+	}
+
+	/**
+	 * Construye un objeto de petici&oacute;n de firma de documentos.
+	 * @param reference Referencia &uacute;nica de la petici&oacute;n.
+	 * @param statusOk Estado de la petici&oacute;n.
+	 * @param permissions Permisos necesarios par ala firma de los documentos de la petici&oacute;n.
+	 */
+	public TriphaseRequest(final String reference, final boolean statusOk, final TriphaseSignDocumentRequest[] documentsRequest, final Set<SignaturePermission> permissions) {
 		this.ref = reference;
 		this.statusOk = statusOk;
-		this.documementsRequest = null;
-		this.exception = exception;
+		this.documentsRequest = documentsRequest;
+		this.permissions = permissions;
 	}
 	
 	/**
@@ -77,7 +90,7 @@ public class TriphaseRequest {
 	 * procesar la petici&oacute;n ({@code isStatusOk() == false}).
 	 */
 	public TriphaseSignDocumentRequest[] getDocumentsRequests() {
-		return this.documementsRequest;
+		return this.documentsRequest;
 	}
 	
 	/**
@@ -86,5 +99,24 @@ public class TriphaseRequest {
 	 */
 	public String getException() {
 		return this.exception;
+	}
+
+
+	/**
+	 * Indica si el error obtenido se debe a que se requiere confirmaci&oacute;n
+	 * por parte del usuario.
+	 * @return {@code true} si se requiere confirmaci&oacute;n,
+	 * {@code false} en caso contrario.
+	 */
+	public boolean isNeedConfirmation() {
+		return this.permissions != null && !this.permissions.isEmpty();
+	}
+
+	/**
+	 * Recupera el conjunto de permisos que deben solicitarse al usuario.
+	 * @return Conjunto de permisos o {@code null} si no son necesarios.
+	 */
+	public Set<SignaturePermission> getPermissions() {
+		return this.permissions;
 	}
 }

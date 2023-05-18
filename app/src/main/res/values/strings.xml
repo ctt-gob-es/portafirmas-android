@@ -438,6 +438,12 @@
     <string name="can_not_can_be_null">El CAN no puede ser vac\u00EDo o nulo</string>
     <string name="unsupported_card">Tarjeta no soportada</string>
     <string name="nfc_card_initializing_error">Error al iniciar la conexi\u00F3n con la tarjeta. Int\u00E9ntelo de nuevo.</string>
-
+    <!-- Mensajes de solicitud de confirmacion de firmas -->
+    <string name="request_sign_certified_pdf_permission">Se han encontrado documentos PDF certificados que pueden quedar invalidados. ¿Desea firmarlos?</string>
+    <string name="request_sign_pdf_with_unregistered_sign_permission">Se han encontrado documentos PDF con firmas sin registrar que pueden quedar invalidadas. ¿Desea firmarlos?</string>
+    <string name="request_sign_suspected_psa_pdf_permission">Se han encontrado documentos PDF sospechosos de haber sufrido un PDF Shadow Attack. ¿Desea firmarlos?</string>
+    <string name="request_sign_pdf_with_modified_form_permission">Se han encontrado documentos PDF con formularios modificados tras ser firmados. ¿Desea firmarlos?</string>
+    <string name="request_sign_lts_signature_permission">Se han encontrado documentos con firma longeva de archivo que pueden quedar invalidados tras la firma. ¿Desea firmarlos?</string>
 
 </resources>
+

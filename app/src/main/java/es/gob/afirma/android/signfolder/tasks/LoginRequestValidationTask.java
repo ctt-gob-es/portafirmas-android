@@ -104,7 +104,7 @@ public final class LoginRequestValidationTask extends AsyncTask<Void, Void, Auth
             }
         } catch (final OldProxyException e) {
             // Proxy antiguo sin validacion
-            PfLog.w(SFConstants.LOG_TAG, "Login no necesario: Se trabaja con una version antigua del portafirmas"); //$NON-NLS-1$
+            PfLog.w(SFConstants.LOG_TAG, "Login no necesario: Se trabaja con una version antigua del portafirmas: " + e, e); //$NON-NLS-1$
             CommManager.getInstance().setOldProxy();
             result.setStatusOk(true);
 		} catch (final IOException e) {
