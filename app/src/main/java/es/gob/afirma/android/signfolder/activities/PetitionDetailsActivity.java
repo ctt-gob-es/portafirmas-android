@@ -55,14 +55,11 @@ import java.io.OutputStream;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
-<<<<<<< HEAD
 
 import es.gob.afirma.android.fcm.NotificationUtilities;
 import es.gob.afirma.android.signfolder.BuildConfig;
 import es.gob.afirma.android.util.Base64;
-=======
 import java.util.Iterator;
->>>>>>> ac97be2ebe9687234f0d5f2aa876096dadb42af6
 import java.util.List;
 import java.util.Set;
 import java.util.Vector;
@@ -105,11 +102,7 @@ import es.gob.afirma.android.user.configuration.ConfigurationConstants;
 import es.gob.afirma.android.user.configuration.ConfigurationRole;
 import es.gob.afirma.android.user.configuration.RoleInfo;
 import es.gob.afirma.android.user.configuration.UserConfig;
-<<<<<<< HEAD
 import es.gob.afirma.android.util.AOUtil;
-=======
-import es.gob.afirma.android.util.Base64;
->>>>>>> ac97be2ebe9687234f0d5f2aa876096dadb42af6
 import es.gob.afirma.android.util.PfLog;
 
 /**
