@@ -1,7 +1,6 @@
 package es.gob.afirma.android.signfolder.activities;
 
 import android.app.PendingIntent;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.nfc.NfcAdapter;
@@ -10,18 +9,15 @@ import android.nfc.tech.NfcA;
 import android.nfc.tech.NfcB;
 import android.nfc.tech.NfcF;
 import android.nfc.tech.NfcV;
+import android.os.Build;
 import android.os.Bundle;
 
-import androidx.annotation.Nullable;
-import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.FragmentActivity;
 
 import es.gob.afirma.android.crypto.DnieConnectionManager;
 import es.gob.afirma.android.signfolder.R;
-import es.gob.afirma.android.signfolder.SFConstants;
 import es.gob.afirma.android.signfolder.keystore.CanDialog;
 import es.gob.afirma.android.signfolder.keystore.CanResult;
-import es.gob.afirma.android.util.PfLog;
 import es.gob.jmulticard.android.callbacks.CachePasswordCallback;
 
 /** Indica al usuario que acerque el DNIe por NFC para obtener los certificados.
@@ -56,10 +52,10 @@ public class NFCDetectorActivity extends FragmentActivity {
                     new CachePasswordCallback(getIntent().getCharArrayExtra(INTENT_EXTRA_CAN_VALUE)));
         }
         else {
-            DialogFragment canDialog = CanDialog.newInstance(canResult);
+            CanDialog canDialog = CanDialog.newInstance(canResult);
             canDialog.setCancelable(false);
             canDialog.show(getSupportFragmentManager(), "dialog");
-            ((CanDialog) canDialog).setListener(new CanDialog.CanDialogListener() {
+            canDialog.setListener(new CanDialog.CanDialogListener() {
                 @Override
                 public void onDismiss() {
                     if (canResult.getPasswordCallback() != null && discoveredTag != null) {
@@ -70,7 +66,8 @@ public class NFCDetectorActivity extends FragmentActivity {
         }
 
         pendingIntent = PendingIntent.getActivity(
-                this, 0, new Intent(this, getClass()).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), 0);
+                this, 0, new Intent(this, getClass()).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ? PendingIntent.FLAG_MUTABLE : 0);
         mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
         IntentFilter discovery = new IntentFilter(NfcAdapter.ACTION_TAG_DISCOVERED);
         IntentFilter ndefDetected = new IntentFilter(NfcAdapter.ACTION_NDEF_DISCOVERED);
