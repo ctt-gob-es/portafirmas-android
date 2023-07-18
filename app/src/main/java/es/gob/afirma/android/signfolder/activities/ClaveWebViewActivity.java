@@ -116,23 +116,32 @@ public final class ClaveWebViewActivity extends FragmentActivity implements WebV
 
 			@Override
 			public void onReceivedHttpError(WebView view, WebResourceRequest request, WebResourceResponse errorResponse) {
-				PfLog.w(SFConstants.LOG_TAG, "No se ha podido cargar la URL requerida");
+				PfLog.w(SFConstants.LOG_TAG, "Se ha recibido un error HTTP al cargar un recurso");
 				String url = null;
 				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
 					url = request.getUrl().toString();
-					PfLog.w(SFConstants.LOG_TAG, "URL que origino el error: " + url);
+					PfLog.w(SFConstants.LOG_TAG, String.format("Status Code: %1s. URL que origino el error: %2s", errorResponse.getStatusCode(), url));
 				}
-				if (url == null || !(url.endsWith(".ico") || url.endsWith(".js"))) {	// Omitimos los errores en recursos secundarios
+				if (url == null
+						|| !isAuxiliarDomain(url) && !isOptionalResouce(url)) {	// Omitimos los errores en los recursos de los dominios no relevantes y aquellos en recursos secundarios
+					PfLog.w(SFConstants.LOG_TAG, "Se cierra el webview debido al error HTTP recibido");
 					closeByStatusError(errorResponse);
 					return;
 				}
-				PfLog.w(SFConstants.LOG_TAG, "Se ignora el error en la carga del recurso: " + url);
+				PfLog.w(SFConstants.LOG_TAG, "Se ignora el error en la carga del recurso");
+			}
+
+			private boolean isOptionalResouce(String url) {
+				return url.endsWith(".ico") || url.endsWith(".js");
+			}
+
+			private boolean isAuxiliarDomain(String url) {
+				return url.startsWith("https://visitas-web.redsara.es");
 			}
 
 			@Override
 			public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
-
-				PfLog.w(SFConstants.LOG_TAG, String.format("Error SSL en la pagina: %1s", error.getUrl()));
+				PfLog.w(SFConstants.LOG_TAG, String.format("Se ha recibido un error SSL al cargar un recurso: %1s", error.getUrl()));
 
 				boolean permissibleError = true;
 				boolean needUserPermission = false;
@@ -189,7 +198,6 @@ public final class ClaveWebViewActivity extends FragmentActivity implements WebV
 
 			@Override
 			public void onReceivedHttpAuthRequest(WebView view, HttpAuthHandler handler, String host, String realm) {
-
 				PfLog.e(SFConstants.LOG_TAG, "Error al autenticarse en la Web cargada");
 				Intent result = createErrorIntent("claveerror", "Error al autenticar al usuario en la pagina");
 				setResult(Activity.RESULT_FIRST_USER, result);
@@ -229,11 +237,8 @@ public final class ClaveWebViewActivity extends FragmentActivity implements WebV
 		webView.loadUrl(url, headers);
 	}
 
-	@TargetApi(21)
 	private void closeByStatusError(WebResourceResponse errorResponse) {
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-			PfLog.w(SFConstants.LOG_TAG, "Status Error: " + errorResponse.getStatusCode());
-		}
+
 		Intent result = createErrorIntent("claveerror",
 				"Error recibido del servicio en la nube");
 		setResult(Activity.RESULT_FIRST_USER, result);

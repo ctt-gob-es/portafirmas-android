@@ -13,8 +13,10 @@ package es.gob.afirma.android.signfolder.activities;
 import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
+import android.os.Bundle;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.FragmentActivity;
 
 import es.gob.afirma.android.crypto.DnieConnectionManager;
@@ -28,7 +30,6 @@ import es.gob.afirma.android.crypto.NfcHelper;
 import es.gob.afirma.android.crypto.UnsupportedNfcCardException;
 import es.gob.afirma.android.signfolder.R;
 import es.gob.afirma.android.signfolder.SFConstants;
-import es.gob.afirma.android.signfolder.SignfolderApp;
 import es.gob.afirma.android.signfolder.listeners.SettingNfcListener;
 import es.gob.afirma.android.util.PfLog;
 import es.gob.jmulticard.android.callbacks.CachePasswordCallback;
@@ -41,8 +42,6 @@ import es.gob.jmulticard.android.callbacks.CachePasswordCallback;
 public abstract class LoadKeyStoreFragmentActivity extends FragmentActivity
 		implements KeyStoreManagerListener,
 		MobileKeyStoreManager.PrivateKeySelectionListener {
-
-	private final static String ES_GOB_AFIRMA = "es.gob.afirma"; //$NON-NLS-1$
 
 	/** C&oacute;digo de solicitud de detecci&oacute;n de tarjeta por NFC. */
 	private final static int REQUEST_CODE_DETECT_NFC_CARD = 2001;

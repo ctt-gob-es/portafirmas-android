@@ -40,6 +40,15 @@ final public class MessageDialog extends DialogFragment {
 		this.title = title;
 	}
 
+
+	public String getMessage() {
+		return this.message;
+	}
+
+	public String getTitle() {
+		return this.title;
+	}
+
 	public void setListeners(final DialogInterface.OnClickListener positiveListener, final DialogInterface.OnClickListener negativeListener) {
 		this.positiveListener = positiveListener;
 		this.negativeListener = negativeListener;

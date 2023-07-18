@@ -1,6 +1,7 @@
 package es.gob.afirma.android.signfolder.activities;
 
 import android.Manifest;
+import android.app.Application;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -371,6 +372,12 @@ public final class LoginActivity extends AuthenticationFragmentActivity implemen
         task.execute();
     }
 
+    //metodo vacio para evitar bugs en versiones superiores al api11
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+    }
+
     /**
      * Muestra un mensaje de advertencia al usuario.
      *
@@ -406,6 +413,7 @@ public final class LoginActivity extends AuthenticationFragmentActivity implemen
                         getMessageDialog().show(getSupportFragmentManager(), "ErrorDialog"); //$NON-NLS-1$;
                     } catch (Exception e) {
                         PfLog.e(SFConstants.LOG_TAG, "No se ha podido mostrar el mensaje de error: " + e, e); //$NON-NLS-1$
+                        Toast.makeText(LoginActivity.this.getApplicationContext(), getMessageDialog().getMessage(), Toast.LENGTH_LONG).show();
                     }
                 }
             });
@@ -525,13 +533,6 @@ public final class LoginActivity extends AuthenticationFragmentActivity implemen
         return baos.toByteArray();
     }
 
-    //metodo vacio para evitar bugs en versiones superiores al api11
-    @Override
-    protected void onSaveInstanceState(@NonNull final Bundle outState) {
-        //No call for super(). Bug on API Level > 11.
-        super.onSaveInstanceState(outState);
-    }
-
     @Override
     public void onErrorLoginOptions(final String url) {
         try {
@@ -582,7 +583,7 @@ public final class LoginActivity extends AuthenticationFragmentActivity implemen
         dismissProgressDialog();
 
         if (resultCode == RESULT_OK) {
-            PfLog.e(SFConstants.LOG_TAG, "Cl@ve autentico correctamente al usuario"); //$NON-NLS-1$
+            PfLog.i(SFConstants.LOG_TAG, "Cl@ve autentico correctamente al usuario"); //$NON-NLS-1$
 
             // Recuperamos el DNI para poder utilizarlo en futuras operaciones
             String dni = data != null ? data.getStringExtra("dni") : null; //$NON-NLS-1$
