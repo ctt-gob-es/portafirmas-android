@@ -55,17 +55,14 @@ import java.io.OutputStream;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
-
-import es.gob.afirma.android.fcm.NotificationUtilities;
-import es.gob.afirma.android.signfolder.BuildConfig;
-import es.gob.afirma.android.util.Base64;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 import java.util.Vector;
 
 import es.gob.afirma.android.crypto.DnieConnectionManager;
+import es.gob.afirma.android.fcm.NotificationUtilities;
 import es.gob.afirma.android.gui.ConfirmSignatureDialog;
+import es.gob.afirma.android.signfolder.BuildConfig;
 import es.gob.afirma.android.signfolder.CryptoConfiguration;
 import es.gob.afirma.android.signfolder.CustomAlertDialog;
 import es.gob.afirma.android.signfolder.MessageDialog;
@@ -87,6 +84,7 @@ import es.gob.afirma.android.signfolder.proxy.SignRequestDocument;
 import es.gob.afirma.android.signfolder.proxy.SignaturePermission;
 import es.gob.afirma.android.signfolder.tasks.ApproveRequestsTask;
 import es.gob.afirma.android.signfolder.tasks.CleanTempFilesTask;
+import es.gob.afirma.android.signfolder.tasks.DownloadDocumentDataTask;
 import es.gob.afirma.android.signfolder.tasks.DownloadFileTask;
 import es.gob.afirma.android.signfolder.tasks.DownloadFileTask.DownloadDocumentListener;
 import es.gob.afirma.android.signfolder.tasks.FireSignTask;
@@ -96,13 +94,13 @@ import es.gob.afirma.android.signfolder.tasks.LogoutRequestTask;
 import es.gob.afirma.android.signfolder.tasks.OpenHelpDocumentTask;
 import es.gob.afirma.android.signfolder.tasks.RejectRequestsTask;
 import es.gob.afirma.android.signfolder.tasks.SaveFileTask;
-import es.gob.afirma.android.signfolder.tasks.DownloadDocumentDataTask;
 import es.gob.afirma.android.signfolder.tasks.VerifyRequestsTask;
 import es.gob.afirma.android.user.configuration.ConfigurationConstants;
 import es.gob.afirma.android.user.configuration.ConfigurationRole;
 import es.gob.afirma.android.user.configuration.RoleInfo;
 import es.gob.afirma.android.user.configuration.UserConfig;
 import es.gob.afirma.android.util.AOUtil;
+import es.gob.afirma.android.util.Base64;
 import es.gob.afirma.android.util.PfLog;
 
 /**
@@ -696,8 +694,8 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
 
         NotificationCompat.Builder mBuilder = (NotificationCompat.Builder) resNotification;
 
-        PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
-                intent, PendingIntent.FLAG_CANCEL_CURRENT);
+        PendingIntent contentIntent = PendingIntent.getActivity(this, 0, intent,
+                PendingIntent.FLAG_CANCEL_CURRENT | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ? PendingIntent.FLAG_IMMUTABLE : 0));
         mBuilder.setContentIntent(contentIntent);
         mBuilder.setAutoCancel(true);
 
