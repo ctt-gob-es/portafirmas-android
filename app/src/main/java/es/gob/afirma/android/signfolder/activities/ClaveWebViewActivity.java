@@ -41,9 +41,19 @@ public final class ClaveWebViewActivity extends FragmentActivity implements WebV
 
 	private static final boolean DEBUG = BuildConfig.DEBUG;
 
+	public boolean finished = true;
+
 	public void onCreate(Bundle savedInstanceState) {
 
 		super.onCreate(savedInstanceState);
+
+		// Si la actividad se abre de nuevas, nos aseguramos de borrar las cookies de sesion
+		// que hubiese
+		if (finished && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+			CookieManager.getInstance().removeSessionCookies(new RemoveCookiesCallback());
+		}
+
+		finished = false;
 
 		int titleStringId = getIntent().getIntExtra(LoadKeyStoreFragmentActivity.EXTRA_RESOURCE_TITLE, 0);
 		if (titleStringId != 0) {
@@ -267,9 +277,6 @@ public final class ClaveWebViewActivity extends FragmentActivity implements WebV
 		PfLog.w(SFConstants.LOG_TAG, "---- Cookie del WebView antes de establecerla: " + cookieManager.getCookie(url));
 
 		if (cookieId != null) {
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-				cookieManager.removeSessionCookies(new RemoveCookiesCallback());
-			}
 			cookieManager.setCookie(url, cookieId);
 		}
 
@@ -313,6 +320,7 @@ public final class ClaveWebViewActivity extends FragmentActivity implements WebV
 	 * Cierra la actividad liberando recursos.
 	 */
 	public void closeActivity() {
+		finished = true;
 		finish();
 	}
 

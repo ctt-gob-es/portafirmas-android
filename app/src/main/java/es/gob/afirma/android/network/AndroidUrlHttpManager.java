@@ -23,6 +23,9 @@ import java.net.URL;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.StringTokenizer;
 
@@ -40,7 +43,6 @@ import es.gob.afirma.android.util.PfLog;
 
 /** Implementacion de una clase para la lectura del contenido de una URL. */
 public final class AndroidUrlHttpManager {
-
 
 	static {
 		final CookieManager cookieManager = new CookieManager();
@@ -149,21 +151,33 @@ public final class AndroidUrlHttpManager {
 	 */
 	private static String extractCookieId(HttpURLConnection conn) {
 
-	    String cookieId = null;
+		Map<String, List<String>> headerFields = conn.getHeaderFields();
 
-		String cookieField = conn.getHeaderField("Set-Cookie");
-		if (cookieField == null) {
-			cookieField = conn.getHeaderField("Set-Cookie2");
+		ArrayList<String> cookieFields = new ArrayList<>();
+		if (headerFields.containsKey("Set-Cookie")) {
+			cookieFields.addAll(headerFields.get("Set-Cookie"));
+		}
+		if (headerFields.containsKey("Set-Cookie2")) {
+			cookieFields.addAll(headerFields.get("Set-Cookie2"));
 		}
 
-		PfLog.d(SFConstants.LOG_TAG, "Cookie: " + cookieField);
+		if (!PfLog.isProduction) {
+			for (String cookieField : cookieFields) {
+				PfLog.d(SFConstants.LOG_TAG, "Cookie: " + cookieField);
+			}
+		}
 
-		if (cookieField != null) {
-			String[] params = cookieField.split(";");
-			for (String param : params) {
-				if (param.trim().startsWith("JSESSIONID=")) {
-					cookieId = param.trim();
-					break;
+		String cookieId = null;
+		if (!cookieFields.isEmpty()) {
+			for (String cookieField : cookieFields) {
+				if (cookieId == null) {
+					String[] params = cookieField.split(";");
+					for (String param : params) {
+						if (param.trim().startsWith("JSESSIONID=")) {
+							cookieId = param.trim();
+							break;
+						}
+					}
 				}
 			}
 		}
