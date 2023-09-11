@@ -22,6 +22,7 @@ import android.webkit.WebViewClient;
 
 import androidx.fragment.app.FragmentActivity;
 
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.security.cert.X509Certificate;
 import java.util.HashMap;
@@ -34,6 +35,7 @@ import es.gob.afirma.android.signfolder.PermissionRequestorDialogFragment;
 import es.gob.afirma.android.signfolder.R;
 import es.gob.afirma.android.signfolder.SFConstants;
 import es.gob.afirma.android.signfolder.WebViewAuthorizable;
+import es.gob.afirma.android.util.AOUtil;
 import es.gob.afirma.android.util.PfLog;
 
 /** Actividad para entrada con usuario y contrase&ntilde;a en Cl@ve. */
@@ -130,7 +132,19 @@ public final class ClaveWebViewActivity extends FragmentActivity implements WebV
 				String url = null;
 				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
 					url = request.getUrl().toString();
-					PfLog.w(SFConstants.LOG_TAG, String.format("Status Code: %1s. URL que origino el error: %2s", errorResponse.getStatusCode(), url));
+					PfLog.w(SFConstants.LOG_TAG, String.format("Status Code: %1s. Mensaje: %3s. URL que origino el error: %2s", errorResponse.getStatusCode(), url, errorResponse.getReasonPhrase()));
+					try (InputStream dataIs = errorResponse.getData()) {
+						if (dataIs != null) {
+							byte[] data = AOUtil.getDataFromInputStream(dataIs);
+							if (data.length > 0) {
+								PfLog.w(SFConstants.LOG_TAG, String.format("Datos de la respuesta:\n%1s", new String(data)));
+							}
+						}
+					}
+					catch (Exception e) {
+						PfLog.w(SFConstants.LOG_TAG, String.format("Error al mostrar los datos de la respuesta: %1s", e));
+					}
+
 				}
 				if (url == null
 						|| !isAuxiliarDomain(url) && !isOptionalResouce(url)) {	// Omitimos los errores en los recursos de los dominios no relevantes y aquellos en recursos secundarios
