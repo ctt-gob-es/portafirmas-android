@@ -48,6 +48,9 @@ public final class CleanTempFilesTask extends AsyncTask<Void, Void, Void> {
 					} catch (final Exception e) {
 						PfLog.w(SFConstants.LOG_TAG, "No se pudo borrar el fichero " + tempFile, e); //$NON-NLS-1$
 					}
+					if (isCancelled()) {
+						return null;
+					}
 				}
 			} catch( final Exception e){
 				PfLog.w(SFConstants.LOG_TAG, "No se pudo ejecutar el proceso de borrado de temporales", e); //$NON-NLS-1$

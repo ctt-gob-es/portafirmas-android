@@ -229,7 +229,7 @@ public final class CommManager extends CommManagerOldVersion {
         try {
             doc = getRemoteDocument(url);
         } catch (UnknownHostException e) {
-            throw new OldProxyException("El proxy no soporta la nueva operacion de login", e);
+            throw new IOException("Se desconoce el nombre del servidor destino", e);
         }
 
         RequestResult result = LoginTokenResponseParser.parse(doc);
@@ -779,6 +779,9 @@ public final class CommManager extends CommManagerOldVersion {
             throws IOException, SAXException {
 
         String xml = XmlRequestsFactory.createSaveAuthorizationRequest(auth);
+
+        PfLog.i(SFConstants.LOG_TAG, "XML de alta de autorizacion:\n" + xml);
+
         String url = this.signFolderProxyUrl + createUrlParams(OPERATION_SAVE_AUTHORIZATION, xml);
 
         return GenericResponseParser.parse(getRemoteDocument(url));

@@ -116,6 +116,8 @@
     <string name="share">Compartir</string>
     <string name="toast_error_sharing">Error al compartir el documento</string>
     <string name="notif_download_file_title">Archivo descargado</string>
+    <string name="toast_error_saving">Error al guardar el documento</string>
+    <string name="toast_error_donwloading">Error al descargar el documento</string>
 
     <string name="button_import_cert">Importar certificado</string>
     <string name="button_login">Acceder</string>
@@ -154,6 +156,7 @@
     <string name="nopermtobrowsekeystore">Es necesario conceder permisos para cargar un almac\u00E9n de certificados del dispositivo</string>
     <string name="nopermtopreviewdocs">Es necesario conceder permisos para guardar temporalmente los documentos en local</string>
     <string name="nopermtoopenhelp">Es necesario conceder permisos para extraer el fichero de ayuda</string>
+    <string name="nopermtoshownotifications">Es necesario conceder permisos para recibir notificaciones</string>
 
     <string name="error_msg_select_any_request">Seleccione al menos una solicitud de firma</string>
     <string name="error_msg_certificate_encoding">Error de codificaci\u00F3n del certificado</string>
@@ -179,7 +182,7 @@
     <string name="error_loading_certificate">No se ha podido cargar el certificado seleccionado para firmar</string>
     <string name="error_no_certs">No se han encontrado certificados instalados en su dispositivo</string>
     <string name="error_title_keystore_empty">Almac\u00E9n vac\u00EDo</string>
-    <string name="error_input_params_creation_role">Los valores introducidos no son correctos</string>
+    <string name="error_input_params_creation_role">El intervalo de tiempo introducido no es correcto</string>
 
     <string name="toast_msg_rejects_ok">Peticiones rechazadas correctamente</string>
     <string name="toast_msg_reject_ok">Petici\u00F3n rechazada correctamente</string>
@@ -279,7 +282,9 @@
     <string name="dialog_title_close_session">Cierre de sesi\u00F3n</string>
     <string name="dialog_msg_close_session">Se va a cerrar su sesi\u00F3n. \u00BFDesea continuar?</string>
     <string name="dialog_msg_confirm_save_sign_title">\u00BFDesea descargar la firma?</string>
+    <string name="dialog_msg_confirm_saved_file">La firma del documento se almacenar\u00E1 en su directorio de descargas.</string>
     <string name="dialog_msg_confirm_save_sign">La firma del documento se almacenar\u00E1 en su directorio de descargas.</string>
+    <string name="dialog_msg_saved_sign">El fichero %1$s se ha guardado en el directorio de descargas.</string>
     <string name="dialog_msg_confirm_preview_title">\u00BFDesea visualizar el documento?</string>
     <string name="dialog_msg_confirm_preview">El documento puede ser un fichero de gran tama\u00F1o. Aseg\u00FArese de estar conectado a una red de alta velocidad y, a ser posible, sin coste adicional.</string>
     <string name="dialog_pin">Para poder utilizar el certificado introduzca su c\u00F3digo de seguridad.\n</string>
@@ -296,6 +301,9 @@
     <string name="dialog_msg_confirm_sign">Se va a proceder a firmar esta petici\u00F3n. \u00BFDesea continuar?</string>
     <string name="dialog_msg_confirm_approve">Se va a proceder a aprobar esta petici\u00F3n. \u00BFDesea continuar? </string>
     <string name="dialog_msg_confirm_verify">Se va a proceder a validar esta petici\u00F3n. \u00BFDesea continuar? </string>
+    <string name="dialog_msg_warning_notification_permission">Conceda permiso para mostrar notificaciones antes de activar las notificaciones de la aplicaci\u00F3n.</string>
+
+
 
     <string name="dialog_server_new_button">Nuevo servidor</string>
     <string name="dialog_server_delete_button">Eliminar</string>

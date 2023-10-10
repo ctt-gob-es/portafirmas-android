@@ -10,7 +10,7 @@ import java.security.Security;
 import es.gob.afirma.android.signfolder.SFConstants;
 import es.gob.afirma.android.util.PfLog;
 import es.gob.jmulticard.android.nfc.AndroidNfcConnection;
-import es.gob.jmulticard.apdu.connection.ApduConnection;
+import es.gob.jmulticard.connection.ApduConnection;
 
 /** Factor&iacute;a de gestores de contrase&ntilde;as y claves para Android. */
 public final class KeyStoreManagerFactory {

@@ -20,25 +20,19 @@ public class SaveFileTask extends AsyncTask<Void, Void, File> {
 	private final InputStream dataIs;
 	private final String filename;
 	private final boolean extDir;
-	private final boolean tempDir;
 	private final SaveFileListener listener;
-	private final Context context;
 
 	/** Crea una tarea para descarga de fichero en segundo plano.
 	 * @param dataIs Flujo de lectura de los datos del fichero.
 	 * @param filename Nombre del fichero a guardar.
 	 * @param extDir Indica si se deberia guardar en un directorio externo o interno de la aplicación.
-	 * @param tempDir Cuando se pida guardar en un directorio interno, indica si sera un guardado temporal o no.
 	 * @param listener Clase a la que notificar el sesultado de la tarea.
-	 * @param context Contexto que invoca a la tarea.
 	 */
-	public SaveFileTask(final InputStream dataIs, final String filename, final boolean extDir, final boolean tempDir, final SaveFileListener listener, final Context context) {
+	public SaveFileTask(final InputStream dataIs, final String filename, final boolean extDir, final SaveFileListener listener) {
 		this.dataIs = dataIs;
 		this.filename = filename;
 		this.extDir = extDir;
-		this.tempDir = tempDir;
 		this.listener = listener;
-		this.context = context;
 	}
 
 	@Override
@@ -54,9 +48,7 @@ public class SaveFileTask extends AsyncTask<Void, Void, File> {
 				);
 			}
         	else {
-        		File outputDir = this.tempDir
-						? SignfolderApp.getInternalTempDir()
-						: this.context.getFilesDir();
+        		File outputDir = SignfolderApp.getInternalTempDir();
         		if (!outputDir.exists()) {
         			outputDir.mkdirs();
 				}

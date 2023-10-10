@@ -8,6 +8,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Environment;
 import android.widget.Toast;
 
 import androidx.core.content.FileProvider;
@@ -29,6 +30,8 @@ import es.gob.afirma.android.util.PfLog;
 public final class OpenHelpDocumentTask extends AsyncTask<Void, Void, File> {
 
 	private static final String PDF_MIMETYPE = "application/pdf"; //$NON-NLS-1$
+
+	public static final int SHOW_HELP = 22;
 
 	private final Activity activity;
 
@@ -58,7 +61,7 @@ public final class OpenHelpDocumentTask extends AsyncTask<Void, Void, File> {
 		// Calculamos la ruta de guardado del documento de ayuda
 		//Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
 		File helpFile = new File(
-				this.activity.getFilesDir(),
+				this.activity.getExternalCacheDir(),
 				helpFilename);
 
 		boolean exist = helpFile.exists();
@@ -126,7 +129,7 @@ public final class OpenHelpDocumentTask extends AsyncTask<Void, Void, File> {
 
 		// Intentamos abrir directamente el fichero
 		if (intent.resolveActivity(pm) != null) {
-			activity.startActivity(intent);
+			activity.startActivityForResult(intent, OpenHelpDocumentTask.SHOW_HELP);
 			return;
 		}
 		// Si no se pudo abrir directamente, se intentamos abrirla con alguna de las aplicaciones
@@ -155,7 +158,7 @@ public final class OpenHelpDocumentTask extends AsyncTask<Void, Void, File> {
 
 					if (resolveInfo.activityInfo.name.startsWith(adobePackage)) {
 						intent.setPackage(resolveInfo.activityInfo.packageName);
-						activity.startActivity(intent);
+						activity.startActivityForResult(intent, OpenHelpDocumentTask.SHOW_HELP);
 						return;
 					} else if (resolveInfo.activityInfo.name.startsWith(gdrivePackage)) {
 						intent.setPackage(resolveInfo.activityInfo.packageName);
@@ -164,7 +167,7 @@ public final class OpenHelpDocumentTask extends AsyncTask<Void, Void, File> {
 				}
 
 				if (isGdriveInstalled) {
-					activity.startActivity(intent);
+					activity.startActivityForResult(intent, OpenHelpDocumentTask.SHOW_HELP);
 					return;
 				}
 
@@ -175,7 +178,7 @@ public final class OpenHelpDocumentTask extends AsyncTask<Void, Void, File> {
 						.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
 							@Override
 							public void onClick(final DialogInterface dialog, final int which) {
-								activity.startActivity(intent);
+								activity.startActivityForResult(intent, OpenHelpDocumentTask.SHOW_HELP);
 							}
 						})
 						.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {

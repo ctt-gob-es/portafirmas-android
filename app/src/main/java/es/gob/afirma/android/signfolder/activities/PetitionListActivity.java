@@ -3,6 +3,8 @@ package es.gob.afirma.android.signfolder.activities;
 import android.Manifest;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -11,7 +13,9 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -26,6 +30,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListAdapter;
 import android.widget.ListView;
@@ -34,6 +39,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -164,6 +170,8 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
 
     private final static int PERMISSION_TO_OPEN_HELP = 22;
 
+    private final static int PERMISSION_TO_NOTIFICATE = 23;
+
     /**
      * Tag para la presentaci&oacute;n de di&aacute;logos
      */
@@ -175,9 +183,13 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
     int numRequestToRejectPending;
     int numRequestToVerifyPending;
 
-    /** Peticiones a medias pendientes de confirmacion de permisos. */
+    /**
+     * Peticiones a medias pendientes de confirmacion de permisos.
+     */
     private List<SignRequest> confirmationPendingRequests = new ArrayList<>();
-    /** Listado de permisos que hay que pedir al usuario para completar las firmas. */
+    /**
+     * Listado de permisos que hay que pedir al usuario para completar las firmas.
+     */
     private Set<SignaturePermission> signPermissionsRequired = new HashSet<>();
     private List<SignaturePermission> signPermissionsGranted = new ArrayList<>();
 
@@ -217,7 +229,9 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
     private List<String> appIds = null;
     private List<String> appNames = null;
 
-    /** Configuración actual de filtros. */
+    /**
+     * Configuración actual de filtros.
+     */
     private FilterConfig filterConfig = null;
 
     private int numPages = -1;
@@ -423,7 +437,9 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
     /**
      * Indica si el usuario se ha dado previamente de alta en el sistema de notificaciones
      * para este portafirmas.
-     * @param  userProxyId Identificador asociado a la combinación usuario/proxy.
+     *
+     * @param userProxyId Identificador asociado a la combinación usuario/proxy.
+     *
      * @return {@code true} si el usuario se ha dado previamente de alta, {@code false} en caso
      * contrario.
      */
@@ -457,7 +473,9 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
     /**
      * Indica si el token de notificaciones actual ha cambiado con respecto al último que el usuario
      * dio de alta.
-     * @param  userProxyId Identificador asociado a la combinación usuario/proxy.
+     *
+     * @param userProxyId Identificador asociado a la combinación usuario/proxy.
+     *
      * @return {@code true} si el token actual no es igual al último que dio de alta el usuario,
      * {@code false} en caso contrario.
      */
@@ -494,7 +512,8 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
     /**
      * Registra el nuevo token de notificaciones para que el usuario pueda recibirlas
      * para este portafirmas y dispositivo.
-     * @param  userProxyId Identificador asociado a la combinación usuario/proxy.
+     *
+     * @param userProxyId Identificador asociado a la combinación usuario/proxy.
      */
     private void registryNotificationToken(String userProxyId, boolean noticeUser) {
 
@@ -602,8 +621,7 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
             public void run() {
                 try {
                     dialog.show(getSupportFragmentManager(), DIALOG_TAG);
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     PfLog.w(SFConstants.LOG_TAG, "No se pudo mostrar el dialogo para confirmar el rechazo de la peticion", e); //$NON-NLS-1$
                 }
             }
@@ -622,8 +640,7 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
                 public void run() {
                     try {
                         dialog.show(getSupportFragmentManager(), DIALOG_TAG);
-                    }
-                    catch (Exception e) {
+                    } catch (Exception e) {
                         PfLog.w(SFConstants.LOG_TAG, "No se pudo mostrar el dialogo de error de elementos no seleccionados", e); //$NON-NLS-1$
                     }
                 }
@@ -646,8 +663,7 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
                 public void run() {
                     try {
                         dialog.show(PetitionListActivity.this.getSupportFragmentManager(), DIALOG_TAG);
-                    }
-                    catch (Exception e) {
+                    } catch (Exception e) {
                         PfLog.w(SFConstants.LOG_TAG, "No se pudo mostrar el mensaje de error", e); //$NON-NLS-1$
                     }
                 }
@@ -686,8 +702,7 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
             public void run() {
                 try {
                     dialog.show(getSupportFragmentManager(), DIALOG_TAG);
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     PfLog.w(SFConstants.LOG_TAG, "No se pudo mostrar el dialogo de confirmacion de firma", e); //$NON-NLS-1$
                 }
             }
@@ -701,6 +716,7 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
      * seleccionadas
      *
      * @param requests Peticiones seleccionadas.
+     *
      * @return Vista del di&aacute;logo de confirmaci&oacute;n.
      */
     private View getViewContentDialogConfirmOperation(final SignRequest[] requests) {
@@ -888,8 +904,7 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
 
             if (!isSimConfigured) {
                 menu.findItem(R.id.notifications).setVisible(false);
-            }
-            else {
+            } else {
                 // Comprobamos el estado de las notificaciones
                 boolean isPushActived = this.userConfig.isPushActivated();
                 // Si estan activadas, mostramos la opcion de desactivarlas
@@ -954,24 +969,18 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
         }
         // Habilitar/deshabilitar notificaciones
         else if (item.getItemId() == R.id.notifications) {
-            // Si se ha solicitado activarlas...
+            // Si se ha solicitado activarlas, comprobamos si la aplicacion tiene permisos para
+            // mostrar notificaciones y los solicitamos si no los tuviese
             if (item.getTitle().equals(getString(R.string.enable_notifications))) {
-
-                String userProxyId = getUserProxyId();
-
-                // Al tratar de activar las notificaciones, registraremos el token de notificacion
-                // si no esta ya registrado o si ha cambiado desde la ultima vez
-                if (!isNotificationTokenRegistered(userProxyId) || isNotificationTokenChanged(userProxyId)) {
-                    registryNotificationToken(userProxyId, true);
-                }
-                // Si el token de notificacion ya se habia registrado, simplemente cambiamos el estado
-                else {
-                    new UpdatePushNotificationsTask(true, this).execute();
+                if (areNotificationsEnabled()) {
+                    changeNotificationState(true);
+                } else {
+                    requestNotificationPermission();
                 }
             }
-            // Si se ha solicitado desactivarlas...
+            // Si se ha solicitado desactivarlas, cambiamos el estado a desactivadas
             else if (item.getTitle().equals(getString(R.string.disable_notifications))) {
-                new UpdatePushNotificationsTask(false, this).execute();
+                changeNotificationState(false);
             }
         }
         // Configuración de usuario
@@ -984,7 +993,7 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
         }
         // Vistas.
         else if (item.getItemId() == R.id.views) {
-            String[] items = { getString(R.string.compact_view), getString(R.string.extended_view) };
+            String[] items = {getString(R.string.compact_view), getString(R.string.extended_view)};
             AlertDialog.Builder builder = new AlertDialog.Builder(PetitionListActivity.this);
             int checkedItem = AppPreferences.getInstance().getIsCompactView() ? 0 : 1;
             builder.setTitle(R.string.select_view);
@@ -1031,12 +1040,21 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
         }
         // Abrir ayuda
         else if (item.getItemId() == R.id.help) {
-            boolean storagePerm = (
-                    ContextCompat.checkSelfPermission(
-                            this,
-                            Manifest.permission.WRITE_EXTERNAL_STORAGE
-                    ) == PackageManager.PERMISSION_GRANTED
-            );
+
+            // Comprobamos si tenemos permisos de escritura, necesario para guardar ficheros.
+            // En Android 11 y superiores consideraremos que ya los tenemos, ya que vamos a usar un
+            // directorio publico
+            boolean storagePerm;
+            if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                storagePerm = true;
+            } else {
+                storagePerm = (
+                        ContextCompat.checkSelfPermission(
+                                this,
+                                Manifest.permission.WRITE_EXTERNAL_STORAGE
+                        ) == PackageManager.PERMISSION_GRANTED
+                );
+            }
 
             if (storagePerm) {
                 openHelp();
@@ -1055,6 +1073,75 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
         return true;
     }
 
+    /**
+     * Consulta si las notificaciones de la aplicacion estan habilitadas a nivel de sistema.
+     * @return {@code true} cuando est&aacute;n habilitadas, {@code false} en caso contrario.
+     */
+    public boolean areNotificationsEnabled() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            return ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED;
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            if (!manager.areNotificationsEnabled()) {
+                return false;
+            }
+            List<NotificationChannel> channels = manager.getNotificationChannels();
+            for (NotificationChannel channel : channels) {
+                if (channel.getImportance() == NotificationManager.IMPORTANCE_NONE) {
+                    return false;
+                }
+            }
+            return true;
+        } else {
+            return NotificationManagerCompat.from(this).areNotificationsEnabled();
+        }
+    }
+
+    /**
+     * Solicita al usuario que habilite las notificaciones de la aplicaci&oacute;n.
+     */
+    private void requestNotificationPermission() {
+        // En Android 13 y superiores mostramos el dialogo de solicitud de permisos
+        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            ActivityCompat.requestPermissions(
+                    this,
+                    new String[]{Manifest.permission.POST_NOTIFICATIONS},
+                    PERMISSION_TO_NOTIFICATE
+            );
+        }
+        // En versiones anteriores, redirigimos a la pantalla de configuración de las notificaciones
+        // de la aplicacion
+        else {
+            showDialogToAskNotificationsPermissions();
+        }
+    }
+
+
+
+    private void changeNotificationState(boolean enable) {
+
+        // Si habilitamos las notificaciones, comprobamos si se habia hecho antes o si ha
+        // cambiado el toquen de notificacion, para registrar el token o simplemente cambiar
+        // el estado
+        if (enable) {
+            String userProxyId = getUserProxyId();
+            if (!isNotificationTokenRegistered(userProxyId) || isNotificationTokenChanged(userProxyId)) {
+                registryNotificationToken(userProxyId, true);
+            }
+            // Si el token de notificacion ya se habia registrado, simplemente cambiamos el estado
+            else {
+                new UpdatePushNotificationsTask(true, this).execute();
+            }
+        }
+        // Si se deshabilitan, unicamente cambiamos el estado
+        else {
+            new UpdatePushNotificationsTask(false, this).execute();
+        }
+    }
+
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            @NonNull String[] permissions,
@@ -1068,6 +1155,18 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
                 Toast.makeText(
                         this,
                         getString(R.string.nopermtoopenhelp),
+                        Toast.LENGTH_LONG
+                ).show();
+            }
+        }
+        else if (requestCode == PERMISSION_TO_NOTIFICATE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                PfLog.i(SFConstants.LOG_TAG, "Permisos concedidos para habilitar las notificaciones");
+                changeNotificationState(true);
+            } else {
+                Toast.makeText(
+                        this,
+                        getString(R.string.nopermtoshownotifications),
                         Toast.LENGTH_LONG
                 ).show();
             }
@@ -1585,7 +1684,8 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
                 // TODO: Diferenciar segun tipo de error
                 showToastMessage(getString(R.string.toast_msg_fire_comunication_ko));
             }
-        } else if (requestCode == UserConfigurationActivity.REQUEST_CODE) {
+        }
+        else if (requestCode == UserConfigurationActivity.REQUEST_CODE) {
             if (resultCode == ConfigurationConstants.ACTIVITY_RESULT_CODE_ACCESS_DENEGATED) {
                 Toast toast = Toast.makeText(this, R.string.toast_error_access_denegated, Toast.LENGTH_LONG);
                 toast.show();
@@ -1595,6 +1695,39 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
                 this.closeSession();
             }
         }
+        else if (requestCode == PERMISSION_TO_NOTIFICATE) {
+            if (areNotificationsEnabled()) {
+                changeNotificationState(true);
+            }
+        }
+    }
+
+    private void showDialogToAskNotificationsPermissions() {
+
+        final AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
+        dialogBuilder.setMessage(R.string.dialog_msg_warning_notification_permission);
+        dialogBuilder.setPositiveButton(R.string.ok,
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(final DialogInterface dialog, final int whichButton) {
+                            Intent intent = new Intent();
+                            intent.setAction("android.settings.APP_NOTIFICATION_SETTINGS");
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+                            //for Android 5-7
+                            intent.putExtra("app_package", getPackageName());
+                            intent.putExtra("app_uid", getApplicationInfo().uid);
+
+                            // for Android 8 and above
+                            intent.putExtra("android.provider.extra.APP_PACKAGE", getPackageName());
+
+                            startActivity(intent);
+                        }
+                    }
+            );
+        dialogBuilder.setNeutralButton(R.string.cancel, null);
+
+        dialogBuilder.create().show();
     }
 
     @Override

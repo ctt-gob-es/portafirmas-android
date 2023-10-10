@@ -33,6 +33,8 @@ public class ListAuthorizationsResponseParser {
     private static final String USER_NODE = "user"; //$NON-NLS-1$
     private static final String AUTHORIZED_USER_NODE = "authuser"; //$NON-NLS-1$
     private static final String OBSERVATIONS_NODE = "observations"; //$NON-NLS-1$
+    private static final String ERROR_CODE_ATTRIBUTE = "cd"; //$NON-NLS-1$
+
 
     private ListAuthorizationsResponseParser() {
         // No instanciable
@@ -52,16 +54,21 @@ public class ListAuthorizationsResponseParser {
             throw new IllegalArgumentException("El documento proporcionado no puede ser nulo");  //$NON-NLS-1$
         }
 
-        final Node requestNode = doc.getDocumentElement();
+        final Element docElement = doc.getDocumentElement();
 
-        if (!ROOT_RESPONSE_NODE.equalsIgnoreCase(requestNode.getNodeName())) {
+        if (ERROR_NODE.equalsIgnoreCase(docElement.getNodeName())) {
+            final String errorCode = docElement.getAttribute(ERROR_CODE_ATTRIBUTE);
+            throw new ServerControlledException(errorCode, XmlUtils.getTextContent(docElement));
+        }
+
+        if (!ROOT_RESPONSE_NODE.equalsIgnoreCase(docElement.getNodeName())) {
             throw new IllegalArgumentException("El elemento raiz del XML debe ser '" + //$NON-NLS-1$
                     ROOT_RESPONSE_NODE + "' y aparece: " + //$NON-NLS-1$
                     doc.getDocumentElement().getNodeName());
         }
 
         // Buscamos el primer nodo elemento
-        NodeList childs = requestNode.getChildNodes();
+        NodeList childs = docElement.getChildNodes();
         int i = XmlUtils.nextNodeElementIndex(childs, 0);
         if (i == -1) {
             throw new IllegalArgumentException("Se ha obtenido un XML vacio");

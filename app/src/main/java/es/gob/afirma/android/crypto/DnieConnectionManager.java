@@ -5,7 +5,7 @@ import android.nfc.Tag;
 import es.gob.afirma.android.signfolder.SFConstants;
 import es.gob.afirma.android.util.PfLog;
 import es.gob.jmulticard.android.callbacks.CachePasswordCallback;
-import es.gob.jmulticard.apdu.connection.ApduConnection;
+import es.gob.jmulticard.connection.ApduConnection;
 
 /**
  * Instancia &uacute;nica que almacenar&aacute; los distintos elementos para la conexi&oacute;n

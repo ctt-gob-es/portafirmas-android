@@ -7,10 +7,6 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/Repositorios_GitHub.portafirmas-android.app.main.iml" filepath="$PROJECT_DIR$/.idea/modules/app/Repositorios_GitHub.portafirmas-android.app.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/Repositorios_GitHub.portafirmas-android.app.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/app/Repositorios_GitHub.portafirmas-android.app.unitTest.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/portafirmas-android.iml" filepath="$PROJECT_DIR$/.idea/modules/portafirmas-android.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/portafirmas-android.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/portafirmas-android.app.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/portafirmas-android.app.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/app/portafirmas-android.app.androidTest.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/portafirmas-android.app.main.iml" filepath="$PROJECT_DIR$/.idea/modules/app/portafirmas-android.app.main.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/portafirmas-android.app.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/app/portafirmas-android.app.unitTest.iml" />
     </modules>
   </component>
 </project>

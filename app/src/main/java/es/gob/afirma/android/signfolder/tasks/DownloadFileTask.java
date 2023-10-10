@@ -147,9 +147,7 @@ public final class DownloadFileTask extends AsyncTask<Void, Void, DocumentData> 
 
 		// Guardamos el documento. En caso de guardarse en un directorio interno, se guardara como
 		// temporal, ya que sera un documento que unicamente se va a visualizar para consulta
-		new SaveFileTask(
-				documentData.getDataIs(), filename, this.extDir, !this.extDir, this, this.context
-				).execute();
+		new SaveFileTask(documentData.getDataIs(), filename, this.extDir, this).execute();
 	}
 
 	@Override

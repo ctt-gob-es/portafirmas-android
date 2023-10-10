@@ -32,6 +32,6 @@ public class SignfolderApp extends Application {
      * @return Directorio temporal.
      */
     public static File getInternalTempDir() {
-        return new File(getAppContext().getFilesDir(), DIR_TEMP);
+        return new File(getAppContext().getExternalCacheDir(), DIR_TEMP);
     }
 }

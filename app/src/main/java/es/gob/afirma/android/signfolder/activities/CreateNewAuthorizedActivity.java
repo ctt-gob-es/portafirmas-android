@@ -128,7 +128,7 @@ public class CreateNewAuthorizedActivity extends Activity implements CreateAutho
         this.findViewById(R.id.finishButton).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (checkValues()) {
+                if (checkInterval()) {
                     try {
                         final Authorization auth = getAuthorizationFieldsValues();
                         final CreateAuthorizationTask task = new CreateAuthorizationTask(auth, CreateNewAuthorizedActivity.this);
@@ -138,10 +138,7 @@ public class CreateNewAuthorizedActivity extends Activity implements CreateAutho
                         errorSavingAuthorization(null);
                     }
                 } else {
-                    Toast toast = Toast.makeText(CreateNewAuthorizedActivity.this,
-                            R.string.error_input_params_creation_role, Toast.LENGTH_LONG);
-                    toast.getView().setBackgroundColor(getResources().getColor(R.color.lightRed));
-                    toast.show();
+                    Toast.makeText(CreateNewAuthorizedActivity.this, R.string.error_input_params_creation_role, Toast.LENGTH_LONG).show();
                 }
             }
         });
@@ -207,7 +204,7 @@ public class CreateNewAuthorizedActivity extends Activity implements CreateAutho
      * Método que comprueba que los valores del formulario asociado a las fechas son válidos.
      * @return <i>True</i> si los valores son correctos y <i>False</i> en caso contrario.
      */
-    private boolean checkValues() {
+    private boolean checkInterval() {
         boolean res = true;
         if (endDateTime != null) {
             Date currentDate = new Date();

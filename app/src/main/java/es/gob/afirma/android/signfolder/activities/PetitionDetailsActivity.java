@@ -2,6 +2,7 @@ package es.gob.afirma.android.signfolder.activities;
 
 import android.Manifest;
 import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.ProgressDialog;
@@ -44,6 +45,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 
@@ -125,7 +127,7 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
      * Tag para la presentaci&oacute;n de di&aacute;logos
      */
     protected final static String DIALOG_TAG = "dialog"; //$NON-NLS-1$
-    protected final static int PERMISSION_TO_OPEN_HELP = 22;
+
     static final String EXTRA_RESOURCE_DNI = "es.gob.afirma.signfolder.dni"; //$NON-NLS-1$
     static final String EXTRA_RESOURCE_CERT_ALIAS = "es.gob.afirma.signfolder.alias"; //$NON-NLS-1$
     static final String EXTRA_RESOURCE_REQUEST_ID = "es.gob.afirma.signfolder.requestId"; //$NON-NLS-1$
@@ -142,6 +144,14 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
     private static final String DOCX_FILE_EXTENSION = ".docx"; //$NON-NLS-1$
     private static final String TXT_FILE_EXTENSION = ".txt"; //$NON-NLS-1$
     private static final String XML_FILE_EXTENSION = ".xml"; //$NON-NLS-1$
+
+    private static final int PERMISSION_TO_DOWNLOAD_DOCUMENT = 1;
+    private static final int PERMISSION_TO_DOWNLOAD_AND_SAVE_DOCUMENT = 2;
+    private static final int PERMISSION_TO_DOWNLOAD_AND_SHARE_DOCUMENT = 3;
+    private static final int PERMISSION_TO_DOWNLOAD_HELP = 4;
+
+    private static final int PERMISSION_TO_NOTIFICATE = 5;
+
     /**
      * Di&aacute;logo para confirmar el cierre de la sesi&oacute;n.
      */
@@ -166,6 +176,8 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
     private String requestState = null;
     private List<File> tempDocuments = null;
 
+    private boolean writePerm;
+
     /**
      * Attributo que representa el rol seleccionado durante la autenticación del usuario.
      */
@@ -175,7 +187,6 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
     private TabHost th;
     private CustomAlertDialog dialog;
     private DocItem selectedDocItem = null;
-    private boolean writePerm = false;
     private String dni;
     private String certB64;
     private ArrayList<String> appIds;
@@ -278,13 +289,20 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
         setupTab(this.getResources().getString(R.string.docs), 3);
         getTabHost().setCurrentTab(0);
 
-        // Comprobamos si tenemos permisos de escritura, por si tenemos que descargar ficheros
-        writePerm = (
-                ContextCompat.checkSelfPermission(
-                        this,
-                        Manifest.permission.WRITE_EXTERNAL_STORAGE
-                ) == PackageManager.PERMISSION_GRANTED
-        );
+        // Comprobamos si tenemos permisos de escritura, por si tenemos que descargar ficheros.
+        // En Android 11 y superiores consideraremos que ya los tenemos, ya que vamos a usar un
+        // directorio publico
+        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            writePerm = true;
+        }
+        else {
+            writePerm = (
+                    ContextCompat.checkSelfPermission(
+                            this,
+                            Manifest.permission.WRITE_EXTERNAL_STORAGE
+                    ) == PackageManager.PERMISSION_GRANTED
+            );
+        }
     }
 
     /**
@@ -508,18 +526,18 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
         }
 
         // Si tenemos permisos de escritura, procedemos a la descarga. Si no, los pedimos
+
         if (writePerm) {
             downloadDocument(selectedDocItem.docId, selectedDocItem.name, selectedDocItem.mimetype, selectedDocItem.docType);
         } else {
-            requestStoragePerm();
+            requestStoragePerm(PERMISSION_TO_DOWNLOAD_DOCUMENT);
         }
     }
 
     /**
-     * Muestra un mensaje solicitando confirmacion al usuario para descargar y almacenar
-     * el fichero seleccionado.
+     * Guarda un fichero en disco.
      */
-    private void showConfirmDownloadAndSaveDialog() {
+    private void saveFile() {
 
         if (selectedDocItem == null) {
             return;
@@ -529,7 +547,7 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
         if (writePerm) {
             downloadAndSaveFile();
         } else {
-            requestStoragePerm();
+            requestStoragePerm(PERMISSION_TO_DOWNLOAD_AND_SAVE_DOCUMENT);
         }
     }
 
@@ -544,48 +562,52 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
 
         // Si tenemos permisos de escritura, procedemos a la descarga. Si no, los pedimos
         if (writePerm) {
-            showProgressDialog(getString(R.string.loading_doc), this);
-            DocumentData data = downloadDocData(selectedDocItem.docId, selectedDocItem.docType, selectedDocItem.name, selectedDocItem.mimetype);
-            if (data != null && data.getDataIs() != null) {
-                File file = null;
-                try {
-                    byte[] fileData = AOUtil.getDataFromInputStream(data.getDataIs());
-                    String dataEncoded = Base64.encode(fileData);
-                    file = createAndSaveFileFromBase64Url("data:"+ data.getMimetype() + ";base64," + dataEncoded, true);
-                    Uri uri = FileProvider.getUriForFile(PetitionDetailsActivity.this,
-                            BuildConfig.APPLICATION_ID + ".fileprovider", file);
-
-                    Intent shareIntent = new Intent();
-                    shareIntent.setAction(Intent.ACTION_SEND);
-                    shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
-                    if (selectedDocItem.mimetype != null) {
-                        shareIntent.setType(selectedDocItem.mimetype);
-                    } else {
-                        String mimeType = URLConnection.guessContentTypeFromName(file.getName());
-                        shareIntent.setType(mimeType);
-                    }
-                    startActivity(Intent.createChooser(shareIntent, getResources().getText(R.string.share)));
-                    if (this.tempDocuments == null) {
-                        this.tempDocuments = new ArrayList<>();
-                    }
-                    this.tempDocuments.add(file);
-                } catch (IOException ioe) {
-                    if (file != null) {
-                        if (file.exists()) {
-                            if (this.tempDocuments == null) {
-                                this.tempDocuments = new ArrayList<>();
-                            }
-                            this.tempDocuments.add(file);
-                        }
-                    }
-                    shareDocumentError();
-                }
-            }
-            dismissProgressDialog();
+            downloadAndShareFile();
         } else {
-            requestStoragePerm();
+            requestStoragePerm(PERMISSION_TO_DOWNLOAD_AND_SHARE_DOCUMENT);
         }
 
+    }
+
+    private void downloadAndShareFile() {
+        showProgressDialog(getString(R.string.loading_doc), this);
+        DocumentData data = downloadDocData(selectedDocItem.docId, selectedDocItem.docType, selectedDocItem.name, selectedDocItem.mimetype);
+        if (data != null && data.getDataIs() != null) {
+            File file = null;
+            try {
+                byte[] fileData = AOUtil.getDataFromInputStream(data.getDataIs());
+                String dataEncoded = Base64.encode(fileData);
+                file = createAndSaveFileFromBase64Url("data:"+ data.getMimetype() + ";base64," + dataEncoded, true);
+                Uri uri = FileProvider.getUriForFile(PetitionDetailsActivity.this,
+                        BuildConfig.APPLICATION_ID + ".fileprovider", file);
+
+                Intent shareIntent = new Intent();
+                shareIntent.setAction(Intent.ACTION_SEND);
+                shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
+                if (selectedDocItem.mimetype != null) {
+                    shareIntent.setType(selectedDocItem.mimetype);
+                } else {
+                    String mimeType = URLConnection.guessContentTypeFromName(file.getName());
+                    shareIntent.setType(mimeType);
+                }
+                startActivity(Intent.createChooser(shareIntent, getResources().getText(R.string.share)));
+                if (this.tempDocuments == null) {
+                    this.tempDocuments = new ArrayList<>();
+                }
+                this.tempDocuments.add(file);
+            } catch (IOException ioe) {
+                if (file != null) {
+                    if (file.exists()) {
+                        if (this.tempDocuments == null) {
+                            this.tempDocuments = new ArrayList<>();
+                        }
+                        this.tempDocuments.add(file);
+                    }
+                }
+                showDocumentError(R.string.toast_error_sharing);
+            }
+        }
+        dismissProgressDialog();
     }
 
     /**
@@ -606,10 +628,12 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
                 createAndSaveFileFromBase64Url("data:"+ data.getMimetype() + ";base64," + dataEncoded, false);
                 dismissProgressDialog();
             } catch (IOException ioe) {
-                shareDocumentError();
+                showDocumentError(R.string.toast_error_saving);
             }
         }
     }
+
+    private File downloadedFile = null;
 
     public File createAndSaveFileFromBase64Url(String url, boolean isShared) {
         File path;
@@ -627,32 +651,30 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
             filetype = url.substring(url.indexOf("/") + 1, url.indexOf(";"));
         }
 
-        File file = null;
-
         try {
             if(!path.exists()) {
                 path.mkdirs();
             }
 
             String filename = selectedDocItem.name.substring(0, selectedDocItem.name.lastIndexOf(".")) +  "." + filetype;
-            file = new File(path, filename);
+            downloadedFile = new File(path, filename);
 
             int cont = 0;
-            while (file.exists()) {
+            while (downloadedFile.exists()) {
                 cont++;
                 filename = selectedDocItem.name.substring(0, selectedDocItem.name.lastIndexOf(".")) + "("+ cont +")" + "." + filetype;
-                file = new File(path, filename);
+                downloadedFile = new File(path, filename);
             }
-            file.createNewFile();
+            downloadedFile.createNewFile();
 
             String base64EncodedString = url.substring(url.indexOf(",") + 1);
             byte[] decodedBytes = Base64.decode(base64EncodedString);
-            OutputStream os = new FileOutputStream(file);
+            OutputStream os = new FileOutputStream(downloadedFile);
             os.write(decodedBytes);
             os.close();
 
             MediaScannerConnection.scanFile(this,
-                    new String[]{file.toString()}, null,
+                    new String[]{ downloadedFile.toString() }, null,
                     new MediaScannerConnection.OnScanCompletedListener() {
                         public void onScanCompleted(String path, Uri uri) {
                             Log.i("ExternalStorage", "Scanned " + path + ":");
@@ -661,7 +683,17 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
             });
 
             if (!isShared) {
-                notifyDownloadAndSave(file);
+                if (areNotificationsEnabled()) {
+                    notifyDownloadAndSave();
+                }
+                else {
+                    if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        requestNotificationPerm();
+                    }
+                    else {
+                        Toast.makeText(this, getString(R.string.dialog_msg_saved_sign, downloadedFile.getName()), Toast.LENGTH_SHORT).show();
+                    }
+                }
             }
 
         } catch (IOException e) {
@@ -669,14 +701,18 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
             return null;
         }
 
-        return file;
+        return downloadedFile;
     }
 
     /**
      * Metodo para crear y enviar notificacion al dispositivo sobre el archivo almacenado
      * @param file informacion sobre el archivo descargado
      */
-    private void notifyDownloadAndSave(File file) {
+    private void notifyDownloadAndSave() {
+
+        File file = downloadedFile;
+
+        // Preparamos el Intent para poder abrir el fichero desde la notificacion
         Intent intent = new Intent();
         intent.setAction(android.content.Intent.ACTION_VIEW);
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
@@ -684,7 +720,7 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
                 BuildConfig.APPLICATION_ID + ".fileprovider", file);
         intent.setDataAndType(uri, selectedDocItem.mimetype);
 
-        // Creacion de la notificacion a mostrar
+        // Preparamos la notificacion
         Object resNotification = NotificationUtilities.createNotification(this, getString(R.string.notif_download_file_title),
                 "El archivo " + file.getName() + " se ha descargado",
                 R.drawable.ic_notification, Notification.DEFAULT_ALL, Notification.PRIORITY_HIGH,
@@ -693,7 +729,6 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
                 null, null);
 
         NotificationCompat.Builder mBuilder = (NotificationCompat.Builder) resNotification;
-
         PendingIntent contentIntent = PendingIntent.getActivity(this, 0, intent,
                 PendingIntent.FLAG_CANCEL_CURRENT | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ? PendingIntent.FLAG_IMMUTABLE : 0));
         mBuilder.setContentIntent(contentIntent);
@@ -701,6 +736,7 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
 
         int notId = 888221;
 
+        // Lanzamos la notificacion
         NotificationManager mNotifyMgr =
                 (NotificationManager) this.getSystemService(NOTIFICATION_SERVICE);
         mNotifyMgr.cancel(notId);
@@ -756,18 +792,28 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
         try {
             return (DocumentData) result.get();
         } catch (Exception e) {
-            shareDocumentError();
+            showDocumentError(R.string.toast_error_donwloading);
             return null;
         }
     }
 
-    private void requestStoragePerm() {
+    private void requestStoragePerm(int actionId) {
         ActivityCompat.requestPermissions(
                 this,
                 new String[]{
                         Manifest.permission.WRITE_EXTERNAL_STORAGE
                 },
-                REQUEST_WRITE_STORAGE
+                actionId
+        );
+    }
+
+    private void requestNotificationPerm() {
+        ActivityCompat.requestPermissions(
+                this,
+                new String[]{
+                        Manifest.permission.POST_NOTIFICATIONS
+                },
+                PERMISSION_TO_NOTIFICATE
         );
     }
 
@@ -776,38 +822,52 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
                                            @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        switch (requestCode) {
-            case REQUEST_WRITE_STORAGE: {
 
+
+
+        if (grantResults.length == 0 || grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(
+                    this,
+                    getString(R.string.nopermtopreviewdocs),
+                    Toast.LENGTH_LONG
+            ).show();
+            return;
+        }
+
+        PfLog.i(SFConstants.LOG_TAG, "Se han concedido pemisos de acceso a disco");
+        writePerm = true;
+
+        switch (requestCode) {
+            case PERMISSION_TO_DOWNLOAD_DOCUMENT:
                 if (selectedDocItem == null) {
                     return;
                 }
+                downloadDocument(selectedDocItem.docId, selectedDocItem.name, selectedDocItem.mimetype, selectedDocItem.docType);
+                break;
+            case PERMISSION_TO_DOWNLOAD_AND_SAVE_DOCUMENT:
+                if (selectedDocItem == null) {
+                    return;
+                }
+                downloadAndSaveFile();
+                break;
 
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    PfLog.i(SFConstants.LOG_TAG, "Concedido permiso de escritura en memoria");
-                    downloadDocument(selectedDocItem.docId, selectedDocItem.name, selectedDocItem.mimetype, selectedDocItem.docType);
-                } else {
-                    Toast.makeText(
-                            this,
-                            getString(R.string.nopermtopreviewdocs),
-                            Toast.LENGTH_LONG
-                    ).show();
+            case PERMISSION_TO_DOWNLOAD_AND_SHARE_DOCUMENT:
+                if (selectedDocItem == null) {
+                    return;
                 }
+                downloadAndShareFile();
                 break;
-            }
-            case PERMISSION_TO_OPEN_HELP: {
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    PfLog.i(SFConstants.LOG_TAG, "Permisos concedidos para abrir el fichero de ayuda");
-                    openHelp();
-                } else {
-                    Toast.makeText(
-                            this,
-                            getString(R.string.nopermtoopenhelp),
-                            Toast.LENGTH_LONG
-                    ).show();
-                }
+
+            case PERMISSION_TO_DOWNLOAD_HELP:
+                openHelp();
                 break;
-            }
+
+            case PERMISSION_TO_NOTIFICATE:
+                notifyDownloadAndSave();
+                break;
+            default:
+                PfLog.i(SFConstants.LOG_TAG, "Se ha pedido permisos de escritura en disco para una actividad desconocida");
+                return;
         }
     }
 
@@ -867,13 +927,13 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
         });
     }
 
-    private void shareDocumentError() {
+    private void showDocumentError(int errorTextId) {
         dismissProgressDialog();
 
         final CustomAlertDialog dlg = CustomAlertDialog.newInstance(
                 DIALOG_MSG_ERROR,
                 getString(R.string.error),
-                getString(R.string.toast_error_sharing),
+                getString(errorTextId),
                 getString(android.R.string.ok),
                 null,
                 this
@@ -922,7 +982,7 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
             // cierra dentro de la tarea de copia)
             try {
                 FileInputStream docFis = new FileInputStream(documentFile);
-                SaveFileTask copyTask = new SaveFileTask(docFis, selectedDocItem.name, true, false,null, this);
+                SaveFileTask copyTask = new SaveFileTask(docFis, selectedDocItem.name, true, null);
                 copyTask.execute();
             }
             catch (Exception e2) {
@@ -1403,20 +1463,10 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
     public boolean onOptionsItemSelected(final MenuItem item) {
         // Abrir ayuda
         if (item.getItemId() == R.id.help) {
-            boolean storagePerm = (
-                    ContextCompat.checkSelfPermission(
-                            this,
-                            Manifest.permission.WRITE_EXTERNAL_STORAGE
-                    ) == PackageManager.PERMISSION_GRANTED
-            );
-
-            if (storagePerm) {
+            if (writePerm) {
                 openHelp();
             } else {
-                ActivityCompat.requestPermissions(
-                        this,
-                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                        PERMISSION_TO_OPEN_HELP);
+                requestStoragePerm(PERMISSION_TO_DOWNLOAD_HELP);
             }
 
         } else if (item.getItemId() == R.id.changeRole) {
@@ -1477,6 +1527,33 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
                 }
             }
         });
+    }
+
+    /**
+     * Consulta si las notificaciones de la aplicacion estan habilitadas a nivel de sistema.
+     * @return {@code true} cuando est&aacute;n habilitadas, {@code false} en caso contrario.
+     */
+    public boolean areNotificationsEnabled() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            return ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED;
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            if (!manager.areNotificationsEnabled()) {
+                return false;
+            }
+            List<NotificationChannel> channels = manager.getNotificationChannels();
+            for (NotificationChannel channel : channels) {
+                if (channel.getImportance() == NotificationManager.IMPORTANCE_NONE) {
+                    return false;
+                }
+            }
+            return true;
+        } else {
+            return NotificationManagerCompat.from(this).areNotificationsEnabled();
+        }
     }
 
     /**
@@ -1676,7 +1753,7 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
                     popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
                         public boolean onMenuItemClick(MenuItem item) {
                             if (item.getTitle().equals(getString(R.string.download))) {
-                                showConfirmDownloadAndSaveDialog();
+                                saveFile();
                             } else if (item.getTitle().equals(getString(R.string.share))) {
                                 shareFile();
                             }
@@ -1756,6 +1833,7 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
             showConfirmPreviewDialog();
         }
     }
+
 
         /**
          * Adaptador para la lista de l&iacute;neas de firma.

@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.List;
@@ -166,21 +167,27 @@ public final class LoginActivity extends AuthenticationFragmentActivity implemen
      * @param v Vista sobre la que se hace clic.
      */
     public void onClickImportCertButton(final View v) {
-        // Comprobamos si tenemos permisos para cargar el almacen de certificados en disco
-        boolean storagePerm = (
-                ContextCompat.checkSelfPermission(
-                        this,
-                        Manifest.permission.WRITE_EXTERNAL_STORAGE
-                ) == PackageManager.PERMISSION_GRANTED
-        );
-
-        if (storagePerm) {
+        // En Android 11 y superiores cargamos directamente el almacen usando el dialogo que lo
+        // permite. En anteriores nos aseguramos de pedir permisos
+        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             browseKeyStore();
-        } else {
-            ActivityCompat.requestPermissions(
-                    this,
-                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                    PERMISSION_TO_BROWSE_FILE);
+        }
+        else {
+            boolean storagePerm = (
+                    ContextCompat.checkSelfPermission(
+                            this,
+                            Manifest.permission.WRITE_EXTERNAL_STORAGE
+                    ) == PackageManager.PERMISSION_GRANTED
+            );
+
+            if (storagePerm) {
+                browseKeyStore();
+            } else {
+                ActivityCompat.requestPermissions(
+                        this,
+                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                        PERMISSION_TO_BROWSE_FILE);
+            }
         }
     }
 
@@ -344,20 +351,28 @@ public final class LoginActivity extends AuthenticationFragmentActivity implemen
         }
         // Abrir ayuda
         else if (item.getItemId() == R.id.help) {
-            boolean storagePerm = (
-                    ContextCompat.checkSelfPermission(
-                            this,
-                            Manifest.permission.WRITE_EXTERNAL_STORAGE
-                    ) == PackageManager.PERMISSION_GRANTED
-            );
 
-            if (storagePerm) {
+            // En Android 11 y superiores guardamos la ayuda en el directorio de cache directamente.
+            // En anteriores nos aseguramos de pedir permisos.
+            if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 openHelp();
-            } else {
-                ActivityCompat.requestPermissions(
-                        this,
-                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                        PERMISSION_TO_OPEN_HELP);
+            }
+            else {
+                boolean storagePerm = (
+                        ContextCompat.checkSelfPermission(
+                                this,
+                                Manifest.permission.WRITE_EXTERNAL_STORAGE
+                        ) == PackageManager.PERMISSION_GRANTED
+                );
+
+                if (storagePerm) {
+                    openHelp();
+                } else {
+                    ActivityCompat.requestPermissions(
+                            this,
+                            new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                            PERMISSION_TO_OPEN_HELP);
+                }
             }
         }
         return true;
@@ -499,6 +514,30 @@ public final class LoginActivity extends AuthenticationFragmentActivity implemen
             final Intent intent = KeyChain.createInstallIntent();
             intent.putExtra(KeyChain.EXTRA_PKCS12, certContent);
             startActivity(intent);
+        }
+        else if (requestCode == OpenHelpDocumentTask.SHOW_HELP) {
+            // A la vuelta de mostrar el fichero de ayuda, lo borramos
+            try {
+                String helpUrl = AppPreferences.getInstance().getHelpUrl();
+                String helpFilename = Uri.parse(helpUrl).getLastPathSegment();
+                File helpFile = new File(
+                        getExternalCacheDir(),
+                        helpFilename);
+                if (helpFile.exists()) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        Files.delete(helpFile.toPath());
+                    }
+                    else {
+                        if (!helpFile.delete()) {
+                            PfLog.w(SFConstants.LOG_TAG, "No se pudo eliminar el fichero de ayuda");
+                        }
+                    }
+                }
+            }
+            catch (Exception e) {
+                PfLog.w(SFConstants.LOG_TAG, "No se pudo eliminar el fichero de ayuda", e);
+                return;
+            }
         }
     }
 

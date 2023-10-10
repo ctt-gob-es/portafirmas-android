@@ -8,6 +8,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -20,6 +21,7 @@ import android.widget.TabHost;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
@@ -65,6 +67,8 @@ public final class UserConfigurationActivity extends FragmentActivity implements
     /** Margen que aplicar a cada uno de los lados a la caja de texto en donde se mostraran los
      * mensajes cuando por algún motivo no haya elementos en un listado. */
     private static final int ALTERNATIVE_TEXT_MARGIN = 20;
+
+    private static final int PERMISSION_TO_OPEN_HELP = 22;
 
     /** Attributo que representa el conjunto de aplicaciones configuradas en portafirmas. */
     RequestAppConfiguration apps = new RequestAppConfiguration();
@@ -172,12 +176,21 @@ public final class UserConfigurationActivity extends FragmentActivity implements
     public boolean onOptionsItemSelected(final MenuItem item) {
         // Abrir ayuda
         if (item.getItemId() == R.id.help) {
-            boolean storagePerm = (
-                    ContextCompat.checkSelfPermission(
-                            this,
-                            Manifest.permission.WRITE_EXTERNAL_STORAGE
-                    ) == PackageManager.PERMISSION_GRANTED
-            );
+            // Comprobamos si tenemos permisos de escritura, necesario para guardar ficheros.
+            // En Android 11 y superiores consideraremos que ya los tenemos, ya que vamos a usar un
+            // directorio publico
+            boolean storagePerm;
+            if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                storagePerm = true;
+            }
+            else {
+                storagePerm = (
+                        ContextCompat.checkSelfPermission(
+                                this,
+                                Manifest.permission.WRITE_EXTERNAL_STORAGE
+                        ) == PackageManager.PERMISSION_GRANTED
+                );
+            }
 
             if (storagePerm) {
                 openHelp();
@@ -185,7 +198,7 @@ public final class UserConfigurationActivity extends FragmentActivity implements
                 ActivityCompat.requestPermissions(
                         this,
                         new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                        PetitionDetailsActivity.PERMISSION_TO_OPEN_HELP);
+                        PERMISSION_TO_OPEN_HELP);
             }
         }
         // Cerrar sesion
@@ -193,6 +206,28 @@ public final class UserConfigurationActivity extends FragmentActivity implements
             showConfirmExitDialog();
         }
         return true;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == PERMISSION_TO_OPEN_HELP) {
+            if (grantResults.length == 0 || grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(
+                        this,
+                        getString(R.string.nopermtopreviewdocs),
+                        Toast.LENGTH_LONG
+                ).show();
+                return;
+            }
+
+            PfLog.i(SFConstants.LOG_TAG, "Se han concedido pemisos de acceso a disco");
+
+            openHelp();
+        }
     }
 
     /**
