@@ -87,10 +87,10 @@
 		                        android:textIsSelectable="false"
 						        android:textAppearance="?android:attr/textAppearanceLarge"
 						        style="@style/SignLine_Item"
-						        android:layout_marginTop="6dp"
-						        android:background="#EFEFEF" 
+						        android:background="#EFEFEF"
 						        android:layout_marginLeft="20dp"
-						        android:layout_marginRight="20dp"
+								android:layout_marginTop="6dp"
+								android:layout_marginRight="20dp"
 		                        />
 							<TextView
 		                        android:id="@+id/subjectValue"
@@ -120,10 +120,10 @@
 		                        android:textIsSelectable="false"
 						        android:textAppearance="?android:attr/textAppearanceLarge"
 						        style="@style/SignLine_Item"
-						        android:layout_marginTop="6dp"
-						        android:background="#EFEFEF" 
+						        android:background="#EFEFEF"
 						        android:layout_marginLeft="20dp"
-						        android:layout_marginRight="20dp" 
+								android:layout_marginTop="6dp"
+								android:layout_marginRight="20dp"
 		                       />
 		
 		                    <TextView
@@ -188,9 +188,9 @@
 								android:textIsSelectable="false"
 								android:textAppearance="?android:attr/textAppearanceLarge"
 								style="@style/SignLine_Item"
-								android:layout_marginTop="6dp"
 								android:background="#EFEFEF"
 								android:layout_marginLeft="20dp"
+								android:layout_marginTop="6dp"
 								android:layout_marginRight="20dp"
 								/>
 
@@ -222,11 +222,11 @@
 		                        android:textIsSelectable="false"
 						        android:textAppearance="?android:attr/textAppearanceLarge"
 						        style="@style/SignLine_Item"
-						        android:layout_marginTop="6dp" 
-						        android:background="#EFEFEF" 
+						        android:background="#EFEFEF"
 						        android:layout_marginLeft="20dp"
-						        android:layout_marginRight="20dp" 
-		                        />
+								android:layout_marginRight="20dp"
+								android:layout_marginTop="6dp"
+								/>
 		
 		                    <TextView
 		                        android:id="@+id/applicationValue"
@@ -274,7 +274,7 @@
 
 					<!-- Mensaje -->
 					<LinearLayout
-						android:id="@+id/tableRow7"
+						android:id="@+id/tableRow8"
 						android:layout_width="match_parent"
 						android:layout_height="wrap_content"
 						android:minHeight="50dp"
@@ -289,10 +289,10 @@
 							android:textIsSelectable="false"
 							android:textAppearance="?android:attr/textAppearanceLarge"
 							style="@style/SignLine_Item"
-							android:layout_marginTop="6dp"
 							android:background="#EFEFEF"
 							android:layout_marginLeft="20dp"
 							android:layout_marginRight="20dp"
+							android:layout_marginTop="6dp"
 							/>
 
 						<TextView

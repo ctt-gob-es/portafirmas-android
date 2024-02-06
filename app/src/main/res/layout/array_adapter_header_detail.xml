@@ -10,8 +10,8 @@
         android:id="@+id/header"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        style="@style/Section_Header"
         android:textIsSelectable="false"
+        style="@style/Section_Header"
         android:text="Cabecera de prueba"
         android:textAppearance="?android:attr/textAppearanceLarge"
          />
@@ -23,5 +23,4 @@
         android:layout_toRightOf="@id/header"
         android:layout_centerVertical="true"
         android:layout_marginLeft="10dp"/>
-
 </LinearLayout>

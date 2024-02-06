@@ -58,10 +58,10 @@
 		                        android:textIsSelectable="false"
 						        android:textAppearance="?android:attr/textAppearanceLarge"
 						        style="@style/SignLine_Item"
-						        android:layout_marginTop="6dp"
-						        android:background="#EFEFEF" 
+						        android:background="#EFEFEF"
 						        android:layout_marginLeft="20dp"
-						        android:layout_marginRight="20dp"
+								android:layout_marginTop="6dp"
+								android:layout_marginRight="20dp"
 		                        />
 							<TextView
 		                        android:id="@+id/subjectValue"
@@ -159,9 +159,9 @@
 							android:textIsSelectable="false"
 							android:textAppearance="?android:attr/textAppearanceLarge"
 							style="@style/SignLine_Item"
-							android:layout_marginTop="6dp"
 							android:background="#EFEFEF"
 							android:layout_marginLeft="20dp"
+							android:layout_marginTop="6dp"
 							android:layout_marginRight="20dp"
 							/>
 
@@ -193,11 +193,11 @@
 		                        android:textIsSelectable="false"
 						        android:textAppearance="?android:attr/textAppearanceLarge"
 						        style="@style/SignLine_Item"
-						        android:layout_marginTop="6dp" 
-						        android:background="#EFEFEF" 
-						        android:layout_marginLeft="20dp"
-						        android:layout_marginRight="20dp" 
-		                        />
+						        android:background="#EFEFEF"
+								android:layout_marginLeft="20dp"
+								android:layout_marginRight="20dp"
+								android:layout_marginTop="6dp"
+								/>
 		
 		                    <TextView
 		                        android:id="@+id/applicationValue"
@@ -227,10 +227,10 @@
 								android:textIsSelectable="false"
 								android:textAppearance="?android:attr/textAppearanceLarge"
 								style="@style/SignLine_Item"
-								android:layout_marginTop="6dp"
 								android:background="#EFEFEF"
 								android:layout_marginLeft="20dp"
 								android:layout_marginRight="20dp"
+								android:layout_marginTop="6dp"
 								/>
 
 							<TextView
@@ -261,10 +261,10 @@
 		                        android:textIsSelectable="false"
 						        android:textAppearance="?android:attr/textAppearanceLarge"
 						        style="@style/SignLine_Item"
-						        android:layout_marginTop="6dp" 
 						        android:background="#EFEFEF"
-						        android:layout_marginLeft="20dp" 
-						        android:layout_marginRight="20dp" 
+								android:layout_marginTop="6dp"
+								android:layout_marginLeft="20dp"
+								android:layout_marginRight="20dp"
 		                        />
 		
 		                    <ListView
@@ -294,10 +294,10 @@
 								android:textIsSelectable="false"
 								android:textAppearance="?android:attr/textAppearanceLarge"
 								style="@style/SignLine_Item"
-								android:layout_marginTop="6dp"
 								android:background="#EFEFEF"
 								android:layout_marginLeft="20dp"
 								android:layout_marginRight="20dp"
+								android:layout_marginTop="6dp"
 								/>
 
 							<TextView

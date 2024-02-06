@@ -220,7 +220,8 @@
                         android:layout_marginRight="11dp"
                         android:filterTouchesWhenObscured="true"
                         android:text="@string/label_filters_year"
-                        android:textAppearance="?android:attr/textAppearanceMedium" />
+                        android:textAppearance="?android:attr/textAppearanceMedium"
+                        android:visibility="invisible" />
                 </TableRow>
 
             </TableRow>
@@ -260,7 +261,8 @@
                         android:layout_marginLeft="15dp"
                         android:layout_marginEnd="11dp"
                         android:layout_marginRight="11dp"
-                        android:spinnerMode="dialog" />
+                        android:spinnerMode="dialog"
+                        android:visibility="invisible" />
                 </TableRow>
             </TableRow>
         </TableLayout>

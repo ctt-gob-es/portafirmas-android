@@ -24,9 +24,9 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="5dp"
             android:singleLine="true"
+            android:text="Primary text"
             android:textAppearance="?android:attr/textAppearanceLarge"
-            android:textIsSelectable="false"
-            android:text="Primary text text text text" />
+            android:textIsSelectable="false"/>
 
         <TextView
             android:id="@+id/secondaryText"
