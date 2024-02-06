@@ -26,7 +26,6 @@ import android.text.Spanned;
 import android.text.method.LinkMovementMethod;
 import android.text.style.URLSpan;
 import android.text.util.Linkify;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -462,7 +461,7 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
             list.add(new DocsHeader(getString(R.string.attached)));
             for (final RequestDocument doc : attachedList) {
                 list.add(new DocItem(doc.getName(), doc.getSize(), doc.getMimeType(),
-                        doc.getId(), DownloadFileTask.DOCUMENT_TYPE_DATA));
+                        doc.getId(), DownloadFileTask.DOCUMENT_TYPE_ANNEX));
             }
         }
         if (SignRequest.STATE_SIGNED.equals(this.requestState) && this.reqDetails.getType() == RequestType.SIGNATURE) {
@@ -543,6 +542,8 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
             return;
         }
 
+        PfLog.i(SFConstants.LOG_TAG, "Descargando documento " + selectedDocItem.docId + " de tipo " + selectedDocItem.docType);
+
         // Si tenemos permisos de escritura, procedemos a la descarga. Si no, los pedimos
         if (writePerm) {
             downloadAndSaveFile();
@@ -559,6 +560,8 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
         if (selectedDocItem == null) {
             return;
         }
+
+        PfLog.i(SFConstants.LOG_TAG, "Compartiendo documento " + selectedDocItem.docId + " de tipo " + selectedDocItem.docType);
 
         // Si tenemos permisos de escritura, procedemos a la descarga. Si no, los pedimos
         if (writePerm) {
@@ -642,29 +645,34 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
         } else {
             path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
         }
-        String filetype = "";
-        if (selectedDocItem.docType == DownloadFileTask.DOCUMENT_TYPE_SIGN) {
-            if (selectedDocItem.name != null && selectedDocItem.name.indexOf('.') != -1) {
-                filetype = selectedDocItem.name.substring(selectedDocItem.name.lastIndexOf('.') + 1);
-            }
-        } else {
-            filetype = url.substring(url.indexOf("/") + 1, url.indexOf(";"));
-        }
 
         try {
             if(!path.exists()) {
                 path.mkdirs();
             }
 
-            String filename = selectedDocItem.name.substring(0, selectedDocItem.name.lastIndexOf(".")) +  "." + filetype;
+            // Componemos el fichero para el guardado
+            String filename = selectedDocItem.name != null ? selectedDocItem.name : "undefined";
             downloadedFile = new File(path, filename);
 
-            int cont = 0;
-            while (downloadedFile.exists()) {
-                cont++;
-                filename = selectedDocItem.name.substring(0, selectedDocItem.name.lastIndexOf(".")) + "("+ cont +")" + "." + filetype;
-                downloadedFile = new File(path, filename);
+            // Si ya existe el fichero, incluiremos un contador al nombre hasta dar con uno
+            // que no exista
+            if (downloadedFile.exists()) {
+
+                String name = filename;
+                String ext = "";
+                if (filename.indexOf('.') != -1) {
+                    name = filename.substring(0, filename.lastIndexOf('.'));
+                    ext = filename.substring(filename.lastIndexOf('.') + 1);
+                }
+
+                int cont = 0;
+                while (downloadedFile.exists()) {
+                    filename = name + "(" + ++cont + ")" + "." + ext;
+                    downloadedFile = new File(path, filename);
+                }
             }
+
             downloadedFile.createNewFile();
 
             String base64EncodedString = url.substring(url.indexOf(",") + 1);
@@ -677,8 +685,8 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
                     new String[]{ downloadedFile.toString() }, null,
                     new MediaScannerConnection.OnScanCompletedListener() {
                         public void onScanCompleted(String path, Uri uri) {
-                            Log.i("ExternalStorage", "Scanned " + path + ":");
-                            Log.i("ExternalStorage", "-> uri=" + uri);
+                            PfLog.i(SFConstants.LOG_TAG, "Scanned " + path + ":");
+                            PfLog.i(SFConstants.LOG_TAG, "-> uri=" + uri);
                  }
             });
 
@@ -1752,9 +1760,9 @@ public final class PetitionDetailsActivity extends SignatureFragmentActivity imp
                     popup.getMenuInflater().inflate(R.menu.activity_document_options_menu, popup.getMenu());
                     popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
                         public boolean onMenuItemClick(MenuItem item) {
-                            if (item.getTitle().equals(getString(R.string.download))) {
+                            if (item.getItemId() == R.id.docdownload) {
                                 saveFile();
-                            } else if (item.getTitle().equals(getString(R.string.share))) {
+                            } else if (item.getItemId() == R.id.share) {
                                 shareFile();
                             }
                             return true;
