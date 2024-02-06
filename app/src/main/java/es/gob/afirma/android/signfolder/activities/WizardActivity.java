@@ -8,7 +8,6 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import es.gob.afirma.android.crypto.NfcHelper;
 import es.gob.afirma.android.signfolder.AppPreferences;
 import es.gob.afirma.android.signfolder.R;
 import es.gob.afirma.android.signfolder.SFConstants;
@@ -56,7 +55,9 @@ public class WizardActivity extends AppCompatActivity {
 
         // La opcion de DNIe solo se muestra si el dispositivo cuenta con NFC
         View optionDnie = findViewById(R.id.optionDnie);
-        if (optionDnie != null && !NfcHelper.isNfcServiceAvailable(this)) {
+
+//TODO: Ocultamos la opcion de firma con DNIe por el momento
+        if (optionDnie != null /*&& !NfcHelper.isNfcServiceAvailable(this)*/) {
             optionDnie.setVisibility(View.GONE);
         }
     }

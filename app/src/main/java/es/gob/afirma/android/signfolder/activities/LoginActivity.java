@@ -293,16 +293,17 @@ public final class LoginActivity extends AuthenticationFragmentActivity implemen
         // Si el dispositivo no tuviese NFC, desactivamos la opcion de DNIe. Ademas, si estuviese
         // configurado el uso de DNIe (cosa que no deberia ocurrir), se cambiaria para el uso de
         // certificados locales
-        if (!nfcAvailable) {
+//TODO: Ocultamos la opcion de firma con DNIe por el momento
+//        if (!nfcAvailable) {
 
-            MenuItem item = menu.findItem(R.id.dnie);
-            item.setVisible(false);
+            MenuItem dnieItem = menu.findItem(R.id.dnie);
+            dnieItem.setVisible(false);
 
             if (AppPreferences.KEYSTORE_DNIE.equals(certKeyStore)) {
                 certKeyStore = AppPreferences.KEYSTORE_LOCAL;
                 AppPreferences.getInstance().setCertKeyStore(certKeyStore);
             }
-        }
+//        }
 
         // Activamos el almacen de claves configurado
         if (AppPreferences.KEYSTORE_CLOUD.equals(certKeyStore)) {
@@ -424,11 +425,14 @@ public final class LoginActivity extends AuthenticationFragmentActivity implemen
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    try {
-                        getMessageDialog().show(getSupportFragmentManager(), "ErrorDialog"); //$NON-NLS-1$;
-                    } catch (Exception e) {
-                        PfLog.e(SFConstants.LOG_TAG, "No se ha podido mostrar el mensaje de error: " + e, e); //$NON-NLS-1$
-                        Toast.makeText(LoginActivity.this.getApplicationContext(), getMessageDialog().getMessage(), Toast.LENGTH_LONG).show();
+                    MessageDialog dialog = getMessageDialog();
+                    if (dialog != null) {
+                        try {
+                            dialog.show(getSupportFragmentManager(), "ErrorDialog"); //$NON-NLS-1$;
+                        } catch (Exception e) {
+                            PfLog.e(SFConstants.LOG_TAG, "No se ha podido mostrar el mensaje de error: " + e, e); //$NON-NLS-1$
+                            Toast.makeText(LoginActivity.this.getApplicationContext(), dialog.getMessage(), Toast.LENGTH_LONG).show();
+                        }
                     }
                 }
             });
@@ -480,7 +484,10 @@ public final class LoginActivity extends AuthenticationFragmentActivity implemen
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    getProgressDialog().dismiss();
+                    ProgressDialog dialog = getProgressDialog();
+                    if (dialog != null) {
+                        dialog.dismiss();
+                    }
                 }
             });
         }
