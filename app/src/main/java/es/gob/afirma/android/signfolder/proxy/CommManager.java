@@ -645,7 +645,7 @@ public final class CommManager extends CommManagerOldVersion {
             byte[] data = AOUtil.getDataFromInputStream(is);
             is.close();
             is = new ByteArrayInputStream(data);
-            PfLog.i(SFConstants.LOG_TAG, "XML recibido: " + new String(data));
+            PfLog.d(SFConstants.LOG_TAG, "XML recibido: " + new String(data));
         }
         final Document doc = this.db.parse(is);
         is.close();

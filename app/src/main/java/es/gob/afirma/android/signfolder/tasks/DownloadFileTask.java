@@ -38,6 +38,9 @@ public final class DownloadFileTask extends AsyncTask<Void, Void, DocumentData> 
 	/** Informe de firma. */
 	public static final int DOCUMENT_TYPE_REPORT = 3;
 
+	/** Informe de firma. */
+	public static final int DOCUMENT_TYPE_ANNEX = 4;
+
 	/**
 	 * Listener utilizado para detectar el resultado de una peticion de descarga de fichero para
 	 * visualizaci&oacute;n.

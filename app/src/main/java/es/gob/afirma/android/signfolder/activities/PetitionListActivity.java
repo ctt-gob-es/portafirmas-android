@@ -370,12 +370,14 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
             if (isNotificationTokenRegistered(userProxyId)) {
                 // Si el token ha cambiado, pedimos el alta del nuevo token
                 if (isNotificationTokenChanged(userProxyId)) {
+                    PfLog.i(SFConstants.LOG_TAG, "Actualizamos el token de notificaciones por el nuevo");
                     registryNotificationToken(userProxyId, false);
                 }
                 // Si no ha cambiado el token, pero las notificaciones en servidor estan
                 // desactivadas, las activamos
                 else if (!this.userConfig.isPushActivated()) {
-                    new UpdatePushNotificationsTask(true, this).execute();
+                    PfLog.i(SFConstants.LOG_TAG, "Las notificaciones en servidor estan desactivadas. Las desactivamos en local");
+                    new UpdatePushNotificationsTask(false, this).execute();
                 }
             }
         }
@@ -449,7 +451,7 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
                 AppPreferences.PREFERENCES_KEY_PREFIX_NOTIFICATION_ACTIVE + userProxyId,
                 false);
 
-        PfLog.d(SFConstants.LOG_TAG, "El token de notificaciones esta registrado: " + tokenRegistered);
+        PfLog.i(SFConstants.LOG_TAG, "El token de notificaciones esta registrado: " + tokenRegistered);
 
         return tokenRegistered;
     }
@@ -1002,8 +1004,10 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
                 public void onClick(DialogInterface dialogInterface, int i) {
 
                     if (i == 0 && !AppPreferences.getInstance().getIsCompactView()) {
+                        PfLog.i(SFConstants.LOG_TAG, "Se selecciona la vista compacta");
                         AppPreferences.getInstance().setIsCompactView(true);
                     } else if (i == 1 && AppPreferences.getInstance().getIsCompactView()) {
+                        PfLog.i(SFConstants.LOG_TAG, "Se selecciona la vista expandida");
                         AppPreferences.getInstance().setIsCompactView(false);
                     }
 
@@ -1415,9 +1419,11 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
     public void onUpdatePushNotsSuccess(boolean requestedState, boolean result) {
         if (result) {
             if (requestedState) {
+                PfLog.i(SFConstants.LOG_TAG, "Se han habilitado las notificaciones");
                 Toast.makeText(this, R.string.toast_msg_push_activated, Toast.LENGTH_LONG).show(); //$NON-NLS-1$
                 menuRef.findItem(R.id.notifications).setTitle(R.string.disable_notifications);
             } else {
+                PfLog.i(SFConstants.LOG_TAG, "Se han deshabilitado las notificaciones");
                 Toast.makeText(this, R.string.toast_msg_push_deactivated, Toast.LENGTH_LONG).show(); //$NON-NLS-1$
                 menuRef.findItem(R.id.notifications).setTitle(R.string.enable_notifications);
             }
@@ -1520,9 +1526,11 @@ public final class PetitionListActivity extends SignatureFragmentActivity implem
         int unresolvedRequestLayoutTypeAdapter;
         int resolvedRequestLayoutTypeAdapter;
         if (AppPreferences.getInstance().getIsCompactView()) {
+            PfLog.i(SFConstants.LOG_TAG, "Cargamos el listado usando la vista compacta");
             unresolvedRequestLayoutTypeAdapter = R.layout.array_adapter_unresolved_request;
             resolvedRequestLayoutTypeAdapter = R.layout.array_adapter_resolved_request;
         } else {
+            PfLog.i(SFConstants.LOG_TAG, "Cargamos el listado usando la vista expandida");
             unresolvedRequestLayoutTypeAdapter = R.layout.array_adapter_unresolved_request_extended;
             resolvedRequestLayoutTypeAdapter = R.layout.array_adapter_resolved_request_extended;
         }

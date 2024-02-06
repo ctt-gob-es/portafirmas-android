@@ -13,10 +13,8 @@ package es.gob.afirma.android.signfolder.activities;
 import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
-import android.os.Bundle;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.fragment.app.FragmentActivity;
 
 import es.gob.afirma.android.crypto.DnieConnectionManager;
