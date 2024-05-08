@@ -1,7 +1,6 @@
 package es.gob.afirma.android.signfolder.activities;
 
 import android.Manifest;
-import android.app.Application;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;

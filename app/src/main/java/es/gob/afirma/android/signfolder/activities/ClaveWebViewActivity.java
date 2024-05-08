@@ -156,7 +156,8 @@ public final class ClaveWebViewActivity extends FragmentActivity implements WebV
 			}
 
 			private boolean isOptionalResouce(String url) {
-				return url.endsWith(".ico") || url.endsWith(".js");
+				return url.endsWith(".ico") || url.endsWith(".js")
+						|| url.endsWith(".png") || url.endsWith(".jpg");
 			}
 
 			private boolean isAuxiliarDomain(String url) {
