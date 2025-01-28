@@ -171,7 +171,7 @@ public final class CommManager extends CommManagerOldVersion {
      */
     private void reset() {
         this.certb64 = null;
-        this.remoteId = null;
+         this.remoteId = null;
         this.oldProxy = false;
     }
 
@@ -821,14 +821,16 @@ public final class CommManager extends CommManagerOldVersion {
 
     /**
      * Cancela o rechaza una autorización.
+     * @param auth Autorizaci&oacute;n.
+     * @param operation Operaci&oacute;n (REVOKE o REJECT).
      * @return Resultado de la operacion.
      * @throws IOException               Si algo falla en el proceso.
      * @throws SAXException              Si algo falla en el proceso.
      */
-    public GenericResponse revokeAuthorization(Authorization auth)
+    public GenericResponse revokeAuthorization(Authorization auth, String operation)
             throws IOException, SAXException {
 
-        String xml = XmlRequestsFactory.createChangeStateAuthorizationRequest(auth);
+        String xml = XmlRequestsFactory.createChangeStateAuthorizationRequest(auth, operation);
         String url = this.signFolderProxyUrl + createUrlParams(OPERATION_REVOKE_AUTHORIZATION, xml);
 
         return GenericResponseParser.parse(getRemoteDocument(url));

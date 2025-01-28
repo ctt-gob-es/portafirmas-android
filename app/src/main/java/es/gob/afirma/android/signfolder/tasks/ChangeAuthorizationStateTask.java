@@ -11,6 +11,9 @@ import es.gob.afirma.android.util.PfLog;
 
 public class ChangeAuthorizationStateTask extends AsyncTask<Void, Void, GenericResponse> {
 
+    private static final String OPERATION_REVOKE = "REVOKE";
+    private static final String OPERATION_REJECT = "REJECT";
+
     private Authorization auth;
     private AuthorizationState state;
     private ChangeAuthorizationStateListener listener;
@@ -30,7 +33,9 @@ public class ChangeAuthorizationStateTask extends AsyncTask<Void, Void, GenericR
             if (this.state == AuthorizationState.ACTIVE) {
                 response = CommManager.getInstance().approveAuthorization(this.auth);
             } else if (this.state == AuthorizationState.REVOKED) {
-                response = CommManager.getInstance().revokeAuthorization(this.auth);
+                response = CommManager.getInstance().revokeAuthorization(this.auth, OPERATION_REVOKE);
+            } else if (this.state == AuthorizationState.REJECTED) {
+                response = CommManager.getInstance().revokeAuthorization(this.auth, OPERATION_REJECT);
             }
         }
         catch (Exception e) {

@@ -102,6 +102,7 @@
     <string name="auth_type_out">Enviada</string>
     <string name="verified">Validada</string>
     <string name="pending">Pendiente de validación</string>
+    <string name="revocked">Revocada</string>
     <string name="rejected">Rechazada</string>
     <string name="dni">DNI</string>
     <string name="select_view">Seleccione una vista</string>

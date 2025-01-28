@@ -51,6 +51,10 @@ public class AuthorizationInfoActivity extends Activity {
                     statusIcon.setImageResource(R.drawable.icon_enespera_16);
                     break;
                 case REVOKED:
+                    ((TextView) this.findViewById(R.id.statusValueId)).setText(R.string.revocked);
+                    statusIcon.setImageResource(R.drawable.icon_error_16);
+                    break;
+                case REJECTED:
                     ((TextView) this.findViewById(R.id.statusValueId)).setText(R.string.rejected);
                     statusIcon.setImageResource(R.drawable.icon_error_16);
                     break;
@@ -130,7 +134,7 @@ public class AuthorizationInfoActivity extends Activity {
     }
 
     /**
-     * Ejecuta la operación de cancelación o rechazo de la autorización.
+     * Ejecuta la operación de cancelación/revocación  de la autorización.
      * @param v Vista sobre la que se hace clic para ejecutar esta operación.
      */
     public void onClickCancel(final View v) {
@@ -143,6 +147,14 @@ public class AuthorizationInfoActivity extends Activity {
      */
     public void onClickAccept(final View v) {
         changeAuthorizationState(AuthorizationState.ACTIVE);
+    }
+
+    /**
+     * Ejecuta la operación de rechazo de la autorización.
+     * @param v Vista sobre la que se hace clic para ejecutar esta operación.
+     */
+    public void onClickReject(final View v) {
+        changeAuthorizationState(AuthorizationState.REJECTED);
     }
 
     /**

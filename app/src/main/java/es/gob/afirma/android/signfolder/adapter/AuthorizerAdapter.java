@@ -63,6 +63,7 @@ public class AuthorizerAdapter extends RecyclerView.Adapter<AuthorizerAdapter.Au
             case PENDING:
                 statusIcon.setImageResource(R.drawable.icon_enespera_16);
                 break;
+            case REJECTED:
             case REVOKED:
             default:
                 statusIcon.setImageResource(R.drawable.icon_error_16);

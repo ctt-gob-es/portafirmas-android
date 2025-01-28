@@ -464,8 +464,24 @@ final class XmlRequestsFactory {
      * @return Petición construida.
      */
     public static String createChangeStateAuthorizationRequest(final Authorization auth) {
+        return createChangeStateAuthorizationRequest(auth, null);
+    }
+
+    /**
+     * Crea una nueva petición para la aceptación, cancelación o rechazo de una autorización.
+     * @param auth Autorización.
+     * @param op Operacion (de rechazo o revocacion)
+     * @return Petición construida.
+     */
+    public static String createChangeStateAuthorizationRequest(final Authorization auth, String op) {
         final StringBuffer sb = new StringBuffer(XML_HEADER);
-        sb.append("<rquserauth id=\"").append(auth.getId()).append("\"/>");
+
+        sb.append("<rquserauth id=\"").append(auth.getId()).append("\"");
+        if (op != null) {
+            sb.append(" op=\"").append(op).append("\"");
+        }
+        sb.append("/>");
+
         return sb.toString();
     }
 

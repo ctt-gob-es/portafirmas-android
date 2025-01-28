@@ -6,6 +6,7 @@ package es.gob.afirma.android.user.configuration;
 public enum AuthorizationState {
     PENDING,
     REVOKED,
+    REJECTED,
     ACTIVE;
 
     public static AuthorizationState parse(String state) {
@@ -23,6 +24,9 @@ public enum AuthorizationState {
                 break;
             case "accepted":
                 authState = ACTIVE;
+                break;
+            case "rejected":
+                authState = REJECTED;
                 break;
             default:
                 authState = null;
